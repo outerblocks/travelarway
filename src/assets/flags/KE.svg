@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+  <path fill="#000" d="M0 0h640v160H0z"/>
+  <path fill="#fff" d="M0 160h640v20H0z"/>
+  <path fill="#b00" d="M0 180h640v120H0z"/>
+  <path fill="#fff" d="M0 300h640v20H0z"/>
+  <path fill="#060" d="M0 320h640v160H0z"/>
+  <!-- Simplified shield -->
+  <ellipse cx="320" cy="240" rx="58" ry="90" fill="#fff"/>
+  <ellipse cx="320" cy="240" rx="36" ry="90" fill="#b00"/>
+  <path d="M320 135c-12 18-22 34-22 105s10 87 22 105c12-18 22-34 22-105s-10-87-22-105z" fill="#000"/>
+</svg>
+
