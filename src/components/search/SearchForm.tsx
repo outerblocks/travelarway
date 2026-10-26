@@ -1,21 +1,44 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from '@/router';
+import { ChevronDown, Plus, Search } from 'lucide-react';
 import { Autocomplete } from '@/components/ui/Autocomplete';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { PassengerCounter } from '@/components/ui/Select';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/context/I18nContext';
 import { TANZANIA_LOCATIONS, TANZANIA_PORTS, TANZANIA_AIRPORTS, TANZANIA_STATIONS } from '@/data/locations';
-import { todayISO, addDays } from '@/utils/format';
+import { todayISO, addDays, generateId } from '@/utils/format';
 import type { BookingMode, SearchParams } from '@/types';
 
 interface SearchFormProps {
   mode: BookingMode;
 }
 
+interface FlightLegInput {
+  key: string;
+  origin: string;
+  originName: string;
+  destination: string;
+  destinationName: string;
+  date: string;
+}
+
+/** A multi-city search starts with two legs and can grow up to five. */
+const MIN_FLIGHT_LEGS = 2;
+const MAX_FLIGHT_LEGS = 5;
+
+function emptyLeg(): FlightLegInput {
+  return { key: generateId(), origin: '', originName: '', destination: '', destinationName: '', date: '' };
+}
+
+function createLegs(count: number): FlightLegInput[] {
+  return Array.from({ length: count }, () => emptyLeg());
+}
+
 export function SearchForm({ mode }: SearchFormProps) {
   const navigate = useNavigate();
   const { setSearchParams } = useApp();
+  const { tp } = useI18n();
 
   const [origin, setOrigin] = useState('');
   const [originName, setOriginName] = useState('');
@@ -30,8 +53,55 @@ export function SearchForm({ mode }: SearchFormProps) {
   const [rooms, setRooms] = useState(1);
   const [cabinClass, setCabinClass] = useState('economy');
   const [tripType, setTripType] = useState<'oneway' | 'return' | 'multicity'>('oneway');
+  const [legs, setLegs] = useState<FlightLegInput[]>(() => createLegs(MIN_FLIGHT_LEGS));
   const [residency, setResidency] = useState<'resident' | 'non_resident'>('resident');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [travelersOpen, setTravelersOpen] = useState(false);
+  const travelersRef = useRef<HTMLDivElement>(null);
+
+  const isMultiCity = mode === 'flights' && tripType === 'multicity';
+  const desktopLayout = getDesktopSearchLayout(mode, tripType);
+  const supportsReturn = mode === 'flights' || mode === 'bus' || mode === 'train' || mode === 'ferry';
+  const travelerCount = adults + children + infants;
+  const travelerCountLabel = tp(travelerCount === 1 ? 'travelerSingular' : 'travelerPlural');
+
+  useEffect(() => {
+    if (!travelersOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (travelersRef.current && !travelersRef.current.contains(event.target as Node)) {
+        setTravelersOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setTravelersOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [travelersOpen]);
+
+  const updateLeg = (index: number, patch: Partial<FlightLegInput>) => {
+    setLegs((prev) => prev.map((leg, i) => (i === index ? { ...leg, ...patch } : leg)));
+  };
+
+  // A new leg continues from where the previous one landed, which is what a
+  // real itinerary looks like; the traveller can still change it.
+  const addLeg = () => {
+    setLegs((prev) => {
+      if (prev.length >= MAX_FLIGHT_LEGS) return prev;
+      const last = prev[prev.length - 1];
+      return [...prev, { ...emptyLeg(), origin: last.destination, originName: last.destinationName }];
+    });
+  };
+
+  const removeLastLeg = () => {
+    setLegs((prev) => (prev.length > MIN_FLIGHT_LEGS ? prev.slice(0, -1) : prev));
+  };
 
   const getLocations = () => {
     switch (mode) {
@@ -45,41 +115,56 @@ export function SearchForm({ mode }: SearchFormProps) {
     }
   };
 
-  const locations = getLocations();
+  const locations = mode === 'bus'
+    ? TANZANIA_LOCATIONS.filter((location) => location.type === 'city' || location.type === 'town')
+    : getLocations();
   const locationOptions = locations.map((l) => ({
     id: l.id,
     name: l.name,
     subText: l.type === 'city' ? `${l.region}, ${l.country}` : `${l.type}, ${l.region}`,
   }));
+  const originOptions = locationOptions.filter((location) => location.id !== destination);
+  const destinationOptions = locationOptions.filter((location) => location.id !== origin);
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
 
-    if (mode !== 'experiences') {
-      if (!origin) e.origin = 'Please select a departure location';
-      if (!destination) e.destination = 'Please select a destination';
+    if (isMultiCity) {
+      legs.forEach((leg, index) => {
+        if (!leg.origin) e[`leg_${index}_origin`] = tp('pleaseSelectDepartureAirport');
+        if (!leg.destination) e[`leg_${index}_destination`] = tp('pleaseSelectDestinationAirport');
+        if (leg.origin && leg.destination && leg.origin === leg.destination) {
+          e[`leg_${index}_destination`] = tp('destinationDifferent');
+        }
+        if (!leg.date) e[`leg_${index}_date`] = tp('departureDateRequired');
+      });
+    } else if (mode !== 'experiences') {
+      if (!origin) e.origin = tp('originRequired');
+      if (!destination) e.destination = tp('destinationRequired');
       if (origin && destination && origin === destination) {
-        e.destination = 'Destination must be different from origin';
+        e.destination = tp('destinationMustDifferOrigin');
       }
     } else {
-      if (!origin) e.origin = 'Please select a destination or activity';
+      if (!origin) e.origin = tp('destinationOrActivityRequired');
     }
 
-    if (mode !== 'experiences' && !date) e.date = 'Please select a date';
+    if (!isMultiCity && mode !== 'experiences' && !date) e.date = tp('pleaseSelectDate');
 
     if (mode === 'stays') {
-      if (!checkOut) e.checkOut = 'Please select a check-out date';
+      if (!checkOut) e.checkOut = tp('checkOutRequired');
       if (date && checkOut && new Date(checkOut) <= new Date(date)) {
-        e.checkOut = 'Check-out must be after check-in';
+        e.checkOut = tp('checkOutAfterCheckIn');
       }
     }
 
-    if (mode === 'flights' && tripType === 'return' && !returnDate) {
-      e.returnDate = 'Please select a return date';
+    if (supportsReturn && tripType === 'return' && !returnDate) {
+      e.returnDate = tp('returnDateRequired');
+    } else if (supportsReturn && tripType === 'return' && date && new Date(returnDate) <= new Date(date)) {
+      e.returnDate = tp('returnDateAfterDeparture');
     }
 
     if (adults + children === 0) {
-      e.adults = 'At least one adult or child is required';
+      e.adults = tp('atLeastOneTraveller');
     }
 
     setErrors(e);
@@ -94,7 +179,7 @@ export function SearchForm({ mode }: SearchFormProps) {
       origin,
       destination,
       date,
-      returnDate: tripType === 'return' ? returnDate : undefined,
+      returnDate: supportsReturn && tripType === 'return' ? returnDate : undefined,
       adults,
       children,
       infants,
@@ -106,9 +191,23 @@ export function SearchForm({ mode }: SearchFormProps) {
     }
     if (mode === 'flights') {
       params.extras = { tripType, cabinClass };
+      if (isMultiCity) {
+        params.legs = legs.map((leg) => ({
+          origin: leg.origin,
+          destination: leg.destination,
+          date: leg.date,
+        }));
+        // Results are still searched on the first leg; multi-leg pricing is not modelled yet.
+        params.origin = legs[0].origin;
+        params.destination = legs[0].destination;
+        params.date = legs[0].date;
+      }
     }
     if (mode === 'ferry') {
-      params.extras = { residency };
+      params.extras = { residency, tripType };
+    }
+    if (mode === 'bus' || mode === 'train') {
+      params.extras = { tripType };
     }
 
     setSearchParams(params);
@@ -116,34 +215,43 @@ export function SearchForm({ mode }: SearchFormProps) {
   };
 
   const labelMap = {
-    bus: { origin: 'From', destination: 'To' },
-    ferry: { origin: 'Departure Port', destination: 'Arrival Port' },
-    flights: { origin: 'Origin Airport', destination: 'Destination Airport' },
-    train: { origin: 'Departure Station', destination: 'Arrival Station' },
-    stays: { origin: 'Destination, location, or property', destination: '' },
-    experiences: { origin: 'Destination or activity', destination: '' },
+    bus: { origin: tp('from'), destination: tp('to') },
+    ferry: { origin: tp('departurePort'), destination: tp('arrivalPort') },
+    flights: { origin: tp('originAirport'), destination: tp('destinationAirport') },
+    train: { origin: tp('departureStation'), destination: tp('arrivalStation') },
+    stays: { origin: tp('destination'), destination: '' },
+    experiences: { origin: tp('destination'), destination: '' },
   };
 
   const labels = labelMap[mode];
   const minDate = addDays(todayISO(), 1);
 
+  const formHeight = 'h-auto min-h-[26rem] sm:min-h-[17.5rem] lg:min-h-[12rem]';
+  const singleRowDesktopGrid = desktopLayout?.formClass ?? '';
+
   return (
-    <div>
-      {mode === 'flights' && (
-        <div className="flex flex-wrap gap-2 mb-3">
+    <div
+      className={`search-form flex flex-col overflow-visible ${formHeight} ${singleRowDesktopGrid}`}
+      data-mode={mode}
+      data-desktop-grid={desktopLayout?.breakpoint}
+    >
+      <div className={`search-form-fields overflow-visible ${isMultiCity ? 'flex-none' : 'min-h-0 flex-1'} pr-0.5`}>
+      {supportsReturn && (
+        <div className="search-trip-type mb-4 inline-flex flex-wrap rounded-full bg-neutral-100 p-1">
           {([
-            { value: 'oneway', label: 'One-way' },
-            { value: 'return', label: 'Return' },
-            { value: 'multicity', label: 'Multi-city' },
+            { value: 'oneway', label: tp('oneWay') },
+            { value: 'return', label: tp('return') },
+            ...(mode === 'flights' ? [{ value: 'multicity', label: tp('multiCity') } as const] : []),
           ] as const).map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => setTripType(opt.value)}
-              className={`px-3 py-1.5 text-label font-medium rounded-sm transition-colors ${
+              aria-pressed={tripType === opt.value}
+              className={`rounded-full px-3.5 py-1.5 text-label font-semibold transition-colors ${
                 tripType === opt.value
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                  ? 'bg-ink text-white shadow-sm'
+                  : 'bg-transparent text-neutral-600 hover:text-ink'
               }`}
             >
               {opt.label}
@@ -152,16 +260,97 @@ export function SearchForm({ mode }: SearchFormProps) {
         </div>
       )}
 
-      <div className={`grid gap-3 ${getGridClass(mode)}`}>
+      {isMultiCity ? (
+        <div className="space-y-3">
+          {legs.map((leg, index) => (
+            <div key={leg.key} className="grid grid-cols-1 gap-x-3 gap-y-2.5 md:grid-cols-3">
+              <Autocomplete
+                id={`leg_${index}_origin`}
+                label={tp('flightLegDeparture').replace('{number}', String(index + 1))}
+                placeholder={tp('airportOrCity')}
+                options={locationOptions.filter((location) => location.id !== leg.destination)}
+                value={leg.originName}
+                onChange={(id, name) => {
+                  updateLeg(index, {
+                    origin: id,
+                    originName: name,
+                    ...(id === leg.destination ? { destination: '', destinationName: '' } : {}),
+                  });
+                  setErrors((prev) => ({ ...prev, [`leg_${index}_origin`]: '' }));
+                }}
+                error={errors[`leg_${index}_origin`]}
+                required
+              />
+
+              <Autocomplete
+                id={`leg_${index}_destination`}
+                label={tp('flightLegDestination').replace('{number}', String(index + 1))}
+                placeholder={tp('airportOrCity')}
+                options={locationOptions.filter((location) => location.id !== leg.origin)}
+                value={leg.destinationName}
+                onChange={(id, name) => {
+                  updateLeg(index, {
+                    destination: id,
+                    destinationName: name,
+                    ...(id === leg.origin ? { origin: '', originName: '' } : {}),
+                  });
+                  setErrors((prev) => ({ ...prev, [`leg_${index}_destination`]: '' }));
+                }}
+                error={errors[`leg_${index}_destination`]}
+                required
+              />
+
+              <DatePicker
+                id={`leg_${index}_date`}
+                label={tp('flightLegDate').replace('{number}', String(index + 1))}
+                value={leg.date}
+                onChange={(d) => {
+                  updateLeg(index, { date: d });
+                  setErrors((prev) => ({ ...prev, [`leg_${index}_date`]: '' }));
+                }}
+                error={errors[`leg_${index}_date`]}
+                required
+                minDate={minDate}
+                placeholder={tp('selectDate')}
+              />
+            </div>
+          ))}
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <button
+              type="button"
+              onClick={addLeg}
+              disabled={legs.length >= MAX_FLIGHT_LEGS}
+              className="inline-flex items-center gap-1.5 text-label font-semibold text-brand-600 transition-colors hover:text-brand-700 disabled:cursor-not-allowed disabled:text-neutral-400"
+            >
+              <Plus size={16} /> {tp('addFlightLeg')}
+            </button>
+            {legs.length > MIN_FLIGHT_LEGS && (
+              <button
+                type="button"
+                onClick={removeLastLeg}
+                className="text-label font-medium text-neutral-500 transition-colors hover:text-error-600"
+              >
+                {tp('removeLastLeg')}
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+      <div className={`search-fields-grid grid gap-x-4 gap-y-4 ${getGridClass(mode, tripType)}`}>
         <Autocomplete
           id="search_origin"
           label={labels.origin}
-          placeholder="Search location..."
-          options={locationOptions}
+          placeholder={mode === 'bus' ? tp('chooseCity') : tp('searchLocation')}
+          options={originOptions}
           value={originName}
           onChange={(id, name) => {
             setOrigin(id);
             setOriginName(name);
+            if (id && id === destination) {
+              setDestination('');
+              setDestinationName('');
+            }
             setErrors((prev) => ({ ...prev, origin: '' }));
           }}
           error={errors.origin}
@@ -172,12 +361,16 @@ export function SearchForm({ mode }: SearchFormProps) {
           <Autocomplete
             id="search_destination"
             label={labels.destination}
-            placeholder="Search location..."
-            options={locationOptions}
+            placeholder={mode === 'bus' ? tp('chooseCity') : tp('searchLocation')}
+            options={destinationOptions}
             value={destinationName}
             onChange={(id, name) => {
               setDestination(id);
               setDestinationName(name);
+              if (id && id === origin) {
+                setOrigin('');
+                setOriginName('');
+              }
               setErrors((prev) => ({ ...prev, destination: '' }));
             }}
             error={errors.destination}
@@ -187,7 +380,7 @@ export function SearchForm({ mode }: SearchFormProps) {
 
         <DatePicker
           id="search_date"
-          label={mode === 'stays' ? 'Check-in' : 'Departure Date'}
+          label={mode === 'stays' ? tp('checkIn') : tp('departureDate')}
           value={date}
           onChange={(d) => {
             setDate(d);
@@ -196,13 +389,13 @@ export function SearchForm({ mode }: SearchFormProps) {
           error={errors.date}
           required={mode !== 'experiences'}
           minDate={minDate}
-          placeholder={mode === 'stays' ? 'Select check-in' : 'Select date'}
+          placeholder={mode === 'stays' ? tp('selectCheckIn') : tp('selectDate')}
         />
 
         {mode === 'stays' && (
           <DatePicker
             id="search_checkout"
-            label="Check-out"
+            label={tp('checkOut')}
             value={checkOut}
             onChange={(d) => {
               setCheckOut(d);
@@ -211,14 +404,14 @@ export function SearchForm({ mode }: SearchFormProps) {
             error={errors.checkOut}
             required
             minDate={date ? addDays(date, 1) : minDate}
-            placeholder="Select check-out"
+            placeholder={tp('selectCheckOut')}
           />
         )}
 
-        {mode === 'flights' && tripType === 'return' && (
+        {supportsReturn && tripType === 'return' && (
           <DatePicker
             id="search_return"
-            label="Return Date"
+            label={tp('returnDate')}
             value={returnDate}
             onChange={(d) => {
               setReturnDate(d);
@@ -227,35 +420,37 @@ export function SearchForm({ mode }: SearchFormProps) {
             error={errors.returnDate}
             required
             minDate={date ? addDays(date, 1) : minDate}
-            placeholder="Select return date"
+            placeholder={tp('selectReturnDate')}
           />
         )}
 
         {mode === 'ferry' && (
-          <div>
-            <label className="input-label">Residency</label>
-            <div className="flex gap-2">
+          <div className="col-span-2 min-w-0 lg:col-span-1">
+            <label className="input-label">{tp('residency')}</label>
+            <div className="flex h-[3.25rem] items-center gap-1 rounded-xl bg-neutral-50 p-1">
               <button
                 type="button"
                 onClick={() => setResidency('resident')}
-                className={`flex-1 px-4 py-3 text-body font-medium rounded-sm transition-colors ${
+                aria-pressed={residency === 'resident'}
+                  className={`h-full min-w-0 flex-1 whitespace-nowrap rounded-lg px-2 text-xs font-semibold transition-colors ${
                   residency === 'resident'
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    ? 'bg-ink text-white'
+                      : 'text-neutral-600 hover:bg-white/80'
                 }`}
               >
-                Resident
+                {tp('resident')}
               </button>
               <button
                 type="button"
                 onClick={() => setResidency('non_resident')}
-                className={`flex-1 px-4 py-3 text-body font-medium rounded-sm transition-colors ${
+                aria-pressed={residency === 'non_resident'}
+                  className={`h-full min-w-0 flex-1 whitespace-nowrap rounded-lg px-2 text-xs font-semibold transition-colors ${
                   residency === 'non_resident'
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    ? 'bg-ink text-white'
+                      : 'text-neutral-600 hover:bg-white/80'
                 }`}
               >
-                Non-Resident
+                {tp('nonResident')}
               </button>
             </div>
           </div>
@@ -263,89 +458,184 @@ export function SearchForm({ mode }: SearchFormProps) {
 
         {mode === 'flights' && (
           <div>
-            <label className="input-label">Cabin Class</label>
+            <label className="input-label">{tp('cabinClass')}</label>
             <select
               className="input-field"
               value={cabinClass}
               onChange={(e) => setCabinClass(e.target.value)}
             >
-              <option value="economy">Economy</option>
-              <option value="premium_economy">Premium Economy</option>
-              <option value="business">Business</option>
-              <option value="first">First Class</option>
+              <option value="economy">{tp('economy')}</option>
+              <option value="premium_economy">{tp('premiumEconomy')}</option>
+              <option value="business">{tp('business')}</option>
+              <option value="first">{tp('firstClass')}</option>
             </select>
           </div>
         )}
       </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-3">
-        <PassengerCounter
-          id="adults"
-          label={mode === 'stays' ? 'Adults' : 'Adults'}
-          value={adults}
-          onChange={(v) => { setAdults(v); setErrors((prev) => ({ ...prev, adults: '' })); }}
-          min={1}
-          max={9}
-          description="Age 12+"
-        />
-        <PassengerCounter
-          id="children"
-          label="Children"
-          value={children}
-          onChange={setChildren}
-          min={0}
-          max={9}
-          description="Age 2-11"
-        />
-        {mode === 'bus' && (
-          <PassengerCounter
-            id="infants"
-            label="Infants"
-            value={infants}
-            onChange={setInfants}
-            min={0}
-            max={4}
-            description="Under 2"
-          />
-        )}
-        {mode === 'stays' && (
-          <PassengerCounter
-            id="rooms"
-            label="Rooms"
-            value={rooms}
-            onChange={setRooms}
-            min={1}
-            max={5}
-          />
-        )}
+      )}
       </div>
 
-      {errors.adults && <p className="field-error mt-2">{errors.adults}</p>}
+      <div className="search-form-bottom mt-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div ref={travelersRef} className="search-travelers-field relative w-full min-w-0">
+          <label className="input-label">{tp('travelersLabel')}</label>
+          <button
+            type="button"
+            onClick={() => setTravelersOpen((open) => !open)}
+            className="search-travelers-trigger flex min-h-[3.25rem] w-full min-w-0 items-center justify-between gap-3 rounded-xl bg-neutral-50 px-4 py-3 text-left transition-colors hover:bg-neutral-100"
+            aria-label={`${tp('travelersLabel')}: ${travelerCount} ${travelerCountLabel}${mode === 'stays' ? `, ${rooms} ${tp(rooms === 1 ? 'roomSingular' : 'roomPlural')}` : ''}`}
+            aria-haspopup="dialog"
+            aria-expanded={travelersOpen}
+            aria-controls="search-travelers-panel"
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-neutral-900">
+                {travelerCount} {travelerCountLabel}
+                {mode === 'stays' && (
+                  <> · {rooms} {tp(rooms === 1 ? 'roomSingular' : 'roomPlural')}</>
+                )}
+              </span>
+            </span>
+            <ChevronDown
+              size={18}
+              aria-hidden="true"
+              className={`shrink-0 text-neutral-500 transition-transform ${travelersOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
 
-      <div className="mt-4 flex justify-end">
-        <button type="button" onClick={handleSearch} className="btn-primary px-7 py-3">
+          {travelersOpen && (
+            <div
+              id="search-travelers-panel"
+              role="dialog"
+              aria-label={tp('travelersLabel')}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute left-0 top-full z-[200] mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-neutral-200 bg-white p-5 shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)]"
+            >
+              <div className="space-y-4">
+                <PassengerCounter
+                  id="adults"
+                  label={tp('adults')}
+                  value={adults}
+                  onChange={(value) => {
+                    setAdults(value);
+                    setErrors((previous) => ({ ...previous, adults: '' }));
+                  }}
+                  min={1}
+                  max={9}
+                  description={tp('age12Plus')}
+                />
+                <PassengerCounter
+                  id="children"
+                  label={tp('children')}
+                  value={children}
+                  onChange={setChildren}
+                  min={0}
+                  max={9}
+                  description={tp('age2to11')}
+                />
+                {mode === 'bus' && (
+                  <PassengerCounter
+                    id="infants"
+                    label={tp('infants')}
+                    value={infants}
+                    onChange={setInfants}
+                    min={0}
+                    max={4}
+                    description={tp('under2')}
+                  />
+                )}
+                {mode === 'stays' && (
+                  <PassengerCounter
+                    id="rooms"
+                    label={tp('rooms')}
+                    value={rooms}
+                    onChange={setRooms}
+                    min={1}
+                    max={5}
+                  />
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setTravelersOpen(false)}
+                className="btn-primary mt-4 w-full py-2"
+              >
+                {tp('done')}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {errors.adults && <p className="search-form-adult-error field-error lg:mb-2">{errors.adults}</p>}
+
+        <div className="search-form-submit-wrapper flex justify-end">
+          <button type="button" onClick={handleSearch} className="btn-primary search-submit w-full px-6 py-2.5 sm:w-auto">
           <Search size={20} />
-          Search {mode === 'stays' ? 'Stays' : mode === 'experiences' ? 'Experiences' : 'Trips'}
-        </button>
+          {mode === 'stays' ? tp('searchStays') : mode === 'experiences' ? tp('searchExperiences') : tp('searchTrips')}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function getGridClass(mode: BookingMode): string {
+function getGridClass(mode: BookingMode, tripType: 'oneway' | 'return' | 'multicity'): string {
   switch (mode) {
+    case 'stays':
+      // Three fields: keep them on one row so none is left orphaned beside an empty cell.
+      return 'grid-cols-1 sm:grid-cols-3';
+    case 'ferry':
+      return tripType === 'return'
+        ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5'
+        : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4';
     case 'bus':
     case 'train':
-      return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
-    case 'ferry':
-      return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
+      return tripType === 'return'
+        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+        : 'grid-cols-1 sm:grid-cols-3';
     case 'flights':
-      return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
-    case 'stays':
-      return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2';
+      // A return flight adds a fifth field; widening the row keeps every tab one row tall
+      // at desktop so the card height stays identical between tabs.
+      return tripType === 'return'
+        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5'
+        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
     case 'experiences':
       return 'grid-cols-1 sm:grid-cols-2';
     default:
-      return 'grid-cols-1 sm:grid-cols-2';
+      return 'grid-cols-2';
   }
+}
+
+function getDesktopSearchLayout(
+  mode: BookingMode,
+  tripType: 'oneway' | 'return' | 'multicity',
+): {
+  breakpoint: '1280' | '1440';
+  formClass: string;
+} | null {
+  // Flights add a cabin field and a return date, so 7 controls on one row would clip the
+  // placeholders at 1280px. They keep the two-row layout instead.
+  if (mode === 'flights') return null;
+
+  const breakpoint = mode === 'ferry' && tripType === 'return' ? '1440' : '1280';
+  const fieldColumns = breakpoint === '1440'
+    ? 'min-[1440px]:grid-cols-[repeat(6,minmax(0,1fr))_max-content]'
+    : mode === 'experiences'
+      ? 'min-[1280px]:grid-cols-[repeat(3,minmax(0,1fr))_max-content]'
+      : (mode === 'bus' || mode === 'train') && tripType === 'return'
+        ? 'min-[1280px]:grid-cols-[repeat(5,minmax(0,1fr))_max-content]'
+        : mode === 'ferry'
+          ? 'min-[1280px]:grid-cols-[repeat(5,minmax(0,1fr))_max-content]'
+          : 'min-[1280px]:grid-cols-[repeat(4,minmax(0,1fr))_max-content]';
+
+  if (breakpoint === '1440') {
+    return {
+      breakpoint,
+      formClass: `min-[1440px]:grid min-[1440px]:items-end min-[1440px]:gap-x-4 min-[1440px]:gap-y-4 min-[1440px]:!h-auto min-[1440px]:!min-h-0 ${fieldColumns}`,
+    };
+  }
+
+  return {
+    breakpoint,
+    formClass: `min-[1280px]:grid min-[1280px]:items-end min-[1280px]:gap-x-4 min-[1280px]:gap-y-4 min-[1280px]:!h-auto min-[1280px]:!min-h-0 ${fieldColumns}`,
+  };
 }

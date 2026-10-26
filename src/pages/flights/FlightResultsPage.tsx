@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@/router';
 import { ArrowLeft, Plane, Clock, Briefcase, Check } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/context/I18nContext';
 import { FLIGHT_RESULTS } from '@/data/mockData';
+import { locationMatches } from '@/domain/search';
 import { GenericResultsSkeleton } from '@/components/shared/Skeletons';
 import { LoadingState, EmptyResults, ErrorState, SearchSummaryBar } from '@/components/shared/States';
 import { formatCurrency, formatDate } from '@/utils/format';
@@ -11,6 +13,7 @@ import type { FlightResult } from '@/types';
 export function FlightResultsPage() {
   const navigate = useNavigate();
   const { bookingState, setSearchParams } = useApp();
+  const { tp } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [results, setResults] = useState<FlightResult[]>([]);
@@ -24,7 +27,10 @@ export function FlightResultsPage() {
         let r = [...FLIGHT_RESULTS];
         if (params.origin && params.destination) {
           r = r.filter((f) =>
-            f.segments.some((s) => s.origin === params.origin || s.originCity.toLowerCase().includes(params.origin!.toLowerCase()))
+            f.segments.some((s) =>
+              locationMatches(params.origin, [s.origin, s.originCity]) &&
+              locationMatches(params.destination, [s.destination, s.destinationCity])
+            )
           );
         }
         if (r.length === 0 && !params.origin) r = FLIGHT_RESULTS;
@@ -46,33 +52,33 @@ export function FlightResultsPage() {
   if (loading) return (
     <>
       <SearchSummaryBar>
-        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> Modify search</Link>
-        <span className="text-body font-medium text-neutral-900">Flight search</span>
+        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link>
+        <span className="text-body font-medium text-neutral-900">{tp('flightSearch')}</span>
       </SearchSummaryBar>
       <GenericResultsSkeleton count={4} />
-      <LoadingState message="Searching flights..." />
+      <LoadingState message={tp('searchingFlights')} />
     </>
   );
 
-  if (error) return <ErrorState message="Unable to load flights" onRetry={() => window.location.reload()} />;
+  if (error) return <ErrorState message={tp('unableLoadFlights')} onRetry={() => window.location.reload()} />;
 
   return (
     <>
       <SearchSummaryBar>
-        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> Modify search</Link>
-        <span className="text-body font-medium text-neutral-900">{params.origin || 'Origin'} → {params.destination || 'Destination'}</span>
-        <span className="text-body text-neutral-500">{params.date ? formatDate(params.date) : ''} · {params.adults} adults</span>
+        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link>
+        <span className="text-body font-medium text-neutral-900">{params.origin || tp('departure')} → {params.destination || tp('destination')}</span>
+        <span className="text-body text-neutral-500">{params.date ? formatDate(params.date) : ''} · {tp('adultCount').replace('{count}', String(params.adults)).replace('{plural}', params.adults === 1 ? '' : 's')}</span>
       </SearchSummaryBar>
 
       <div className="section-container py-6">
-        <h1 className="text-page font-bold text-neutral-900 mb-6">{results.length} flights found</h1>
+        <h1 className="text-page font-bold text-neutral-900 mb-6">{tp('flightCount').replace('{count}', String(results.length))}</h1>
 
         {results.length === 0 ? (
-          <EmptyResults message="No flights found" subMessage="Try a different date or route." />
+          <EmptyResults message={tp('noFlightsFound')} subMessage={tp('tryDifferentDateRoute')} />
         ) : (
           <div className="space-y-3">
             {results.map((flight) => (
-              <div key={flight.id} className="card p-5 hover:border-brand-300 transition-colors animate-fade-in">
+              <div key={flight.id} className="ticket-row animate-fade-in p-5">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex-1">
                     {flight.segments.map((seg, i) => (
@@ -110,21 +116,21 @@ export function FlightResultsPage() {
                     <div className="flex items-center gap-3 mt-2 text-meta text-neutral-500">
                       <span className="flex items-center gap-1"><Briefcase size={12} /> {flight.baggageInfo}</span>
                       {flight.refundable ? (
-                        <span className="flex items-center gap-1 text-accent-600"><Check size={12} /> Refundable</span>
+                        <span className="flex items-center gap-1 text-accent-600"><Check size={12} /> {tp('refundable')}</span>
                       ) : (
-                        <span>Non-refundable</span>
+                        <span>{tp('nonRefundable')}</span>
                       )}
                     </div>
                   </div>
 
                   <div className="lg:text-right lg:border-l lg:border-neutral-200 lg:pl-6">
-                    <p className="text-meta text-neutral-500 uppercase tracking-wide">Total price</p>
-                    <p className="text-section font-bold text-brand-600">
+                    <p className="text-meta text-neutral-500 uppercase tracking-wide">{tp('totalPrice')}</p>
+                    <p className="text-listing font-bold text-brand-600 whitespace-nowrap">
                       {formatCurrency(flight.totalPrice, flight.currency, 'TSh')}
                     </p>
                     <p className="text-meta text-neutral-500">{flight.cabinClass}</p>
                     <button onClick={() => handleSelect(flight)} className="btn-primary mt-2 whitespace-nowrap">
-                      Select Flight
+                      {tp('selectFlight')}
                     </button>
                   </div>
                 </div>

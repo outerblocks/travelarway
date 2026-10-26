@@ -12,6 +12,8 @@ interface BookingState {
   dropOffPointId: string | null;
   selectedClassId: string | null;
   bookingReference: string | null;
+  paidAmount: number | null;
+  demoTicket: { reference: string; amount: number } | null;
 }
 
 interface AppContextValue {
@@ -28,6 +30,8 @@ interface AppContextValue {
   setDropOffPointId: (id: string | null) => void;
   setSelectedClassId: (id: string | null) => void;
   setBookingReference: (ref: string | null) => void;
+  setPaidAmount: (amount: number | null) => void;
+  setDemoTicket: (ticket: { reference: string; amount: number } | null) => void;
   resetBooking: (mode: BookingMode) => void;
 }
 
@@ -48,6 +52,8 @@ const defaultBookingState = (mode: BookingMode): BookingState => ({
   dropOffPointId: null,
   selectedClassId: null,
   bookingReference: null,
+  paidAmount: null,
+  demoTicket: null,
 });
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -63,7 +69,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setSearchParams = useCallback((params: SearchParams) => {
-    setBookingState((prev) => ({ ...prev, searchParams: params }));
+    // `mode` is part of the booking, not just of the query: the ticket header and
+    // the mode-specific labels read it, so keep it in step with every search.
+    setBookingState((prev) => ({ ...prev, mode: params.mode, searchParams: params }));
   }, []);
 
   const setSelectedServiceId = useCallback((id: string | null) => {
@@ -91,7 +99,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setBookingReference = useCallback((ref: string | null) => {
-    setBookingState((prev) => ({ ...prev, bookingReference: ref }));
+    setBookingState((prev) => ({ ...prev, bookingReference: ref, demoTicket: null }));
+  }, []);
+
+  const setPaidAmount = useCallback((amount: number | null) => {
+    setBookingState((prev) => ({ ...prev, paidAmount: amount }));
+  }, []);
+
+  const setDemoTicket = useCallback((ticket: { reference: string; amount: number } | null) => {
+    setBookingState((prev) => ({
+      ...prev,
+      bookingReference: null,
+      paidAmount: null,
+      demoTicket: ticket,
+    }));
   }, []);
 
   const resetBooking = useCallback((mode: BookingMode) => {
@@ -114,6 +135,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setDropOffPointId,
         setSelectedClassId,
         setBookingReference,
+        setPaidAmount,
+        setDemoTicket,
         resetBooking,
       }}
     >

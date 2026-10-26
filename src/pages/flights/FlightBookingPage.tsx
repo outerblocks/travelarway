@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@/router';
 import { ArrowLeft, Plane } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/context/I18nContext';
 import { FLIGHT_RESULTS } from '@/data/mockData';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
 import { LoadingState, ErrorState, SearchSummaryBar } from '@/components/shared/States';
@@ -10,6 +11,7 @@ import type { FlightResult, PassengerInfo } from '@/types';
 export function FlightBookingPage() {
   const navigate = useNavigate();
   const { bookingState, setPassengers, setSearchParams } = useApp();
+  const { tp } = useI18n();
   const [loading, setLoading] = useState(true);
   const [flight, setFlight] = useState<FlightResult | null>(null);
   const [passengers, setPassengersState] = useState<PassengerInfo[]>([]);
@@ -47,9 +49,9 @@ export function FlightBookingPage() {
   const validate = (): boolean => {
     const e: Record<string, string> = {};
     passengers.forEach((p, i) => {
-      if (!p.fullName) e[`name_${i}`] = 'Required';
-      if (!p.email) e[`email_${i}`] = 'Required';
-      if (!p.phone) e[`phone_${i}`] = 'Required';
+      if (!p.fullName) e[`name_${i}`] = tp('requiredLabel');
+      if (!p.email) e[`email_${i}`] = tp('requiredLabel');
+      if (!p.phone) e[`phone_${i}`] = tp('requiredLabel');
     });
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -64,17 +66,17 @@ export function FlightBookingPage() {
 
   if (loading) return (
     <>
-      <SearchSummaryBar><Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> Back</Link><span className="text-body font-medium text-neutral-900">Passenger details</span></SearchSummaryBar>
-      <LoadingState message="Loading flight details..." />
+      <SearchSummaryBar><Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link><span className="text-body font-medium text-neutral-900">{tp('flightBookingTitle')}</span></SearchSummaryBar>
+      <LoadingState message={tp('loadingFlightDetails')} />
     </>
   );
 
-  if (!flight) return <ErrorState message="Flight not found" onRetry={() => navigate('/flights/results')} />;
+  if (!flight) return <ErrorState message={tp('flightNotFound')} onRetry={() => navigate('/flights/results')} />;
 
   return (
     <>
       <SearchSummaryBar>
-        <Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> Back to results</Link>
+        <Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
         <span className="text-body font-medium text-neutral-900">{flight.segments[0].airline} · {flight.segments[0].flightNumber}</span>
       </SearchSummaryBar>
 
@@ -82,26 +84,30 @@ export function FlightBookingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <div className="card p-6">
-              <h2 className="text-listing font-bold text-neutral-900 mb-1">Passenger Information</h2>
-              <p className="text-meta text-neutral-500 mb-6">Enter details as they appear on your travel document.</p>
+              <h2 className="text-listing font-bold text-neutral-900 mb-1">{tp('passengerInformation')}</h2>
+              <p className="text-meta text-neutral-500 mb-6">{tp('enterTravelDocumentDetails')}</p>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {passengers.map((p, i) => (
                   <div key={p.id} data-error={errors[`name_${i}`] ? 'true' : undefined}>
-                    <PassengerForm passenger={p} index={i} onChange={(u) => handleChange(i, u)} requireId />
+                    <PassengerForm passenger={p} index={i} onChange={(u) => handleChange(i, u)} requireId errors={{
+                      name: errors[`name_${i}`],
+                      email: errors[`email_${i}`],
+                      phone: errors[`phone_${i}`],
+                    }} />
                   </div>
                 ))}
               </div>
 
               <div className="mt-6 pt-6 border-t border-neutral-200 flex justify-end">
-                <button onClick={handleContinue} className="btn-primary">Continue to Review</button>
+                <button onClick={handleContinue} className="btn-primary">{tp('continueToReview')}</button>
               </div>
             </div>
           </div>
 
           <div>
             <div className="card p-6 sticky top-20">
-              <h3 className="text-listing font-bold text-neutral-900 mb-4">Flight Summary</h3>
+              <h3 className="text-listing font-bold text-neutral-900 mb-4">{tp('flightSummary')}</h3>
               {flight.segments.map((seg, i) => (
                 <div key={i} className="mb-4 pb-4 border-b border-neutral-100 last:border-b-0">
                   <div className="flex items-center gap-2 mb-2">
@@ -114,7 +120,7 @@ export function FlightBookingPage() {
               ))}
               <div className="border-t border-neutral-200 pt-4">
                 <div className="flex justify-between">
-                  <span className="text-listing font-bold text-neutral-900">Total</span>
+                  <span className="text-listing font-bold text-neutral-900">{tp('checkoutTotal')}</span>
                   <span className="text-listing font-bold text-brand-600">TSh {flight.totalPrice.toLocaleString()}</span>
                 </div>
                 <p className="text-meta text-neutral-500 mt-1">{flight.cabinClass} · {flight.baggageInfo}</p>

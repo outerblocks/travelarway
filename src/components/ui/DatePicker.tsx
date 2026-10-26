@@ -1,5 +1,6 @@
-import { useState, useRef, type RefObject } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useI18n } from '@/context/I18nContext';
 
 interface DatePickerProps {
   id: string;
@@ -12,12 +13,11 @@ interface DatePickerProps {
   placeholder?: string;
 }
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH_KEYS = [
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december',
+] as const;
+const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 
 export function DatePicker({
   id,
@@ -29,6 +29,7 @@ export function DatePicker({
   minDate,
   placeholder = 'Select date',
 }: DatePickerProps) {
+  const { tp, lang } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => {
     if (value) {
@@ -37,10 +38,31 @@ export function DatePicker({
     }
     return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   });
-  const containerRef: RefObject<HTMLDivElement> = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Only attach listener while open; clean up when closed or unmounted.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   const displayValue = value
-    ? new Date(value).toLocaleDateString('en-US', {
+    ? new Date(value).toLocaleDateString(lang === 'fr' ? 'fr-FR' : lang === 'sw' ? 'sw-TZ' : 'en-GB', {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
@@ -72,20 +94,8 @@ export function DatePicker({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (typeof document !== 'undefined') {
-    setTimeout(() => {
-      if (!isOpen) return;
-      const handler = (e: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-          setIsOpen(false);
-        }
-      };
-      document.addEventListener('mousedown', handler, { once: true });
-    }, 0);
-  }
-
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative min-w-0">
       <label htmlFor={id} className="input-label">
         {label}
         {required && <span className="text-error-600 ml-0.5">*</span>}
@@ -98,42 +108,50 @@ export function DatePicker({
           className={`input-field pr-10 cursor-pointer ${error ? 'border-error-500' : ''}`}
           placeholder={placeholder}
           value={displayValue}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsOpen((prev) => !prev)}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
         />
         <Calendar
           size={18}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none"
         />
       </div>
+
       {isOpen && (
-        <div className="absolute z-50 mt-1 bg-white border border-neutral-200 rounded-lg shadow-lg p-4 w-80">
+        <div
+          className="absolute left-0 top-full z-[200] mt-1 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-4 shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)]"
+          role="dialog"
+          aria-label={label}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center justify-between mb-4">
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1 hover:bg-neutral-100 rounded-sm"
-              aria-label="Previous month"
+              className="p-1.5 hover:bg-neutral-100 rounded-lg transition-colors"
+              aria-label={tp('previousMonth')}
             >
               <ChevronLeft size={20} className="text-neutral-600" />
             </button>
-            <span className="font-medium text-body text-neutral-900">
-              {MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}
+            <span className="font-semibold text-body text-neutral-900">
+              {tp(MONTH_KEYS[viewMonth.getMonth()])} {viewMonth.getFullYear()}
             </span>
             <button
               type="button"
               onClick={nextMonth}
-              className="p-1 hover:bg-neutral-100 rounded-sm"
-              aria-label="Next month"
+              className="p-1.5 hover:bg-neutral-100 rounded-lg transition-colors"
+              aria-label={tp('nextMonth')}
             >
               <ChevronRight size={20} className="text-neutral-600" />
             </button>
           </div>
           <div className="grid grid-cols-7 gap-1 mb-2">
-            {WEEKDAYS.map((day) => (
+            {WEEKDAY_KEYS.map((day) => (
               <div key={day} className="text-center text-meta font-medium text-neutral-500 py-1">
-                {day}
+                {tp(day)}
               </div>
             ))}
           </div>
@@ -159,10 +177,10 @@ export function DatePicker({
                   disabled={isDisabled}
                   onClick={() => handleDateClick(day)}
                   className={`
-                    w-9 h-9 rounded-sm text-body transition-colors
-                    ${isSelected ? 'bg-brand-600 text-white font-medium' : ''}
-                    ${!isSelected && isToday ? 'border border-brand-600 text-brand-600' : ''}
-                    ${!isSelected && !isToday && !isDisabled ? 'text-neutral-700 hover:bg-brand-50' : ''}
+                    w-9 h-9 rounded-lg text-body transition-colors
+                    ${isSelected ? 'bg-ink text-white font-semibold' : ''}
+                    ${!isSelected && isToday ? 'border border-ink text-ink font-semibold' : ''}
+                    ${!isSelected && !isToday && !isDisabled ? 'text-neutral-700 hover:bg-brand-50 hover:text-brand-700' : ''}
                     ${isDisabled ? 'text-neutral-300 cursor-not-allowed' : ''}
                   `}
                 >
@@ -173,6 +191,7 @@ export function DatePicker({
           </div>
         </div>
       )}
+
       {error && <p id={`${id}-error`} className="field-error">{error}</p>}
     </div>
   );

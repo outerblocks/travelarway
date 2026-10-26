@@ -1,74 +1,81 @@
-import { Link } from 'react-router-dom';
-import { Logo } from '@/components/ui/Logo';
+import { Link } from '@/router';
+import { useI18n } from '@/context/I18nContext';
+import airtelMoney from '@/assets/payments/airtel-money-logo.png';
+import crdbBank from '@/assets/payments/bank-crdb.png';
+import nbcBank from '@/assets/payments/bank-nbc.png';
+import haloPesa from '@/assets/payments/halopesa-logo.png';
+import mastercard from '@/assets/payments/mastercard-logo.png';
+import mixxByYas from '@/assets/payments/mixx-by-yas-logo.png';
+import mpesa from '@/assets/payments/m-pesa-logo.png';
+import nmbBank from '@/assets/payments/nmb-bank.png';
+import unionPay from '@/assets/payments/unionpay-logo.png';
+import visa from '@/assets/payments/visa-logo.png';
+
+const PAYMENT_METHODS = [
+  { name: 'Visa', image: visa },
+  { name: 'Mastercard', image: mastercard },
+  { name: 'UnionPay', image: unionPay },
+  { name: 'Airtel Money', image: airtelMoney },
+  { name: 'M-Pesa', image: mpesa },
+  { name: 'Mixx by Yas', image: mixxByYas },
+  { name: 'HaloPesa', image: haloPesa },
+  { name: 'NMB Bank', image: nmbBank },
+  { name: 'CRDB Bank', image: crdbBank },
+  { name: 'NBC Bank', image: nbcBank },
+];
 
 export function Footer() {
+  const { tp } = useI18n();
   const sections = [
     {
       title: 'Travelar',
       links: [
-        { label: 'About Travelar', to: '/about' },
-        { label: 'Contact Us', to: '/contact' },
-        { label: 'Help Center', to: '/help' },
+        { label: tp('aboutTravelar'), to: '/about' },
+        { label: tp('contactUs'), to: '/contact' },
+        { label: tp('helpCenter'), to: '/help' },
       ],
     },
     {
-      title: 'Explore',
+      title: tp('customerSupport'),
       links: [
-        { label: 'Bus', to: '/bus' },
-        { label: 'Ferry', to: '/ferry' },
-        { label: 'Flights', to: '/flights' },
-        { label: 'Train', to: '/train' },
-        { label: 'Stays', to: '/stays' },
-        { label: 'Experiences', to: '/experiences' },
+        { label: tp('manageBooking'), to: '/manage-booking' },
+        { label: tp('helpCenter'), to: '/help' },
+        { label: tp('cancellationRefundPolicy'), to: '/cancellation-policy' },
       ],
     },
     {
-      title: 'Customer Support',
+      title: tp('partners'),
       links: [
-        { label: 'Manage Booking', to: '/manage-booking' },
-        { label: 'Help Center', to: '/help' },
-        { label: 'Cancellation and Refund Policy', to: '/cancellation-policy' },
+        { label: tp('becomeTransportOperator'), to: '/partners' },
+        { label: tp('apiEnquiries'), to: '/api-enquiries' },
       ],
     },
     {
-      title: 'Partners',
+      title: tp('legal'),
       links: [
-        { label: 'Become a Transport Operator', to: '/partners' },
-        { label: 'API and Integration Enquiries', to: '/api-enquiries' },
-      ],
-    },
-    {
-      title: 'Legal',
-      links: [
-        { label: 'Terms and Conditions', to: '/terms' },
-        { label: 'Privacy Policy', to: '/privacy' },
-        { label: 'Cookie Policy', to: '/cookies' },
+        { label: tp('termsConditions'), to: '/terms' },
+        { label: tp('privacyPolicy'), to: '/privacy' },
+        { label: tp('cookiePolicy'), to: '/cookies' },
       ],
     },
   ];
 
   return (
-    <footer className="bg-brand-600 text-white">
-      <div className="section-container py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8">
-          <div className="lg:col-span-1">
-            <Logo variant="light" size="md" />
-            <p className="text-label text-white/70 mt-3 max-w-xs">
-              Multimodal travel booking for Tanzania and beyond.
-            </p>
-          </div>
-
+    <footer className="bg-ink text-white">
+      <div className="h-0.5 w-full bg-accent" />
+      <div className="section-container py-14">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {sections.map((section) => (
             <div key={section.title}>
-              <h3 className="text-label font-bold uppercase tracking-wider text-white/90 mb-3">
+              <h3 className="mb-4 font-display text-base font-bold text-white">
                 {section.title}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.label}>
                     <Link
                       to={link.to}
-                      className="text-body text-white/70 hover:text-white transition-colors"
+                      className="text-body text-white/65 transition-colors hover:text-accent"
                     >
                       {link.label}
                     </Link>
@@ -79,15 +86,30 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-white/20">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-label text-white/70">
-              © {new Date().getFullYear()} Travelar. Operated by OuterBlocks Limited.
+        <div className="mt-12">
+          <h3 className="mb-4 font-display text-base font-bold text-white">
+            {tp('paymentMethodsAvailable')}
+          </h3>
+          <ul className="flex flex-wrap items-center gap-2.5" aria-label={tp('paymentMethodsAvailable')}>
+            {PAYMENT_METHODS.map(({ name, image }) => (
+              <li key={name} className="flex h-11 w-[4.5rem] items-center justify-center rounded-md bg-white px-2 py-1.5">
+                <img src={image} alt={name} className="max-h-full max-w-full object-contain" loading="lazy" />
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-12 border-t border-white/12 pt-6">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <p className="text-label text-white/60">
+              © {new Date().getFullYear()} Travelar. {tp('operatedBy')}
             </p>
-            <div className="flex items-center gap-4 text-label text-white/70">
-              <span>English</span>
-              <span className="text-white/40">|</span>
-              <span>Swahili</span>
+            <div className="flex items-center gap-4 text-label text-white/60">
+              <span>{tp('languageEnglish')}</span>
+              <span className="text-accent">/</span>
+              <span>{tp('languageSwahili')}</span>
+              <span className="text-accent">/</span>
+              <span>{tp('languageFrench')}</span>
             </div>
           </div>
         </div>

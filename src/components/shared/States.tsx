@@ -1,11 +1,13 @@
 import { AlertCircle, RefreshCw, SearchX } from 'lucide-react';
+import { useI18n } from '@/context/I18nContext';
 
-export function LoadingState({ message = 'Searching for available options...' }: { message?: string }) {
+export function LoadingState({ message }: { message?: string }) {
+  const { tp } = useI18n();
   return (
     <div className="section-container py-16">
       <div className="flex flex-col items-center justify-center text-center">
         <div className="w-12 h-12 border-4 border-brand-100 border-t-brand-600 rounded-full animate-spin mb-4" />
-        <p className="text-body text-neutral-500">{message}</p>
+        <p className="text-body text-neutral-500">{message ?? tp('searchingOptions')}</p>
       </div>
     </div>
   );
@@ -34,6 +36,7 @@ export function ErrorState({
   subMessage?: string;
   onRetry?: () => void;
 }) {
+  const { tp } = useI18n();
   return (
     <div className="section-container py-16">
       <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
@@ -45,7 +48,7 @@ export function ErrorState({
         {onRetry && (
           <button onClick={onRetry} className="btn-secondary">
             <RefreshCw size={16} />
-            Try again
+            {tp('tryAgain')}
           </button>
         )}
       </div>
@@ -55,9 +58,9 @@ export function ErrorState({
 
 export function SearchSummaryBar({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-white border-b border-neutral-200">
-      <div className="section-container py-3">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+    <div className="search-summary-bar border-b border-white/10 bg-ink text-white [&_.btn-ghost]:text-white [&_.btn-ghost:hover]:bg-white/10 [&_.text-neutral-500]:text-white/65 [&_.text-neutral-900]:text-white">
+      <div className="section-container py-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           {children}
         </div>
       </div>

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@/router';
 import { ArrowLeft, Check, Bus as BusIcon } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { BUS_TRIPS } from '@/data/mockData';
+import { useI18n } from '@/context/I18nContext';
+import { getBusTrip } from '@/data/operations';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
 import { LoadingState, ErrorState, SearchSummaryBar } from '@/components/shared/States';
 import { Select } from '@/components/ui/Select';
@@ -18,6 +19,7 @@ export function BusBookingPage() {
     setBoardingPointId,
     setDropOffPointId,
   } = useApp();
+  const { tp } = useI18n();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -34,7 +36,7 @@ export function BusBookingPage() {
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => {
-      const found = BUS_TRIPS.find((t) => t.id === tripId);
+      const found = getBusTrip(tripId);
       if (found) {
         setTrip(found);
         setLoading(false);
@@ -95,16 +97,16 @@ export function BusBookingPage() {
     const e: Record<string, string> = {};
 
     if (selectedSeats.length !== totalPassengers) {
-      e.seats = `Please select ${totalPassengers} seat${totalPassengers > 1 ? 's' : ''}. You have selected ${selectedSeats.length}.`;
+      e.seats = tp('seatSelectionError').replace('{count}', String(totalPassengers)).replace('{plural}', totalPassengers > 1 ? 's' : '').replace('{selected}', String(selectedSeats.length));
     }
 
-    if (!boardingPoint) e.boarding = 'Please select a boarding point';
-    if (!dropOffPoint) e.dropOff = 'Please select a drop-off point';
+    if (!boardingPoint) e.boarding = tp('selectBoardingPoint');
+    if (!dropOffPoint) e.dropOff = tp('selectDropOffPoint');
 
     passengers.forEach((p, i) => {
-      if (!p.fullName) e[`name_${i}`] = 'Required';
-      if (!p.email) e[`email_${i}`] = 'Required';
-      if (!p.phone) e[`phone_${i}`] = 'Required';
+      if (!p.fullName) e[`name_${i}`] = tp('requiredLabel');
+      if (!p.email) e[`email_${i}`] = tp('requiredLabel');
+      if (!p.phone) e[`phone_${i}`] = tp('requiredLabel');
     });
 
     setErrors(e);
@@ -128,17 +130,17 @@ export function BusBookingPage() {
   if (loading) return (
     <>
       <SearchSummaryBar>
-        <Link to="/bus/results" className="btn-ghost text-label"><ArrowLeft size={16} /> Back to results</Link>
-        <span className="text-body font-medium text-neutral-900">Select your seats</span>
+        <Link to="/bus/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
+        <span className="text-body font-medium text-neutral-900">{tp('selectYourSeats')}</span>
       </SearchSummaryBar>
-      <LoadingState message="Loading seat map..." />
+      <LoadingState message={tp('loadingSeatMap')} />
     </>
   );
 
   if (error || !trip) return (
     <ErrorState
-      message="Unable to load this trip"
-      subMessage="The selected trip could not be found. Please go back and try again."
+      message={tp('unableLoadTrip')}
+      subMessage={tp('selectedTripMissing')}
       onRetry={() => navigate('/bus/results')}
     />
   );
@@ -146,7 +148,7 @@ export function BusBookingPage() {
   return (
     <>
       <SearchSummaryBar>
-        <Link to="/bus/results" className="btn-ghost text-label"><ArrowLeft size={16} /> Back to results</Link>
+        <Link to="/bus/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
         <span className="text-body font-medium text-neutral-900">
           {trip.operatorName} · {trip.passengerOrigin} → {trip.passengerDestination}
         </span>
@@ -158,19 +160,20 @@ export function BusBookingPage() {
           {/* Seat Selection - Left */}
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-20">
-              <div className="flex items-baseline gap-2 mb-3">
-                <h2 className="text-listing font-bold text-neutral-900">1 · Seats</h2>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-label font-bold text-white">1</span>
+                <h2 className="text-listing font-bold text-neutral-900 capitalize">{tp('seats')}</h2>
                 <span className="text-meta text-neutral-500">({selectedSeats.length}/{totalPassengers})</span>
               </div>
               <p className="text-meta text-neutral-500 mb-3">
-                Select {totalPassengers} seat{totalPassengers > 1 ? 's' : ''} for your journey
+                {tp('selectSeatsForJourney').replace('{count}', String(totalPassengers)).replace('{plural}', totalPassengers > 1 ? 's' : '')}
               </p>
 
               {/* Seat legend */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-meta text-neutral-600">
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-white border border-neutral-300 rounded-sm" /> Free</div>
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-brand-600 rounded-sm" /> Yours</div>
-                <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-neutral-300 rounded-sm" /> Taken</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-white border border-neutral-300 rounded-sm" /> {tp('seatFree')}</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-brand-600 rounded-sm" /> {tp('seatYours')}</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-error-100 border border-error-200 rounded-sm" /> {tp('seatTaken')}</div>
               </div>
 
               {errors.seats && (
@@ -185,7 +188,7 @@ export function BusBookingPage() {
                     {/* Front windshield indicator */}
                     <div className="flex items-center justify-center mb-3">
                       <div className="w-3/4 h-5 bg-brand-100 rounded-t-xl flex items-center justify-center">
-                        <span className="text-[10px] text-brand-600 font-medium uppercase tracking-wider">Front</span>
+                        <span className="text-[10px] text-brand-600 font-medium uppercase tracking-wider">{tp('front')}</span>
                       </div>
                     </div>
 
@@ -199,7 +202,7 @@ export function BusBookingPage() {
                             }
                             if (seat.type === 'driver') {
                               return (
-                                <div key={colIdx} className="w-10 h-10 rounded-md bg-neutral-200 flex items-center justify-center" title="Driver">
+                                <div key={colIdx} className="w-10 h-10 rounded-md bg-neutral-200 flex items-center justify-center" title={tp('driver')}>
                                   <BusIcon size={16} className="text-neutral-400" />
                                 </div>
                               );
@@ -215,10 +218,10 @@ export function BusBookingPage() {
                                   isSelected
                                     ? 'bg-brand-600 text-white border-2 border-brand-600 scale-110 shadow-md shadow-brand-200 z-10'
                                     : isOccupied
-                                    ? 'bg-neutral-300 text-neutral-400 cursor-not-allowed'
+                                    ? 'bg-error-100 text-error-600 border-2 border-error-200 cursor-not-allowed'
                                     : 'bg-white border-2 border-neutral-300 text-neutral-700 hover:border-brand-500 hover:bg-brand-50'
                                 }`}
-                                aria-label={`Seat ${seat.label} ${isOccupied ? 'occupied' : isSelected ? 'selected' : 'available'}`}
+                                aria-label={`${tp('seatLabel')} ${seat.label} ${isOccupied ? tp('seatOccupied') : isSelected ? tp('seatSelected') : tp('seatAvailable')}`}
                                 aria-pressed={isSelected}
                               >
                                 {isSelected ? <Check size={15} /> : seat.label}
@@ -246,11 +249,11 @@ export function BusBookingPage() {
               {/* Mini summary */}
               <div className="mt-4 pt-4 border-t border-neutral-200 text-meta">
                 <div className="flex items-center justify-between">
-                  <span className="text-neutral-500">Fare per person</span>
+                  <span className="text-neutral-500">{tp('farePerPerson')}</span>
                   <span className="font-medium text-neutral-900">{formatCurrency(trip.segmentFare, trip.currency, 'TSh')}</span>
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-neutral-500">Total</span>
+                  <span className="text-neutral-500">{tp('checkoutTotal')}</span>
                   <span className="font-bold text-brand-600">{formatCurrency(trip.segmentFare * totalPassengers, trip.currency, 'TSh')}</span>
                 </div>
               </div>
@@ -258,78 +261,103 @@ export function BusBookingPage() {
           </div>
 
           {/* Boarding/Drop-off + Passenger Information - Right */}
-          <div className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-6">
             {/* Boarding & Drop-off */}
-            <section>
-              <h2 className="text-listing font-bold text-neutral-900 mb-1">2 · Boarding &amp; drop-off</h2>
-              <p className="text-meta text-neutral-500 mb-4">Choose where you get on and off for this bus journey.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Select
-                  id="boarding_point"
-                  label="Boarding point"
-                  value={boardingPoint}
-                  onChange={(v) => { setBoardingPoint(v); setErrors((p) => ({ ...p, boarding: '' })); }}
-                  options={trip.boardingPoints.map((bp) => ({
-                    value: bp.id,
-                    label: `${bp.name} · ${bp.time}`,
-                  }))}
-                  required
-                  placeholder="Select boarding point"
-                />
-                {errors.boarding && <p className="field-error -mt-2">{errors.boarding}</p>}
+            <section className="card">
+              <header className="flex items-center gap-3 border-b border-neutral-200 px-5 py-4 sm:px-6">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-label font-bold text-white">2</span>
+                <div className="min-w-0">
+                  <h2 className="text-listing font-bold text-neutral-900">{tp('boardingAndDropoff')}</h2>
+                  <p className="mt-0.5 text-meta text-neutral-500">{tp('chooseBoardingDropoff')}</p>
+                </div>
+              </header>
+              <div className="px-5 py-5 sm:px-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Select
+                    id="boarding_point"
+                    label={tp('boardingPoint')}
+                    value={boardingPoint}
+                    onChange={(v) => { setBoardingPoint(v); setErrors((p) => ({ ...p, boarding: '' })); }}
+                    options={trip.boardingPoints.map((bp) => ({
+                      value: bp.id,
+                      label: `${bp.name} · ${bp.time}`,
+                    }))}
+                    required
+                    placeholder={tp('selectBoardingPoint')}
+                  />
+                  {errors.boarding && <p className="field-error -mt-2">{errors.boarding}</p>}
 
-                <Select
-                  id="dropoff_point"
-                  label="Drop-off point"
-                  value={dropOffPoint}
-                  onChange={(v) => { setDropOffPoint(v); setErrors((p) => ({ ...p, dropOff: '' })); }}
-                  options={trip.dropOffPoints.map((dp) => ({
-                    value: dp.id,
-                    label: `${dp.name} · ${dp.time}`,
-                  }))}
-                  required
-                  placeholder="Select drop-off point"
-                />
-                {errors.dropOff && <p className="field-error -mt-2">{errors.dropOff}</p>}
+                  <Select
+                    id="dropoff_point"
+                    label={tp('dropOffPoint')}
+                    value={dropOffPoint}
+                    onChange={(v) => { setDropOffPoint(v); setErrors((p) => ({ ...p, dropOff: '' })); }}
+                    options={trip.dropOffPoints.map((dp) => ({
+                      value: dp.id,
+                      label: `${dp.name} · ${dp.time}`,
+                    }))}
+                    required
+                    placeholder={tp('selectDropOffPoint')}
+                  />
+                  {errors.dropOff && <p className="field-error -mt-2">{errors.dropOff}</p>}
+                </div>
               </div>
+            </section>
 
             {/* Passenger Information */}
-            </section>
-            <section>
-              <h2 className="text-listing font-bold text-neutral-900 mb-1">3 · Passenger information</h2>
-              <p className="text-meta text-neutral-500 mb-5">
-                Enter details for {totalPassengers} passenger{totalPassengers > 1 ? 's' : ''}. Fields marked * are required.
-              </p>
-
-              {selectedSeats.length === 0 ? (
-                <div className="text-center py-12 text-neutral-400">
-                  <p className="text-body">Select seats on the left to enter passenger details.</p>
+            <section className="card">
+              <header className="flex items-center gap-3 border-b border-neutral-200 px-5 py-4 sm:px-6">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-label font-bold text-white">3</span>
+                <div className="min-w-0">
+                  <h2 className="text-listing font-bold text-neutral-900">{tp('passengerInformation')}</h2>
+                  <p className="mt-0.5 text-meta text-neutral-500">
+                    {tp('enterPassengerDetails').replace('{count}', String(totalPassengers)).replace('{plural}', totalPassengers === 1 ? '' : 's')} {tp('fieldsMarkedRequired')}
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  {passengers.map((p, i) => (
-                    <div key={p.id} data-error={errors[`name_${i}`] ? 'true' : undefined}>
-                      <PassengerForm
-                        passenger={p}
-                        index={i}
-                        onChange={(updated) => handlePassengerChange(i, updated)}
-                        showSeatLabel
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+              </header>
 
-              <div className="mt-6 pt-5 border-t border-neutral-200 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
-                <span className="text-meta text-neutral-600">Prices in {trip.currency}</span>
-                <button
-                  onClick={handleContinue}
-                  disabled={selectedSeats.length !== totalPassengers}
-                  className="btn-primary px-7"
-                >
-                  Review booking
-                </button>
+              <div className="px-5 py-5 sm:px-6">
+                {selectedSeats.length === 0 ? (
+                  <div className="text-center py-12 text-neutral-400">
+                    <p className="text-body">{tp('selectSeatsForDetails')}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {passengers.map((p, i) => (
+                      <div key={p.id} data-error={errors[`name_${i}`] ? 'true' : undefined}>
+                        <PassengerForm
+                          passenger={p}
+                          index={i}
+                          onChange={(updated) => handlePassengerChange(i, updated)}
+                          showSeatLabel
+                          errors={{
+                            name: errors[`name_${i}`],
+                            email: errors[`email_${i}`],
+                            phone: errors[`phone_${i}`],
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              <footer className="flex flex-col gap-4 rounded-b-xl border-t border-neutral-200 bg-neutral-50/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <span className="text-meta text-neutral-600">{tp('pricesIn').replace('{currency}', trip.currency)}</span>
+                <div className="flex w-full items-center justify-between gap-5 sm:w-auto sm:justify-end">
+                  <div className="text-left sm:text-right">
+                    <p className="text-meta text-neutral-500">{tp('checkoutTotal')}</p>
+                    <p className="text-listing font-bold text-brand-600">{formatCurrency(trip.segmentFare * totalPassengers, trip.currency, 'TSh')}</p>
+                  </div>
+                  <button
+                    onClick={handleContinue}
+                    disabled={selectedSeats.length !== totalPassengers}
+                    className="btn-primary px-7"
+                  >
+                    {tp('reviewYourBooking')}
+                  </button>
+                </div>
+              </footer>
             </section>
           </div>
         </div>

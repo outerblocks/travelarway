@@ -1,9 +1,18 @@
 import { useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  RouterProvider,
+} from '@tanstack/react-router';
 import { AppProvider, useApp } from '@/context/AppContext';
+import { I18nProvider } from '@/context/I18nContext';
 import { CheckoutPage } from '@/pages/shared/CheckoutPage';
+import { ConfirmationPage } from '@/pages/shared/ConfirmationPage';
 import type { PassengerInfo } from '@/types';
 
 const pax = (id: string, category: PassengerInfo['category']): PassengerInfo => ({
@@ -17,34 +26,64 @@ const pax = (id: string, category: PassengerInfo['category']): PassengerInfo => 
   countryOfResidence: 'TZ',
 });
 
-function Seed({ passengers }: { passengers: PassengerInfo[] }) {
-  const { setSelectedServiceId, setPassengers } = useApp();
+function Seed({ passengers, tripId }: { passengers: PassengerInfo[]; tripId?: string }) {
+  const { setSelectedServiceId, setPassengers, setSearchParams } = useApp();
   useEffect(() => {
     setSelectedServiceId('svc-1');
+    if (tripId) {
+      setSearchParams({
+        mode: 'bus',
+        adults: 1,
+        children: 1,
+        infants: 0,
+        extras: { tripId },
+      });
+    }
     setPassengers(passengers);
-  }, [setSelectedServiceId, setPassengers, passengers]);
+  }, [setSelectedServiceId, setPassengers, setSearchParams, passengers, tripId]);
   return null;
 }
 
 function RefProbe() {
   const { bookingState } = useApp();
-  return <div data-testid="ref">{bookingState.bookingReference ?? 'none'}</div>;
+  return (
+    <>
+      <div data-testid="ref">{bookingState.bookingReference ?? 'none'}</div>
+      <div data-testid="paid-amount">{bookingState.paidAmount ?? 'none'}</div>
+      <div data-testid="demo-ref">{bookingState.demoTicket?.reference ?? 'none'}</div>
+      <div data-testid="demo-amount">{bookingState.demoTicket?.amount ?? 'none'}</div>
+    </>
+  );
 }
 
 const adultChild = [pax('1', 'adult'), pax('2', 'child')];
 
-function renderCheckout(passengers: PassengerInfo[] | null = adultChild) {
+async function renderCheckout(passengers: PassengerInfo[] | null = adultChild, tripId?: string) {
+  const rootRoute = createRootRoute({ component: Outlet });
+  const checkoutRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: 'checkout',
+    component: CheckoutPage,
+  });
+  const confirmationRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: 'confirmation',
+    component: ConfirmationPage,
+  });
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([checkoutRoute, confirmationRoute]),
+    history: createMemoryHistory({ initialEntries: ['/checkout'] }),
+  });
+  await router.load();
+
   return render(
-    <MemoryRouter initialEntries={['/checkout']}>
+    <I18nProvider>
       <AppProvider>
-        {passengers && <Seed passengers={passengers} />}
+        {passengers && <Seed passengers={passengers} tripId={tripId} />}
         <RefProbe />
-        <Routes>
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/confirmation" element={<div>CONFIRMATION PAGE</div>} />
-        </Routes>
+        <RouterProvider router={router} />
       </AppProvider>
-    </MemoryRouter>,
+    </I18nProvider>,
   );
 }
 
@@ -54,37 +93,39 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// Characterization of CURRENT behaviour, including the known F1 quirk:
-// checkout prices passengers at a flat 12,000 (adult) / 6,000 (child) and
-// ignores the fare shown on the review page.
-describe('CheckoutPage (current behaviour)', () => {
-  it('shows an empty state when there is no booking', () => {
-    renderCheckout(null);
+describe('CheckoutPage', () => {
+  it('shows an empty state when there is no booking', async () => {
+    await renderCheckout(null);
     expect(screen.getByText('No booking to check out.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to home' })).toBeInTheDocument();
   });
 
-  it('prices a flat 12,000 per adult and 6,000 per child (F1 quirk)', () => {
-    renderCheckout();
+  it('does not invent a price or allow payment when no quote is available', async () => {
+    await renderCheckout();
+    expect(screen.getByRole('button', { name: 'Simulate payment request' })).toBeDisabled();
+    expect(screen.queryByText(/TSh/)).not.toBeInTheDocument();
+  });
+
+  it('uses the resolved trip quote for the simulated payment action', async () => {
+    // bus_003 fares at 25,000 with children at half price: 25,000 + 12,500.
+    await renderCheckout(adultChild, 'bus_003');
     const fmt = (n: number) => `TSh ${n.toLocaleString()}`;
-    expect(screen.getByText('Passengers').nextSibling).toHaveTextContent('2');
-    expect(screen.getByText('Subtotal').nextSibling).toHaveTextContent(fmt(18000));
-    expect(screen.getByRole('button', { name: new RegExp(`Pay ${fmt(18000)}`) })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: new RegExp(`Simulate payment request · ${fmt(37500)}`) })).toBeDisabled();
   });
 
   it('applies TRAVELAR10 as a 10% discount after 800ms', async () => {
-    renderCheckout();
+    await renderCheckout(adultChild, 'bus_003');
     fireEvent.change(screen.getByPlaceholderText('Enter coupon code'), { target: { value: 'travelar10' } });
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(800);
     });
     expect(screen.getByText(/Coupon applied: 10% discount/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: new RegExp(`Pay TSh ${(16200).toLocaleString()}`) })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Simulate payment request · TSh 33,750/ })).toBeDisabled();
   });
 
   it('rejects any other coupon code', async () => {
-    renderCheckout();
+    await renderCheckout(adultChild, 'bus_003');
     fireEvent.change(screen.getByPlaceholderText('Enter coupon code'), { target: { value: 'NOPE' } });
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
     await act(async () => {
@@ -93,47 +134,51 @@ describe('CheckoutPage (current behaviour)', () => {
     expect(screen.getByText('Invalid coupon code')).toBeInTheDocument();
   });
 
-  it('payment success: processing -> pending -> success -> confirmation with a TRV reference', async () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.9);
-    renderCheckout();
-    fireEvent.click(screen.getByRole('button', { name: /^Pay/ }));
-    expect(screen.getByText('Processing payment...')).toBeInTheDocument();
-
+  it('simulates payment then routes to the demo ticket without claiming payment', async () => {
+    await renderCheckout(adultChild, 'bus_003');
+    fireEvent.change(screen.getByLabelText('Phone Number'), { target: { value: '712345678' } });
+    fireEvent.click(screen.getByRole('button', { name: /Simulate payment request/ }));
+    expect(screen.getByRole('status')).toHaveTextContent('Simulating payment flow (demo only)');
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(1500);
+      await vi.advanceTimersByTimeAsync(2300);
     });
-    expect(screen.getByText('Awaiting confirmation...')).toBeInTheDocument();
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(2000);
-    });
-    expect(screen.getByText('Payment confirmed')).toBeInTheDocument();
-    expect(screen.getByTestId('ref').textContent).toMatch(/^TRV-\d{6}$/);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1500);
-    });
-    expect(screen.getByText('CONFIRMATION PAGE')).toBeInTheDocument();
-  });
-
-  it('payment failure: shows the decline message and allows retry', async () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.1);
-    renderCheckout();
-    fireEvent.click(screen.getByRole('button', { name: /^Pay/ }));
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(3500);
-    });
-    expect(screen.getByText('Payment failed')).toBeInTheDocument();
-    expect(screen.getByText('Payment was declined. Please try a different payment method.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Demo payment flow complete. No request was sent and no money was charged.');
+    expect(screen.getByRole('status')).toHaveTextContent('Preparing your demo ticket for printing…');
     expect(screen.getByTestId('ref').textContent).toBe('none');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(screen.queryByText('Payment failed')).not.toBeInTheDocument();
+    expect(screen.getByTestId('paid-amount').textContent).toBe('none');
+    expect(screen.getByTestId('demo-ref').textContent).toMatch(/^DEMO-/);
+    expect(screen.getByTestId('demo-amount').textContent).toBe('37500');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(900);
+    });
+    expect(screen.getByText('Demo ticket simulation')).toBeInTheDocument();
+    expect(screen.getByLabelText('Receipt printer')).toHaveAttribute('data-stage', 'processing');
+    expect(screen.getByText('DEMO AMOUNT · NOT PAID')).toBeInTheDocument();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2700);
+    });
+    expect(screen.getByLabelText('Receipt printer')).toHaveAttribute('data-stage', 'complete');
+    expect(screen.getByText('Demo ticket printed')).toBeInTheDocument();
   });
 
-  it('only offers payment methods enabled for the market and defaults to mobile money', () => {
-    renderCheckout();
+  it('does not collect card details and explains the hosted checkout is unavailable', async () => {
+    await renderCheckout();
+    fireEvent.click(screen.getByRole('button', { name: 'Card Payment' }));
+    expect(screen.getByText(/ClickPesa card payments use a hosted checkout/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Card Number')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('CVV')).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Visa' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Mastercard' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'UnionPay' })).toBeInTheDocument();
+  });
+
+  it('only offers payment methods enabled for the market and defaults to mobile money', async () => {
+    await renderCheckout();
     expect(screen.getByLabelText('Mobile Money Provider')).toHaveValue('M-Pesa');
     expect(screen.getByRole('button', { name: /Card Payment/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'M-Pesa' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Tigo Pesa' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Airtel Money' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'HaloPesa' })).toBeInTheDocument();
   });
 });

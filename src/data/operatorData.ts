@@ -139,7 +139,7 @@ const BUS_ROUTES = ['Dar es Salaam → Morogoro', 'Dar es Salaam → Dodoma', 'D
 const FERRY_ROUTES = ['Dar es Salaam → Zanzibar', 'Zanzibar → Dar es Salaam', 'Zanzibar → Pemba'];
 const DATES = ['2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30'];
 
-function makeRevenueHistory(count: number, base: number, variance: number, currency: string): RevenueDay[] {
+function makeRevenueHistory(count: number, base: number, variance: number): RevenueDay[] {
   const history: RevenueDay[] = [];
   for (let i = 0; i < count; i++) {
     const d = new Date('2026-10-23');
@@ -219,7 +219,7 @@ export const BUS_OPERATORS: BusOperatorData[] = [
       makeBusSchedule('op_001', 'sch_003', 'Dar es Salaam', 'Morogoro', '06:00', '08:30', '2h 30m', '2026-10-26', 8, 44, 12000, 'scheduled'),
       makeBusSchedule('op_001', 'sch_004', 'Dar es Salaam', 'Dodoma', '06:00', '11:00', '5h 00m', '2026-10-26', 12, 44, 25000, 'scheduled'),
     ],
-    revenueHistory: makeRevenueHistory(14, 95000, 35000, 'TZS'),
+    revenueHistory: makeRevenueHistory(14, 95000, 35000),
   },
   {
     operatorId: 'op_002', operatorName: 'Shabibert Lines', operatorLogo: 'SL',
@@ -239,7 +239,7 @@ export const BUS_OPERATORS: BusOperatorData[] = [
       makeBusSchedule('op_002', 'sch_005', 'Dar es Salaam', 'Morogoro', '07:30', '10:00', '2h 30m', '2026-10-25', 9, 44, 10000, 'scheduled'),
       makeBusSchedule('op_002', 'sch_006', 'Morogoro', 'Iringa', '10:30', '13:30', '3h 00m', '2026-10-25', 6, 44, 14000, 'scheduled'),
     ],
-    revenueHistory: makeRevenueHistory(14, 60000, 20000, 'TZS'),
+    revenueHistory: makeRevenueHistory(14, 60000, 20000),
   },
   {
     operatorId: 'op_003', operatorName: 'Sumry Transportation', operatorLogo: 'ST',
@@ -256,7 +256,7 @@ export const BUS_OPERATORS: BusOperatorData[] = [
     schedules: [
       makeBusSchedule('op_003', 'sch_007', 'Dar es Salaam', 'Arusha', '06:30', '13:00', '6h 30m', '2026-10-25', 4, 44, 18000, 'scheduled'),
     ],
-    revenueHistory: makeRevenueHistory(14, 38000, 15000, 'TZS'),
+    revenueHistory: makeRevenueHistory(14, 38000, 15000),
   },
   {
     operatorId: 'op_004', operatorName: 'Tahmeed Express', operatorLogo: 'TE',
@@ -273,7 +273,7 @@ export const BUS_OPERATORS: BusOperatorData[] = [
     schedules: [
       makeBusSchedule('op_004', 'sch_008', 'Dar es Salaam', 'Dodoma', '05:00', '10:00', '5h 00m', '2026-10-25', 22, 44, 22000, 'scheduled'),
     ],
-    revenueHistory: makeRevenueHistory(14, 37000, 12000, 'TZS'),
+    revenueHistory: makeRevenueHistory(14, 37000, 12000),
   },
 ];
 
@@ -306,7 +306,7 @@ export const FERRY_OPERATORS: FerryOperatorData[] = [
       makeFerrySchedule('fsch_002', 'Zanzibar Port', 'Pemba Port (Mkoani)', '07:00', '12:00', '5h 00m', '2026-10-25', 110, 230, 45, 'scheduled'),
       makeFerrySchedule('fsch_003', 'Dar es Salaam Port', 'Zanzibar Port', '09:00', '11:30', '2h 30m', '2026-10-26', 80, 340, 35, 'scheduled'),
     ],
-    revenueHistory: makeRevenueHistory(14, 300, 120, 'USD'),
+    revenueHistory: makeRevenueHistory(14, 300, 120),
   },
   {
     operatorId: 'fop_002', operatorName: 'Zanzibar Ferries', operatorLogo: 'ZF',
@@ -326,6 +326,6 @@ export const FERRY_OPERATORS: FerryOperatorData[] = [
     schedules: [
       makeFerrySchedule('fsch_004', 'Dar es Salaam Port', 'Zanzibar Port', '12:00', '14:30', '2h 30m', '2026-10-25', 62, 350, 30, 'scheduled'),
     ],
-    revenueHistory: makeRevenueHistory(14, 130, 50, 'USD'),
+    revenueHistory: makeRevenueHistory(14, 130, 50),
   },
 ];

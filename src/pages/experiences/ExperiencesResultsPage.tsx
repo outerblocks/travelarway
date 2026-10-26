@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@/router';
 import { ArrowLeft, Clock, Star, MapPin } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/context/I18nContext';
 import { EXPERIENCES } from '@/data/mockData';
+import { locationMatches } from '@/domain/search';
 import { GenericResultsSkeleton } from '@/components/shared/Skeletons';
 import { LoadingState, EmptyResults, ErrorState, SearchSummaryBar } from '@/components/shared/States';
 import { formatCurrency } from '@/utils/format';
@@ -17,6 +19,7 @@ const EXP_IMAGES: Record<string, string> = {
 export function ExperiencesResultsPage() {
   const navigate = useNavigate();
   const { bookingState, setSearchParams } = useApp();
+  const { tp } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [results, setResults] = useState<typeof EXPERIENCES>([]);
@@ -29,7 +32,7 @@ export function ExperiencesResultsPage() {
       try {
         let r = [...EXPERIENCES];
         if (params.origin) {
-          r = r.filter((e) => e.city.toLowerCase().includes(params.origin!.toLowerCase()) || e.name.toLowerCase().includes(params.origin!.toLowerCase()));
+          r = r.filter((e) => locationMatches(params.origin, [e.city, e.name]));
         }
         if (r.length === 0 && !params.origin) r = EXPERIENCES;
         setResults(r);
@@ -49,21 +52,21 @@ export function ExperiencesResultsPage() {
 
   if (loading) return (
     <>
-      <SearchSummaryBar><Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> Modify search</Link></SearchSummaryBar>
+      <SearchSummaryBar><Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link></SearchSummaryBar>
       <GenericResultsSkeleton count={4} />
-      <LoadingState message="Searching experiences..." />
+      <LoadingState message={tp('searchingExperiences')} />
     </>
   );
 
-  if (error) return <ErrorState message="Unable to load experiences" onRetry={() => window.location.reload()} />;
+  if (error) return <ErrorState message={tp('unableLoadExperiences')} onRetry={() => window.location.reload()} />;
 
   return (
     <>
-      <SearchSummaryBar><Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> Modify search</Link><span className="text-body font-medium text-neutral-900">Experiences</span></SearchSummaryBar>
+      <SearchSummaryBar><Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link><span className="text-body font-medium text-neutral-900">{tp('experiences')}</span></SearchSummaryBar>
       <div className="section-container py-6">
-        <h1 className="text-page font-bold text-neutral-900 mb-6">{results.length} experiences found</h1>
+        <h1 className="text-page font-bold text-neutral-900 mb-6">{tp('experienceCount').replace('{count}', String(results.length))}</h1>
         {results.length === 0 ? (
-          <EmptyResults message="No experiences found" subMessage="Try a different destination or activity." />
+          <EmptyResults message={tp('noExperiencesFound')} subMessage={tp('tryDifferentDestinationDate')} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((exp) => (
@@ -79,8 +82,8 @@ export function ExperiencesResultsPage() {
                   <p className="text-meta text-neutral-500 flex items-center gap-1 mb-2"><MapPin size={12} /> {exp.location}, {exp.city}</p>
                   <p className="text-meta text-neutral-500 flex items-center gap-1 mb-3"><Clock size={12} /> {exp.duration}</p>
                   <div className="flex items-center justify-between pt-3 border-t border-neutral-100">
-                    <p className="text-body font-bold text-brand-600">{formatCurrency(exp.price, exp.currency, 'TSh')}<span className="text-meta text-neutral-500 font-normal"> /person</span></p>
-                    <span className="text-meta text-neutral-500">{exp.availableDates.length} dates</span>
+                    <p className="text-body font-bold text-brand-600">{formatCurrency(exp.price, exp.currency, 'TSh')}<span className="text-meta text-neutral-500 font-normal"> {tp('personSuffix')}</span></p>
+                    <span className="text-meta text-neutral-500">{tp('dateCount').replace('{count}', String(exp.availableDates.length))}</span>
                   </div>
                 </div>
               </div>

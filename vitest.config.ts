@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
-import viteConfig from './vite.config';
+import viteConfig from './vite.config.ts';
 
 // Pin the timezone so date-formatting characterization tests are deterministic.
 // Africa/Dar_es_Salaam (UTC+3, no DST) is Travelar's primary market.

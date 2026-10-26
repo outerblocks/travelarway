@@ -33,6 +33,8 @@ describe('AppContext', () => {
       dropOffPointId: null,
       selectedClassId: null,
       bookingReference: null,
+      paidAmount: null,
+      demoTicket: null,
     });
   });
 
@@ -54,6 +56,7 @@ describe('AppContext', () => {
       result.current.setDropOffPointId('d1');
       result.current.setSelectedClassId('c1');
       result.current.setBookingReference('TRV-123456');
+      result.current.setPaidAmount(18000);
     });
     const s = result.current.bookingState;
     expect(s.selectedServiceId).toBe('trip-1');
@@ -63,7 +66,22 @@ describe('AppContext', () => {
     expect(s.dropOffPointId).toBe('d1');
     expect(s.selectedClassId).toBe('c1');
     expect(s.bookingReference).toBe('TRV-123456');
+    expect(s.paidAmount).toBe(18000);
+    expect(s.demoTicket).toBeNull();
     expect(s.mode).toBe('bus');
+  });
+
+  it('keeps simulated ticket data separate from confirmed payment data', () => {
+    const { result } = renderHook(() => useApp(), { wrapper });
+    act(() => {
+      result.current.setBookingReference('TRV-REAL');
+      result.current.setPaidAmount(18000);
+      result.current.setDemoTicket({ reference: 'DEMO-123', amount: 18000 });
+    });
+
+    expect(result.current.bookingState.bookingReference).toBeNull();
+    expect(result.current.bookingState.paidAmount).toBeNull();
+    expect(result.current.bookingState.demoTicket).toEqual({ reference: 'DEMO-123', amount: 18000 });
   });
 
   it('resetBooking restores defaults for the requested mode', () => {
@@ -73,6 +91,8 @@ describe('AppContext', () => {
     expect(result.current.bookingState.mode).toBe('ferry');
     expect(result.current.bookingState.searchParams.mode).toBe('ferry');
     expect(result.current.bookingState.selectedServiceId).toBeNull();
+    expect(result.current.bookingState.paidAmount).toBeNull();
+    expect(result.current.bookingState.demoTicket).toBeNull();
   });
 
   it('useApp throws outside AppProvider', () => {

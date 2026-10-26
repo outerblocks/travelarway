@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 
 const PROVIDERS = [
   { id: 'google' as const, label: 'Google', icon: GoogleIcon },
@@ -8,6 +9,7 @@ const PROVIDERS = [
 
 export function SocialLoginButtons({ disabled }: { disabled?: boolean }) {
   const { signInWithProvider } = useAuth();
+  const { tp } = useI18n();
   const [busyProvider, setBusyProvider] = useState<string | null>(null);
 
   const handleProvider = async (provider: 'google' | 'apple') => {
@@ -20,7 +22,7 @@ export function SocialLoginButtons({ disabled }: { disabled?: boolean }) {
     <div className="space-y-3">
       <div className="flex items-center gap-3 my-2">
         <div className="flex-1 h-px bg-neutral-200" />
-        <span className="text-meta text-neutral-400 font-medium">or continue with</span>
+        <span className="text-meta text-neutral-400 font-medium">{tp('orContinueWith')}</span>
         <div className="flex-1 h-px bg-neutral-200" />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -30,8 +32,8 @@ export function SocialLoginButtons({ disabled }: { disabled?: boolean }) {
             type="button"
             disabled={disabled || busyProvider !== null}
             onClick={() => handleProvider(id)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-neutral-300 rounded-sm bg-white text-body font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:border-neutral-400 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-1"
-            aria-label={`Continue with ${label}`}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-neutral-300 rounded-sm bg-white text-body font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:border-neutral-400 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
+            aria-label={tp('continueWithProvider').replace('{provider}', label)}
           >
             <Icon />
             <span>{label}</span>
@@ -40,7 +42,7 @@ export function SocialLoginButtons({ disabled }: { disabled?: boolean }) {
       </div>
       {busyProvider && (
         <p className="text-meta text-neutral-500 text-center">
-          Connecting to {busyProvider}...
+          {tp('connectingToProvider').replace('{provider}', busyProvider)}
         </p>
       )}
     </div>

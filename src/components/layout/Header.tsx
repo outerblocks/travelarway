@@ -1,79 +1,86 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, HelpCircle, User, Ticket, LogOut, LayoutDashboard, Languages, Bus, Ship } from 'lucide-react';
+import { Link } from '@/router';
+import { Menu, X, LogOut, ChevronDown } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
+
+const LANGUAGE_OPTIONS = [
+  { value: 'en', label: 'EN', fullLabel: 'English' },
+  { value: 'sw', label: 'SW', fullLabel: 'Kiswahili' },
+  { value: 'fr', label: 'FR', fullLabel: 'Français' },
+] as const;
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const { lang, setLang } = useI18n();
+  const { bookingState, resetBooking } = useApp();
+  const { lang, setLang, tp } = useI18n();
 
   const handleSignOut = async () => {
     await signOut();
+    // Drop the in-memory booking, so passenger names, emails and phone numbers
+    // do not survive a sign-out on a shared device.
+    resetBooking(bookingState.mode);
     setMobileOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-neutral-200">
+    <header className="sticky top-0 z-40 border-b border-ink/8 bg-white/90 backdrop-blur-md">
+      <div className="h-0.5 w-full bg-accent" />
       <div className="section-container">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex h-[4.25rem] items-center justify-between">
           <Link to="/" className="flex-shrink-0" aria-label="Travelar home">
             <Logo size="md" />
           </Link>
 
-          <div className="hidden lg:flex items-center gap-1">
-            <button
-              onClick={() => setLang(lang === 'en' ? 'sw' : 'en')}
-              className="btn-ghost text-label"
-              aria-label="Toggle language"
-            >
-              <Languages size={16} />
-              {lang === 'en' ? 'SW' : 'EN'}
-            </button>
+          <div className="hidden items-center gap-1 lg:flex">
+            {/* Language switcher — clean pill style, no icon */}
+            <div className="relative">
+              <select
+                value={lang}
+                onChange={(event) => setLang(event.target.value as typeof lang)}
+                aria-label={tp('languageLabel')}
+                className="h-9 cursor-pointer appearance-none rounded-full border border-neutral-200 bg-neutral-50 pl-3 pr-7 text-label font-semibold text-ink hover:bg-neutral-100 transition-colors outline-none"
+              >
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.fullLabel}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
+            </div>
+
             <Link to="/help" className="btn-ghost text-label">
-              <HelpCircle size={16} />
-              Help
+              {tp('help')}
             </Link>
             <Link to="/manage-booking" className="btn-ghost text-label">
-              <Ticket size={16} />
-              Manage Booking
+              {tp('manageBooking')}
             </Link>
             {user ? (
-              <div className="flex items-center gap-1">
+              <div className="ml-2 flex items-center gap-1">
                 <Link to="/dashboard" className="btn-ghost text-label">
-                  <LayoutDashboard size={16} />
-                  Dashboard
-                </Link>
-                <Link to="/operator/bus" className="btn-ghost text-label">
-                  <Bus size={16} />
-                  Bus Console
-                </Link>
-                <Link to="/operator/ferry" className="btn-ghost text-label">
-                  <Ship size={16} />
-                  Ferry Console
+                  {tp('dashboard')}
                 </Link>
                 <button
                   onClick={handleSignOut}
                   className="btn-secondary text-label px-4 py-2"
                 >
                   <LogOut size={16} />
-                  Sign Out
+                  {tp('signOut')}
                 </button>
               </div>
             ) : (
-              <Link to="/signin" className="btn-secondary text-label px-4 py-2">
-                <User size={16} />
-                Sign In
+              <Link to="/signin" className="btn-primary ml-2 text-label px-5 py-2">
+              {tp('signIn')}
               </Link>
             )}
           </div>
 
           <button
-            className="lg:hidden p-2 text-neutral-600"
+            className="p-2 text-ink lg:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
+            aria-label={tp('toggleMenu')}
             aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -82,47 +89,43 @@ export function Header() {
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden border-t border-neutral-200 bg-white animate-fade-in">
+        <div className="border-t border-ink/8 bg-white lg:hidden">
           <div className="section-container py-4">
             <div className="flex flex-col gap-2">
-              <button
-                onClick={() => setLang(lang === 'en' ? 'sw' : 'en')}
-                className="btn-ghost justify-start"
-              >
-                <Languages size={18} />
-                {lang === 'en' ? 'Kiswahili' : 'English'}
-              </button>
+              {/* Mobile language switcher — clean full-width pill */}
+              <div className="relative">
+                <select
+                  value={lang}
+                  onChange={(event) => setLang(event.target.value as typeof lang)}
+                  aria-label={tp('languageLabel')}
+                  className="w-full h-11 cursor-pointer appearance-none rounded-lg border border-neutral-200 bg-white pl-4 pr-8 text-body font-medium text-ink outline-none"
+                >
+                  {LANGUAGE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.fullLabel}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
+              </div>
+
               <Link to="/help" className="btn-ghost justify-start" onClick={() => setMobileOpen(false)}>
-                <HelpCircle size={18} />
-                Help
+                {tp('help')}
               </Link>
               <Link to="/manage-booking" className="btn-ghost justify-start" onClick={() => setMobileOpen(false)}>
-                <Ticket size={18} />
-                Manage Booking
+                {tp('manageBooking')}
               </Link>
               {user ? (
                 <>
                   <Link to="/dashboard" className="btn-ghost justify-start" onClick={() => setMobileOpen(false)}>
-                    <LayoutDashboard size={18} />
-                    Dashboard
-                  </Link>
-                  <Link to="/operator/bus" className="btn-ghost justify-start" onClick={() => setMobileOpen(false)}>
-                    <Bus size={18} />
-                    Bus Management
-                  </Link>
-                  <Link to="/operator/ferry" className="btn-ghost justify-start" onClick={() => setMobileOpen(false)}>
-                    <Ship size={18} />
-                    Ferry Management
+                    {tp('dashboard')}
                   </Link>
                   <button onClick={handleSignOut} className="btn-secondary justify-start">
                     <LogOut size={18} />
-                    Sign Out
+                    {tp('signOut')}
                   </button>
                 </>
               ) : (
-                <Link to="/signin" className="btn-secondary" onClick={() => setMobileOpen(false)}>
-                  <User size={18} />
-                  Sign In
+                <Link to="/signin" className="btn-primary" onClick={() => setMobileOpen(false)}>
+                  {tp('signIn')}
                 </Link>
               )}
             </div>

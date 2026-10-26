@@ -22,7 +22,9 @@ export type PaymentStatus =
   | 'pending'
   | 'success'
   | 'failed'
-  | 'timeout';
+  | 'timeout'
+  | 'unavailable'
+  | 'demo_complete';
 
 export interface Country {
   code: string;
@@ -274,5 +276,13 @@ export interface SearchParams {
   adults: number;
   children: number;
   infants: number;
+  /** Ordered legs of a multi-city flight search. Leg 1 mirrors origin/destination/date. */
+  legs?: FlightLeg[];
   extras?: Record<string, string>;
+}
+
+export interface FlightLeg {
+  origin: string;
+  destination: string;
+  date: string;
 }

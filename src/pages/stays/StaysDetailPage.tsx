@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, Check, BedDouble, Wifi } from 'lucide-react';
+import { useNavigate, Link } from '@/router';
+import { ArrowLeft, Star, MapPin, Check, BedDouble } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/context/I18nContext';
 import { STAY_PROPERTIES } from '@/data/mockData';
 import { LoadingState, ErrorState, SearchSummaryBar } from '@/components/shared/States';
 import { formatCurrency, formatDate, nightsBetween } from '@/utils/format';
@@ -15,6 +16,7 @@ const STAY_IMAGES: Record<string, string> = {
 export function StaysDetailPage() {
   const navigate = useNavigate();
   const { bookingState, setSearchParams } = useApp();
+  const { tp } = useI18n();
   const [loading, setLoading] = useState(true);
   const [property, setProperty] = useState<typeof STAY_PROPERTIES[0] | null>(null);
   const [selectedRoom, setSelectedRoom] = useState('');
@@ -39,13 +41,13 @@ export function StaysDetailPage() {
     navigate('/stays/review');
   };
 
-  if (loading) return <><SearchSummaryBar><Link to="/stays/results" className="btn-ghost text-label"><ArrowLeft size={16} /> Back</Link></SearchSummaryBar><LoadingState /></>;
-  if (!property) return <ErrorState message="Property not found" onRetry={() => navigate('/stays/results')} />;
+  if (loading) return <><SearchSummaryBar><Link to="/stays/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link></SearchSummaryBar><LoadingState message={tp('loadingStayDetails')} /></>;
+  if (!property) return <ErrorState message={tp('propertyNotFound')} onRetry={() => navigate('/stays/results')} />;
 
   return (
     <>
       <SearchSummaryBar>
-        <Link to="/stays/results" className="btn-ghost text-label"><ArrowLeft size={16} /> Back to results</Link>
+        <Link to="/stays/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
         <span className="text-body font-medium text-neutral-900">{property.name}</span>
       </SearchSummaryBar>
 
@@ -72,7 +74,7 @@ export function StaysDetailPage() {
               ))}
             </div>
 
-            <h2 className="text-section font-bold text-neutral-900 mb-4">Available Rooms</h2>
+            <h2 className="text-section font-bold text-neutral-900 mb-4">{tp('availableRooms')}</h2>
             <div className="space-y-3">
               {property.rooms.map((room) => {
                 const isSelected = selectedRoom === room.id;
@@ -84,8 +86,8 @@ export function StaysDetailPage() {
                         <h3 className="text-listing font-bold text-neutral-900">{room.name}</h3>
                         <p className="text-body text-neutral-500 mt-1">{room.description}</p>
                         <div className="flex items-center gap-3 mt-2 text-meta text-neutral-500">
-                          <span><BedDouble size={12} className="inline mr-1" /> Max {room.maxOccupancy}</span>
-                          <span>{room.available} available</span>
+                          <span><BedDouble size={12} className="inline mr-1" /> {tp('maxOccupancy').replace('{count}', String(room.maxOccupancy))}</span>
+                          <span>{tp('roomAvailable').replace('{count}', String(room.available))}</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {room.includedServices.map((s) => (
@@ -96,10 +98,12 @@ export function StaysDetailPage() {
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="text-body font-bold text-brand-600">{formatCurrency(room.pricePerNight, room.currency, 'TSh')}</p>
-                        <p className="text-meta text-neutral-500">per night</p>
+                        <p className="text-meta text-neutral-500">{tp('perNight')}</p>
                         <p className="text-body font-medium text-neutral-900 mt-2">{formatCurrency(totalPrice, room.currency, 'TSh')}</p>
-                        <p className="text-meta text-neutral-500">{nights} night{nights > 1 ? 's' : ''} · {rooms} room{rooms > 1 ? 's' : ''}</p>
-                        {isSelected && <p className="text-meta text-brand-600 font-medium mt-1 flex items-center gap-1 justify-end"><Check size={12} /> Selected</p>}
+                        <p className="text-meta text-neutral-500">{tp('stayDuration')
+                          .replace('{nights}', `${nights} ${tp(nights === 1 ? 'nightSingular' : 'nights')}`)
+                          .replace('{rooms}', `${rooms} ${tp(rooms === 1 ? 'roomSingular' : 'rooms')}`)}</p>
+                        {isSelected && <p className="text-meta text-brand-600 font-medium mt-1 flex items-center gap-1 justify-end"><Check size={12} /> {tp('selected')}</p>}
                       </div>
                     </div>
                   </div>
@@ -110,16 +114,16 @@ export function StaysDetailPage() {
 
           <div>
             <div className="card p-6 sticky top-20">
-              <h3 className="text-listing font-bold text-neutral-900 mb-4">Your Stay</h3>
+              <h3 className="text-listing font-bold text-neutral-900 mb-4">{tp('yourStay')}</h3>
               <div className="space-y-2 text-body">
-                <div className="flex justify-between"><span className="text-neutral-500">Check-in</span><span className="font-medium text-neutral-900">{params.date ? formatDate(params.date) : '—'}</span></div>
-                <div className="flex justify-between"><span className="text-neutral-500">Check-out</span><span className="font-medium text-neutral-900">{params.extras?.checkOut ? formatDate(params.extras.checkOut) : '—'}</span></div>
-                <div className="flex justify-between"><span className="text-neutral-500">Nights</span><span className="font-medium text-neutral-900">{nights}</span></div>
-                <div className="flex justify-between"><span className="text-neutral-500">Guests</span><span className="font-medium text-neutral-900">{params.adults + params.children}</span></div>
-                <div className="flex justify-between"><span className="text-neutral-500">Rooms</span><span className="font-medium text-neutral-900">{rooms}</span></div>
+                <div className="flex justify-between"><span className="text-neutral-500">{tp('checkIn')}</span><span className="font-medium text-neutral-900">{params.date ? formatDate(params.date) : '-'}</span></div>
+                <div className="flex justify-between"><span className="text-neutral-500">{tp('checkOut')}</span><span className="font-medium text-neutral-900">{params.extras?.checkOut ? formatDate(params.extras.checkOut) : '-'}</span></div>
+                <div className="flex justify-between"><span className="text-neutral-500">{tp('nights')}</span><span className="font-medium text-neutral-900">{nights}</span></div>
+                <div className="flex justify-between"><span className="text-neutral-500">{tp('guests')}</span><span className="font-medium text-neutral-900">{params.adults + params.children}</span></div>
+                <div className="flex justify-between"><span className="text-neutral-500">{tp('rooms')}</span><span className="font-medium text-neutral-900">{rooms}</span></div>
               </div>
               <button onClick={handleContinue} disabled={!selectedRoom} className="btn-primary w-full mt-6">
-                {selectedRoom ? 'Continue to Review' : 'Select a room'}
+                {selectedRoom ? tp('continueToReview') : tp('selectRoom')}
               </button>
             </div>
           </div>

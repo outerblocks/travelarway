@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, BedDouble } from 'lucide-react';
+import { useNavigate, Link } from '@/router';
+import { ArrowLeft, Star, MapPin } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/context/I18nContext';
 import { STAY_PROPERTIES } from '@/data/mockData';
+import { locationMatches } from '@/domain/search';
 import { GenericResultsSkeleton } from '@/components/shared/Skeletons';
 import { LoadingState, EmptyResults, ErrorState, SearchSummaryBar } from '@/components/shared/States';
 import { formatCurrency, formatDate, nightsBetween } from '@/utils/format';
@@ -17,6 +19,7 @@ const STAY_IMAGES: Record<string, string> = {
 export function StaysResultsPage() {
   const navigate = useNavigate();
   const { bookingState, setSearchParams } = useApp();
+  const { tp } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [results, setResults] = useState<StayProperty[]>([]);
@@ -30,7 +33,7 @@ export function StaysResultsPage() {
       try {
         let r = [...STAY_PROPERTIES];
         if (params.origin) {
-          r = r.filter((s) => s.city.toLowerCase().includes(params.origin!.toLowerCase()) || s.location.toLowerCase().includes(params.origin!.toLowerCase()));
+          r = r.filter((s) => locationMatches(params.origin, [s.city, s.location]));
         }
         if (r.length === 0 && !params.origin) r = STAY_PROPERTIES;
         setResults(r);
@@ -50,29 +53,29 @@ export function StaysResultsPage() {
 
   if (loading) return (
     <>
-      <SearchSummaryBar><Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> Modify search</Link></SearchSummaryBar>
+      <SearchSummaryBar><Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link></SearchSummaryBar>
       <GenericResultsSkeleton count={3} />
-      <LoadingState message="Searching accommodations..." />
+      <LoadingState message={tp('searchingAccommodations')} />
     </>
   );
 
-  if (error) return <ErrorState message="Unable to load stays" onRetry={() => window.location.reload()} />;
+  if (error) return <ErrorState message={tp('unableLoadStays')} onRetry={() => window.location.reload()} />;
 
   return (
     <>
       <SearchSummaryBar>
-        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> Modify search</Link>
-        <span className="text-body font-medium text-neutral-900">{params.origin || 'All destinations'}</span>
+        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link>
+        <span className="text-body font-medium text-neutral-900">{params.origin || tp('allDestinations')}</span>
         <span className="text-body text-neutral-500">
-          {params.date ? formatDate(params.date) : ''} · {nights} night{nights > 1 ? 's' : ''} · {params.adults} adults
+          {params.date ? formatDate(params.date) : ''} · {tp('nightCount').replace('{count}', String(nights)).replace('{plural}', nights === 1 ? '' : 's')} · {tp('adultCount').replace('{count}', String(params.adults)).replace('{plural}', params.adults === 1 ? '' : 's')}
         </span>
       </SearchSummaryBar>
 
       <div className="section-container py-6">
-        <h1 className="text-page font-bold text-neutral-900 mb-6">{results.length} properties found</h1>
+        <h1 className="text-page font-bold text-neutral-900 mb-6">{tp('propertyCount').replace('{count}', String(results.length))}</h1>
 
         {results.length === 0 ? (
-          <EmptyResults message="No properties found" subMessage="Try a different destination or date." />
+          <EmptyResults message={tp('noPropertiesFound')} subMessage={tp('tryDifferentDestinationDate')} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((prop) => {

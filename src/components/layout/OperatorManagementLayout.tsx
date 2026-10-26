@@ -1,32 +1,38 @@
 import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@/router';
 import {
   LayoutDashboard, CalendarDays, Users, BarChart3, Bus, Ship, Settings,
-  ArrowLeft, LogOut, type LucideIcon,
+  ArrowLeft, LogOut, Route, ClipboardList, type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useI18n, type TranslationKey } from '@/context/I18nContext';
 
-export type MgmtSection = 'overview' | 'schedules' | 'fleet' | 'bookings' | 'analytics';
+export type MgmtSection = 'overview' | 'routes' | 'schedules' | 'fleet' | 'manifest' | 'bookings' | 'analytics';
 
 interface MgmtSidebarItem {
   id: MgmtSection;
-  labelKey: TranslationKey;
+  labelKey?: TranslationKey;
+  /** Interior console copy is English only; passenger surfaces stay translated. */
+  label?: string;
   icon: LucideIcon;
 }
 
 const SIDEBAR_ITEMS: MgmtSidebarItem[] = [
   { id: 'overview', labelKey: 'mgmtOverview', icon: LayoutDashboard },
+  { id: 'routes', label: 'Routes & fares', icon: Route },
   { id: 'schedules', labelKey: 'scheduleManagement', icon: CalendarDays },
   { id: 'fleet', labelKey: 'fleetManagement', icon: Bus },
+  { id: 'manifest', label: 'Manifest & OTC', icon: ClipboardList },
   { id: 'bookings', labelKey: 'bookingManagement', icon: Users },
   { id: 'analytics', labelKey: 'analytics', icon: BarChart3 },
 ];
 
 const SIDEBAR_ITEMS_FERRY: MgmtSidebarItem[] = [
   { id: 'overview', labelKey: 'mgmtOverview', icon: LayoutDashboard },
+  { id: 'routes', label: 'Routes & fares', icon: Route },
   { id: 'schedules', labelKey: 'scheduleManagement', icon: CalendarDays },
   { id: 'fleet', labelKey: 'vesselManagement', icon: Ship },
+  { id: 'manifest', label: 'Manifest & OTC', icon: ClipboardList },
   { id: 'bookings', labelKey: 'bookingManagement', icon: Users },
   { id: 'analytics', labelKey: 'analytics', icon: BarChart3 },
 ];
@@ -70,10 +76,10 @@ export function OperatorManagementLayout({
   };
 
   return (
-    <div className="flex min-h-screen bg-neutral-100">
+    <div className="flex min-h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 shrink-0 bg-neutral-900 text-neutral-300 fixed inset-y-0 left-0 z-30">
-        <div className="px-5 py-5 border-b border-neutral-800">
+      <aside className="hidden lg:flex flex-col w-60 shrink-0 bg-ink text-white/70 fixed inset-y-0 left-0 z-30">
+        <div className="px-5 py-5 border-b border-white/10">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center shrink-0">
               <ModeIcon size={20} className="text-white" />
@@ -85,12 +91,12 @@ export function OperatorManagementLayout({
           </div>
         </div>
 
-        <div className="px-3 py-3 border-b border-neutral-800">
-          <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wide px-3 mb-1.5">{t('selectOperator')}</p>
+        <div className="border-b border-white/10 px-3 py-3">
+          <p className="mb-1.5 px-3 text-[11px] font-medium text-white/50">{t('selectOperator')}</p>
           <select
             value={selectedOperatorId}
             onChange={(e) => onSelectOperator(e.target.value)}
-            className="w-full px-3 py-2 text-sm bg-neutral-800 text-white border border-neutral-700 rounded-md focus:outline-none focus:border-brand-500"
+            className="w-full rounded-md border border-white/15 bg-white/10 px-3 py-2 text-sm text-white focus:outline-none"
           >
             {operators.map((op) => (
               <option key={op.operatorId} value={op.operatorId}>{op.operatorName}</option>
@@ -108,19 +114,19 @@ export function OperatorManagementLayout({
                 onClick={() => handleNav(item.id)}
                 className={`flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium rounded-md transition-colors mb-0.5 ${
                   isActive
-                    ? 'bg-brand-600 text-white'
-                    : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
+                    ? 'bg-accent text-ink'
+                    : 'text-white/60 hover:bg-white/8 hover:text-white'
                 }`}
               >
                 <Icon size={17} />
-                <span className="flex-1 text-left">{t(item.labelKey)}</span>
+                <span className="flex-1 text-left">{item.label ?? t(item.labelKey as TranslationKey)}</span>
               </button>
             );
           })}
         </nav>
 
-        <div className="px-3 py-4 border-t border-neutral-800 space-y-1">
-          <Link to="/" className="flex items-center gap-2.5 w-full px-3 py-2 text-sm font-medium text-neutral-400 hover:text-white rounded-md transition-colors">
+        <div className="space-y-1 border-t border-white/10 px-3 py-4">
+          <Link to="/" className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:text-white">
             <ArrowLeft size={16} />
             <span>{t('backToSite')}</span>
           </Link>
@@ -168,7 +174,7 @@ export function OperatorManagementLayout({
                     }`}
                   >
                     <Icon size={17} />
-                    <span>{t(item.labelKey)}</span>
+                    <span>{item.label ?? t(item.labelKey as TranslationKey)}</span>
                   </button>
                 );
               })}
@@ -198,7 +204,7 @@ export function OperatorManagementLayout({
             </button>
             <div>
               <h1 className="text-base font-bold text-neutral-900">{operator.operatorName}</h1>
-              <p className="text-[11px] text-neutral-500">{consoleTitle} — {t('mgmtConsole')}</p>
+              <p className="text-[11px] text-neutral-500">{consoleTitle} - {t('mgmtConsole')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

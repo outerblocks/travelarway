@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 
 interface AuthUser {
   email: string;
@@ -16,13 +16,42 @@ interface AuthContextValue {
 }
 
 const STORAGE_KEY = 'travelar_auth_user';
+const PROVIDERS: ReadonlyArray<AuthUser['provider']> = ['email', 'google', 'apple'];
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+/**
+ * The signed-in user is cached in localStorage purely as a UI convenience. It is
+ * readable and writable by any script on the origin, so it is never an
+ * authorisation boundary — every protected action must be re-checked by the API.
+ * Anything that does not match the expected shape is discarded rather than trusted.
+ */
+function normalizeUser(value: unknown): AuthUser | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const candidate = value as Record<string, unknown>;
+  const email = typeof candidate.email === 'string' ? candidate.email.trim() : '';
+  const provider = candidate.provider;
+  const isKnownProvider = typeof provider === 'string' && PROVIDERS.includes(provider as AuthUser['provider']);
+
+  if (!email || email.length > 254 || !email.includes('@') || !isKnownProvider) return null;
+
+  const rawName = typeof candidate.name === 'string' ? candidate.name.trim() : '';
+  return {
+    email,
+    name: (rawName || email.split('@')[0]).slice(0, 80),
+    provider: provider as AuthUser['provider'],
+  };
+}
 
 function loadUser(): AuthUser | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) as AuthUser : null;
+    if (!raw) return null;
+
+    const user = normalizeUser(JSON.parse(raw));
+    if (!user) localStorage.removeItem(STORAGE_KEY);
+    return user;
   } catch {
     return null;
   }
@@ -41,8 +70,13 @@ function delay(ms: number) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => loadUser());
-  const [loading] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setUser(loadUser());
+    setLoading(false);
+  }, []);
 
   const persistUser = useCallback((newUser: AuthUser | null) => {
     saveUser(newUser);

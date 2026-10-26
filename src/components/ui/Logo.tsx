@@ -24,7 +24,7 @@ export function Logo({ variant = 'dark', size = 'md' }: LogoProps) {
         style={{ filter }}
         loading="eager"
       />
-      <span className={`text-2xl font-bold tracking-tight ${variant === 'light' ? 'text-white' : 'text-brand-600'}`}>
+      <span className={`font-display text-2xl font-bold tracking-tight ${variant === 'light' ? 'text-white' : 'text-ink'}`}>
         Travelar
       </span>
     </div>

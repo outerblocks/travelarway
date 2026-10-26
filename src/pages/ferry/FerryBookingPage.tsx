@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@/router';
 import { ArrowLeft, Users } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { FERRY_SAILINGS } from '@/data/mockData';
+import { useI18n } from '@/context/I18nContext';
+import { getFerrySailing } from '@/data/operations';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
 import { LoadingState, ErrorState, SearchSummaryBar } from '@/components/shared/States';
-import { formatCurrency, formatDate } from '@/utils/format';
+import { formatDate } from '@/utils/format';
 import type { FerrySailing, PassengerInfo } from '@/types';
 
 export function FerryBookingPage() {
   const navigate = useNavigate();
   const { bookingState, setPassengers, setSelectedClassId, setSearchParams } = useApp();
+  const { tp } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [sailing, setSailing] = useState<FerrySailing | null>(null);
@@ -24,7 +26,7 @@ export function FerryBookingPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const found = FERRY_SAILINGS.find((s) => s.id === sailingId);
+      const found = getFerrySailing(sailingId);
       if (found) {
         setSailing(found);
         setLoading(false);
@@ -57,15 +59,15 @@ export function FerryBookingPage() {
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
-    if (!selectedClassId) e.class = 'Please select a vessel class';
+    if (!selectedClassId) e.class = tp('selectVesselClassError');
 
     passengers.forEach((p, i) => {
-      if (!p.fullName) e[`name_${i}`] = 'Required';
-      if (!p.email) e[`email_${i}`] = 'Required';
-      if (!p.phone) e[`phone_${i}`] = 'Required';
-      if (!p.idType) e[`idtype_${i}`] = 'Required for ferry';
-      if (!p.idNumber) e[`idnum_${i}`] = 'Required for ferry';
-      if (!p.idCountryOfIssue) e[`idcountry_${i}`] = 'Required for ferry';
+      if (!p.fullName) e[`name_${i}`] = tp('requiredLabel');
+      if (!p.email) e[`email_${i}`] = tp('requiredLabel');
+      if (!p.phone) e[`phone_${i}`] = tp('requiredLabel');
+      if (!p.idType) e[`idtype_${i}`] = tp('requiredForFerry');
+      if (!p.idNumber) e[`idnum_${i}`] = tp('requiredForFerry');
+      if (!p.idCountryOfIssue) e[`idcountry_${i}`] = tp('requiredForFerry');
     });
 
     setErrors(e);
@@ -86,17 +88,17 @@ export function FerryBookingPage() {
   if (loading) return (
     <>
       <SearchSummaryBar>
-        <Link to="/ferry/results" className="btn-ghost text-label"><ArrowLeft size={16} /> Back to results</Link>
-        <span className="text-body font-medium text-neutral-900">Select class & enter details</span>
+        <Link to="/ferry/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
+        <span className="text-body font-medium text-neutral-900">{tp('selectClassAndDetails')}</span>
       </SearchSummaryBar>
-      <LoadingState message="Loading sailing details..." />
+      <LoadingState message={tp('loadingSailingDetails')} />
     </>
   );
 
   if (error || !sailing) return (
     <ErrorState
-      message="Unable to load this sailing"
-      subMessage="Please go back and try again."
+      message={tp('unableLoadSailing')}
+      subMessage={tp('pleaseGoBackTryAgain')}
       onRetry={() => navigate('/ferry/results')}
     />
   );
@@ -106,7 +108,7 @@ export function FerryBookingPage() {
   return (
     <>
       <SearchSummaryBar>
-        <Link to="/ferry/results" className="btn-ghost text-label"><ArrowLeft size={16} /> Back to results</Link>
+        <Link to="/ferry/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
         <span className="text-body font-medium text-neutral-900">
           {sailing.operatorName} · {sailing.vesselName}
         </span>
@@ -118,9 +120,9 @@ export function FerryBookingPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Class Selection */}
             <div className="card p-6">
-              <h2 className="text-listing font-bold text-neutral-900 mb-1">Select Vessel Class</h2>
+              <h2 className="text-listing font-bold text-neutral-900 mb-1">{tp('selectVesselClass')}</h2>
               <p className="text-meta text-neutral-500 mb-4">
-                No seat selection required for ferry travel. Choose your travel class.
+                {tp('noSeatSelectionFerry')}
               </p>
               {errors.class && <p className="field-error mb-3" data-error="true">{errors.class}</p>}
 
@@ -148,10 +150,10 @@ export function FerryBookingPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-body font-bold text-brand-600">{fareLabel}</p>
-                          <p className="text-meta text-neutral-500">per adult · {residency}</p>
+                          <p className="text-meta text-neutral-500">{tp('perAdultResidency').replace('{residency}', tp(residency === 'resident' ? 'resident' : 'nonResident'))}</p>
                         </div>
                         <span className="text-meta text-neutral-500 flex items-center gap-1">
-                          <Users size={12} /> {cls.availableCapacity} left
+                          <Users size={12} /> {tp('availableCount').replace('{count}', String(cls.availableCapacity))}
                         </span>
                       </div>
                     </button>
@@ -163,12 +165,12 @@ export function FerryBookingPage() {
             {/* Passenger Information */}
             {selectedClass && passengers.length > 0 && (
               <div className="card p-6 animate-fade-in">
-                <h2 className="text-listing font-bold text-neutral-900 mb-1">Passenger Information</h2>
+                <h2 className="text-listing font-bold text-neutral-900 mb-1">{tp('passengerInformation')}</h2>
                 <p className="text-meta text-neutral-500 mb-6">
-                  Identification is required for all ferry passengers (residents and non-residents).
+                  {tp('ferryPassengerIdNote')}
                 </p>
 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {passengers.map((p, i) => (
                     <div key={p.id} data-error={errors[`name_${i}`] ? 'true' : undefined}>
                       <PassengerForm
@@ -176,6 +178,14 @@ export function FerryBookingPage() {
                         index={i}
                         onChange={(updated) => handlePassengerChange(i, updated)}
                         requireId
+                        errors={{
+                          name: errors[`name_${i}`],
+                          email: errors[`email_${i}`],
+                          phone: errors[`phone_${i}`],
+                          idType: errors[`idtype_${i}`],
+                          idNumber: errors[`idnum_${i}`],
+                          idCountry: errors[`idcountry_${i}`],
+                        }}
                       />
                     </div>
                   ))}
@@ -183,7 +193,7 @@ export function FerryBookingPage() {
 
                 <div className="mt-6 pt-6 border-t border-neutral-200 flex justify-end">
                   <button onClick={handleContinue} className="btn-primary">
-                    Continue to Review
+                    {tp('continueToReview')}
                   </button>
                 </div>
               </div>
@@ -193,36 +203,36 @@ export function FerryBookingPage() {
           {/* Summary */}
           <div>
             <div className="card p-6 sticky top-20">
-              <h3 className="text-listing font-bold text-neutral-900 mb-4">Summary</h3>
+              <h3 className="text-listing font-bold text-neutral-900 mb-4">{tp('summary')}</h3>
               <div className="space-y-2 text-body">
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Vessel</span>
+                  <span className="text-neutral-500">{tp('vessel')}</span>
                   <span className="font-medium text-neutral-900">{sailing.vesselName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Route</span>
+                  <span className="text-neutral-500">{tp('ticketRoute')}</span>
                   <span className="font-medium text-neutral-900 text-right text-meta">
                     {sailing.departurePort} → {sailing.arrivalPort}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Date</span>
+                  <span className="text-neutral-500">{tp('ticketDate')}</span>
                   <span className="font-medium text-neutral-900">{formatDate(sailing.departureDate)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Departure</span>
+                  <span className="text-neutral-500">{tp('departure')}</span>
                   <span className="font-medium text-neutral-900">{sailing.departureTime}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Class</span>
-                  <span className="font-medium text-neutral-900">{selectedClass?.name || '—'}</span>
+                  <span className="text-neutral-500">{tp('ticketClass')}</span>
+                  <span className="font-medium text-neutral-900">{selectedClass?.name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Residency</span>
-                  <span className="font-medium text-neutral-900 capitalize">{residency.replace('_', ' ')}</span>
+                  <span className="text-neutral-500">{tp('residency')}</span>
+                  <span className="font-medium text-neutral-900">{tp(residency === 'resident' ? 'resident' : 'nonResident')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Passengers</span>
+                  <span className="text-neutral-500">{tp('checkoutPassengers')}</span>
                   <span className="font-medium text-neutral-900">{totalPassengers}</span>
                 </div>
               </div>
