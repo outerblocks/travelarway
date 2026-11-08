@@ -1,0 +1,14 @@
+---
+description: Travelar repository-first full-stack implementation and PostgreSQL safety
+alwaysApply: true
+---
+
+Before substantial work, read `AGENTS.md`, `docs/engineering/implementation-directive.md`, `docs/engineering/decisions/ADR-064-postgresql-baseline.md`, `docs/engineering/postgresql-connection-and-docker.md`, and relevant requirements/addenda.
+
+Treat the repository as an existing codebase to audit, not a blank starter. Preserve useful work; inspect frontend, backend, database, migrations, auth, integrations, tests and deployment; produce a requirement-to-code gap matrix before large changes.
+
+PostgreSQL is the selected database baseline. Do not force a major upgrade; inspect the actual server and environment first. IDE connectivity alone does not prove app runtime connectivity or deployment configuration. Start with read-only inspection. No writes to an unidentified database. No production migrations/deployment, destructive SQL, live payments/refunds, permission/security changes or provider activation without explicit human approval.
+
+Docker is optional. Prefer a safe, isolated dedicated test database where available. Recommend Docker/Compose only when reproducibility, disposable state, pinned versions, CI or dependent services justify it. Never point destructive test cleanup at production or shared data.
+
+Implement the requirements pack across backend, database, authorization, UI, integrations, tests, operations and documentation. A polished screen is not completion evidence. Record commands, exit codes, test environment, migration impact/rollback, security findings, remaining gaps and exact evidence.

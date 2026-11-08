@@ -5,7 +5,8 @@ import {
   MapPin, Ticket, Users,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useI18n, type TranslationKey } from '@/context/I18nContext';
+import type { TranslationKey } from '@/context/I18nContext';
+import { RoutePending } from '@/components/shared/RouteStates';
 import { OperatorManagementLayout, type MgmtSection, type OperatorInfo } from '@/components/layout/OperatorManagementLayout';
 import {
   FleetSection, ManifestSection, RoutesSection, SchedulesSection, VesselsSection,
@@ -23,7 +24,6 @@ const nf = (value: number, currency: string) =>
  */
 export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
   const { user, loading } = useAuth();
-  const { t } = useI18n();
   const ops = useOperations();
   const [selectedOperatorId, setSelectedOperatorId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<MgmtSection>('overview');
@@ -58,7 +58,8 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
     .filter((booking) => booking.currency === currency)
     .reduce((sum, booking) => sum + booking.amount, 0);
 
-  if (loading) return <div className="p-12 text-center" role="status">{t('loadingAccount')}</div>;
+  // One frame while the browser session is adopted, then the console or sign-in.
+  if (loading) return <RoutePending />;
   if (!user) return <Navigate to="/operator/oims-signin" replace />;
   if (!operator || !operatorInfo) {
     return <div className="p-12 text-center text-sm text-neutral-500">No operators are provisioned for this mode yet.</div>;
@@ -127,7 +128,7 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
                       <span className="block truncate text-xs text-neutral-500">{booking.routeLabel} · {booking.seats.join(', ')}</span>
                     </span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      booking.channel === 'otc' ? 'bg-amber-50 text-amber-700' : 'bg-brand-50 text-brand-700'
+                      booking.channel === 'otc' ? 'bg-warning-50 text-warning-700' : 'bg-brand-50 text-brand-700'
                     }`}>
                       {booking.channel === 'otc' ? 'OTC' : 'Online'}
                     </span>

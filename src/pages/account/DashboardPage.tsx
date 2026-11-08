@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate } from '@/router';
-import {
-  LogOut, Calendar, Wallet, Clock, ArrowRight, XCircle, CheckCircle2,
-  Ticket, MapPin, LayoutDashboard, Compass, User, Settings, Search,
-  Heart, CreditCard, Tag, ChevronRight,
-  type LucideIcon,
-} from 'lucide-react';
+import { Clock, XCircle, CheckCircle2, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
 import { useI18n, type Language, type TranslationKey } from '@/context/I18nContext';
@@ -20,16 +15,15 @@ type BookingFilter = 'all' | BookingMode;
 interface SidebarLink {
   id: DashboardView;
   labelKey: TranslationKey;
-  icon: LucideIcon;
 }
 
 const MAIN_NAV: SidebarLink[] = [
-  { id: 'overview', labelKey: 'overview', icon: LayoutDashboard },
-  { id: 'bookings', labelKey: 'allBookings', icon: Ticket },
+  { id: 'overview', labelKey: 'overview' },
+  { id: 'bookings', labelKey: 'allBookings' },
 ];
 
-const BOOKING_CATEGORIES: { id: BookingFilter; labelKey: TranslationKey; icon: LucideIcon }[] = [
-  { id: 'all', labelKey: 'allBookings', icon: Ticket },
+const BOOKING_CATEGORIES: { id: BookingFilter; labelKey: TranslationKey; icon?: LucideIcon }[] = [
+  { id: 'all', labelKey: 'allBookings' },
   { id: 'bus', labelKey: 'busBookings', icon: MODE_ICON_MAP.bus },
   { id: 'ferry', labelKey: 'ferryBookings', icon: MODE_ICON_MAP.ferry },
   { id: 'flights', labelKey: 'flightBookings', icon: MODE_ICON_MAP.flights },
@@ -39,16 +33,16 @@ const BOOKING_CATEGORIES: { id: BookingFilter; labelKey: TranslationKey; icon: L
 ];
 
 const ACCOUNT_NAV: SidebarLink[] = [
-  { id: 'saved', labelKey: 'savedTrips', icon: Heart },
-  { id: 'payment-methods', labelKey: 'paymentMethods', icon: CreditCard },
-  { id: 'promo-codes', labelKey: 'promoCodes', icon: Tag },
-  { id: 'profile', labelKey: 'profile', icon: User },
-  { id: 'settings', labelKey: 'settings', icon: Settings },
+  { id: 'saved', labelKey: 'savedTrips' },
+  { id: 'payment-methods', labelKey: 'paymentMethods' },
+  { id: 'promo-codes', labelKey: 'promoCodes' },
+  { id: 'profile', labelKey: 'profile' },
+  { id: 'settings', labelKey: 'settings' },
 ];
 
 const STATUS_META: Record<TripStatus, { labelKey: TranslationKey; class: string; icon: LucideIcon }> = {
   upcoming: { labelKey: 'upcoming', class: 'bg-brand-50 text-brand-700', icon: Clock },
-  completed: { labelKey: 'completed', class: 'bg-accent-50 text-accent-700', icon: CheckCircle2 },
+  completed: { labelKey: 'completed', class: 'bg-success-50 text-success-700', icon: CheckCircle2 },
   cancelled: { labelKey: 'cancelled', class: 'bg-error-50 text-error-600', icon: XCircle },
 };
 
@@ -127,8 +121,9 @@ export function DashboardPage() {
               <button
                 className="lg:hidden p-1.5 text-neutral-600 hover:bg-neutral-100 rounded-md"
                 onClick={() => setSidebarOpen(true)}
+                aria-label={t('overview')}
               >
-                <LayoutDashboard size={20} />
+                <span aria-hidden="true" className="block text-lg leading-none">☰</span>
               </button>
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 bg-ink rounded-full flex items-center justify-center text-white text-sm font-bold">
@@ -142,7 +137,7 @@ export function DashboardPage() {
             </div>
             <div className="flex items-center gap-2">
               <Link to="/" className="btn-ghost text-label hidden sm:flex">
-                <Compass size={15} /> {t('searchNewTrips') || 'Book a Trip'}
+                {t('searchNewTrips') || 'Book a Trip'}
               </Link>
               <button
                 onClick={() => {
@@ -153,7 +148,7 @@ export function DashboardPage() {
                 }}
                 className="btn-ghost text-label text-neutral-500"
               >
-                <LogOut size={15} /> <span className="hidden sm:inline">{t('signOut')}</span>
+                {t('signOut')}
               </button>
             </div>
           </div>
@@ -167,7 +162,6 @@ export function DashboardPage() {
             <nav className="flex flex-col gap-0.5">
               {/* Main nav */}
               {MAIN_NAV.map((item) => {
-                const Icon = item.icon;
                 const isActive = activeView === item.id && (item.id !== 'bookings');
                 return (
                   <button
@@ -179,10 +173,9 @@ export function DashboardPage() {
                         : 'text-neutral-700 hover:bg-neutral-100'
                     }`}
                   >
-                    <Icon size={17} />
                     <span className="flex-1 text-left">{t(item.labelKey)}</span>
                     {item.id === 'bookings' && (
-                      <ChevronRight size={14} className={`transition-transform ${bookingsExpanded ? 'rotate-90' : ''}`} />
+                      <span aria-hidden="true" className={`inline-block leading-none transition-transform ${bookingsExpanded ? 'rotate-90' : ''}`}>›</span>
                     )}
                   </button>
                 );
@@ -207,7 +200,7 @@ export function DashboardPage() {
                             : 'text-neutral-600 hover:bg-neutral-100'
                         }`}
                       >
-                        <Icon size={15} />
+                        {Icon ? <Icon size={15} /> : <span className="w-[15px]" />}
                         <span className="flex-1 text-left">{t(cat.labelKey)}</span>
                         {count > 0 && <span className="text-[11px] text-neutral-400">{count}</span>}
                       </button>
@@ -221,7 +214,6 @@ export function DashboardPage() {
 
               {/* Account nav */}
               {ACCOUNT_NAV.map((item) => {
-                const Icon = item.icon;
                 const isActive = activeView === item.id;
                 return (
                   <button
@@ -233,7 +225,6 @@ export function DashboardPage() {
                         : 'text-neutral-700 hover:bg-neutral-100'
                     }`}
                   >
-                    <Icon size={17} />
                     <span className="flex-1 text-left">{t(item.labelKey)}</span>
                   </button>
                 );
@@ -258,14 +249,14 @@ export function DashboardPage() {
                       <p className="text-[11px] text-neutral-500">{user.email}</p>
                     </div>
                   </div>
-                  <button onClick={() => setSidebarOpen(false)} className="p-1 text-neutral-400">
-                    <XCircle size={20} />
+                  <button onClick={() => setSidebarOpen(false)} className="flex h-10 w-10 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100" aria-label="Close">
+                    <span aria-hidden="true" className="text-base leading-none">✕</span>
                   </button>
                 </div>
 
                 <nav className="flex flex-col gap-0.5">
                   <button onClick={() => handleNavClick('overview')} className={`flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium rounded-lg ${activeView === 'overview' ? 'bg-ink text-white' : 'text-neutral-700'}`}>
-                    <LayoutDashboard size={17} /> {t('overview')}
+                    {t('overview')}
                   </button>
 
                   <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide px-3 mt-4 mb-1.5">{t('bookings')}</p>
@@ -274,17 +265,16 @@ export function DashboardPage() {
                     const isActive = activeView === 'bookings' && bookingFilter === cat.id;
                     return (
                       <button key={cat.id} onClick={() => handleBookingCategory(cat.id)} className={`flex items-center gap-2 w-full px-3 py-2 text-sm font-medium rounded-lg ${isActive ? 'bg-brand-50 text-brand-700' : 'text-neutral-600'}`}>
-                        <Icon size={16} /> {t(cat.labelKey)}
+                        {Icon ? <Icon size={16} /> : <span className="w-4" />} {t(cat.labelKey)}
                       </button>
                     );
                   })}
 
                   <div className="h-px bg-neutral-200 my-3" />
                   {ACCOUNT_NAV.map((item) => {
-                    const Icon = item.icon;
                     return (
                       <button key={item.id} onClick={() => handleNavClick(item.id)} className={`flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium rounded-lg ${activeView === item.id ? 'bg-ink text-white' : 'text-neutral-700'}`}>
-                        <Icon size={17} /> {t(item.labelKey)}
+                        {t(item.labelKey)}
                       </button>
                     );
                   })}
@@ -303,9 +293,9 @@ export function DashboardPage() {
             )}
             {activeView === 'profile' && <ProfileContent user={user} t={t} />}
             {activeView === 'settings' && <SettingsContent t={t} />}
-            {activeView === 'saved' && <PlaceholderSection icon={Heart} title={t('savedTrips') || 'Saved Trips'} desc="Your saved trips and wishlisted destinations will appear here." />}
-            {activeView === 'payment-methods' && <PlaceholderSection icon={CreditCard} title={t('paymentMethods') || 'Payment Methods'} desc="Your saved payment methods and cards will appear here." />}
-            {activeView === 'promo-codes' && <PlaceholderSection icon={Tag} title={t('promoCodes') || 'Promo Codes'} desc="Your promo codes and discount coupons will appear here. Try TRAVELAR10 for 10% off!" />}
+            {activeView === 'saved' && <PlaceholderSection title={t('savedTrips') || 'Saved Trips'} desc="Your saved trips and wishlisted destinations will appear here." />}
+            {activeView === 'payment-methods' && <PlaceholderSection title={t('paymentMethods') || 'Payment Methods'} desc="Your saved payment methods and cards will appear here." />}
+            {activeView === 'promo-codes' && <PlaceholderSection title={t('promoCodes') || 'Promo Codes'} desc="Your promo codes and discount coupons will appear here. Try TRAVELAR10 for 10% off!" />}
           </div>
         </div>
       </div>
@@ -341,37 +331,25 @@ function OverviewContent({ user, t, lang, upcoming, completed, totalSpent, onNav
 
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Clock} label={t('upcomingTrips')} value={String(upcoming.length)} color="bg-ink" />
-        <StatCard icon={CheckCircle2} label={t('completedTrips')} value={String(completed.length)} color="bg-emerald-600" />
-        <StatCard icon={Wallet} label={t('totalSpent')} value={formatCurrency(totalSpent, 'USD')} color="bg-amber-600" />
-        <StatCard icon={Compass} label={t('travelModes')} value={String(new Set(TRIP_HISTORY.filter((t) => t.status !== 'cancelled').map((t) => t.mode)).size)} color="bg-violet-600" />
+        <StatCard label={t('upcomingTrips')} value={String(upcoming.length)} color="bg-ink" />
+        <StatCard label={t('completedTrips')} value={String(completed.length)} color="bg-success-600" />
+        <StatCard label={t('totalSpent')} value={formatCurrency(totalSpent, 'USD')} color="bg-ink" />
+        <StatCard label={t('travelModes')} value={String(new Set(TRIP_HISTORY.filter((t) => t.status !== 'cancelled').map((t) => t.mode)).size)} color="bg-neutral-700" />
       </div>
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Link to="/" className="flex flex-col items-center gap-2 p-4 rounded-xl border border-neutral-200 bg-white hover:border-brand-300 hover:shadow-sm transition-all group">
-          <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
-            <Search size={20} className="text-ink" />
-          </div>
-          <span className="text-[13px] font-medium text-neutral-700">{t('searchNewTrips') || 'Book a Trip'}</span>
+        <Link to="/" className="flex min-h-[56px] items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50">
+          <span className="text-label font-medium text-neutral-800">{t('searchNewTrips') || 'Book a Trip'}</span>
         </Link>
-        <Link to="/manage-booking" className="flex flex-col items-center gap-2 p-4 rounded-xl border border-neutral-200 bg-white hover:border-brand-300 hover:shadow-sm transition-all group">
-          <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
-            <Ticket size={20} className="text-ink" />
-          </div>
-          <span className="text-[13px] font-medium text-neutral-700">{t('manageBooking')}</span>
+        <Link to="/manage-booking" className="flex min-h-[56px] items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50">
+          <span className="text-label font-medium text-neutral-800">{t('manageBooking')}</span>
         </Link>
-        <button onClick={() => onNavigate('saved')} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-neutral-200 bg-white hover:border-brand-300 hover:shadow-sm transition-all group">
-          <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
-            <Heart size={20} className="text-ink" />
-          </div>
-          <span className="text-[13px] font-medium text-neutral-700">{t('savedTrips') || 'Saved'}</span>
+        <button onClick={() => onNavigate('saved')} className="flex min-h-[56px] items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50">
+          <span className="text-label font-medium text-neutral-800">{t('savedTrips') || 'Saved'}</span>
         </button>
-        <button onClick={() => onNavigate('promo-codes')} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-neutral-200 bg-white hover:border-brand-300 hover:shadow-sm transition-all group">
-          <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
-            <Tag size={20} className="text-ink" />
-          </div>
-          <span className="text-[13px] font-medium text-neutral-700">{t('promoCodes') || 'Promo Codes'}</span>
+        <button onClick={() => onNavigate('promo-codes')} className="flex min-h-[56px] items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50">
+          <span className="text-label font-medium text-neutral-800">{t('promoCodes') || 'Promo Codes'}</span>
         </button>
       </div>
 
@@ -381,7 +359,7 @@ function OverviewContent({ user, t, lang, upcoming, completed, totalSpent, onNav
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-neutral-900">{t('nextTrip')}</h2>
             <button onClick={() => onBookingCategory('all')} className="text-[13px] font-medium text-ink hover:text-brand-700 flex items-center gap-0.5">
-              {t('viewAll')} <ArrowRight size={13} />
+              {t('viewAll')} <span aria-hidden="true">→</span>
             </button>
           </div>
           <NextTripCard trip={upcoming[0]} t={t} lang={lang} />
@@ -396,7 +374,7 @@ function OverviewContent({ user, t, lang, upcoming, completed, totalSpent, onNav
             onClick={() => onBookingCategory('all')}
             className="text-[13px] font-medium text-ink hover:text-brand-700 flex items-center gap-0.5"
           >
-            {t('viewAll')} <ArrowRight size={13} />
+            {t('viewAll')} <span aria-hidden="true">→</span>
           </button>
         </div>
         {recentTrips.length === 0 ? (
@@ -503,10 +481,10 @@ function ProfileContent({ user, t }: {
         <h2 className="text-sm font-bold text-neutral-900 mb-4">{t('quickActions')}</h2>
         <div className="flex flex-col gap-2">
           <Link to="/manage-booking" className="btn-ghost justify-start text-label">
-            <Ticket size={16} /> {t('manageBooking')}
+            {t('manageBooking')}
           </Link>
           <Link to="/" className="btn-ghost justify-start text-label">
-            <MapPin size={16} /> {t('searchNewTrips') || 'Search New Trips'}
+            {t('searchNewTrips') || 'Search New Trips'}
           </Link>
         </div>
       </div>
@@ -544,14 +522,12 @@ function SettingsContent({ t }: { t: (key: TranslationKey) => string }) {
 }
 
 /* ─── Shared Components ─── */
-function StatCard({ icon: Icon, label, value, color }: { icon: LucideIcon; label: string; value: string; color: string }) {
+function StatCard({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-white rounded-xl border border-neutral-200 p-4">
-      <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center mb-3`}>
-        <Icon size={20} className="text-white" />
-      </div>
-      <p className="text-[11px] text-neutral-500 mb-0.5">{label}</p>
-      <p className="text-base font-bold text-neutral-900 truncate">{value}</p>
+    <div className="bg-white rounded-lg border border-neutral-200 p-4">
+      <div className={`h-1 w-8 ${color} rounded-full mb-3`} />
+      <p className="text-meta text-neutral-500 mb-0.5">{label}</p>
+      <p className="text-listing font-bold text-neutral-900 truncate">{value}</p>
     </div>
   );
 }
@@ -569,7 +545,7 @@ function NextTripCard({ trip, t, lang }: { trip: TripRecord; t: (key: Translatio
         <h3 className="text-sm font-bold text-neutral-900 leading-snug">{trip.title}</h3>
         <p className="text-[13px] text-neutral-500 mt-0.5">{trip.route}</p>
         <div className="flex items-center gap-3 mt-2 flex-wrap">
-          <span className="text-[12px] text-neutral-500 flex items-center gap-1"><Calendar size={12} /> {formatDate(trip.date, lang)}</span>
+          <span className="text-[12px] text-neutral-500 flex items-center gap-1">{formatDate(trip.date, lang)}</span>
           <span className="text-[12px] font-medium text-ink bg-brand-50 px-2 py-0.5 rounded-full">
             {daysUntil > 0
               ? `${daysUntil} ${daysUntil === 1 ? t('dayAway') : t('daysAway')}`
@@ -591,8 +567,8 @@ function TripRow({ trip, t, lang }: { trip: TripRecord; t: (key: TranslationKey)
   const StatusIcon = status.icon;
 
   return (
-    <div className="flex items-center gap-4 px-5 py-4 hover:bg-neutral-50 transition-colors">
-      <div className="w-11 h-11 bg-ink rounded-xl flex items-center justify-center shrink-0">
+    <div className="flex items-start gap-3 px-4 py-4 transition-colors hover:bg-neutral-50 sm:items-center sm:gap-4 sm:px-5">
+      <div className="w-10 h-10 bg-ink rounded-lg flex items-center justify-center shrink-0 sm:w-11 sm:h-11">
         <Icon size={22} className="text-white" />
       </div>
 
@@ -601,7 +577,7 @@ function TripRow({ trip, t, lang }: { trip: TripRecord; t: (key: TranslationKey)
         <p className="text-[13px] text-neutral-500 truncate">{trip.route}</p>
         <div className="flex items-center gap-3 mt-1 flex-wrap">
           <span className="text-[12px] text-neutral-500 flex items-center gap-1">
-            <Calendar size={11} /> {formatDate(trip.date, lang)}
+            {formatDate(trip.date, lang)}
           </span>
           <span className="text-[12px] text-neutral-500">
             {trip.passengers} {trip.passengers === 1 ? t('passenger') : t('passengers')}
@@ -623,26 +599,20 @@ function TripRow({ trip, t, lang }: { trip: TripRecord; t: (key: TranslationKey)
 function EmptyBookings({ t }: { t: (key: TranslationKey) => string }) {
   return (
     <div className="px-6 py-16 text-center">
-      <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-        <Ticket size={24} className="text-neutral-400" />
-      </div>
       <p className="text-sm font-medium text-neutral-600 mb-1">{t('noTripsCategory') || 'No bookings found'}</p>
       <p className="text-[13px] text-neutral-400 mb-4">Your bookings will appear here once you make a reservation.</p>
       <Link to="/" className="btn-primary inline-flex">
-        {t('bookNextTrip') || 'Book Your First Trip'} <ArrowRight size={16} />
+        {t('bookNextTrip') || 'Book Your First Trip'} <span aria-hidden="true">→</span>
       </Link>
     </div>
   );
 }
 
-function PlaceholderSection({ icon: Icon, title, desc }: { icon: LucideIcon; title: string; desc: string }) {
+function PlaceholderSection({ title, desc }: { title: string; desc: string }) {
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-bold text-neutral-900">{title}</h1>
       <div className="bg-white rounded-xl border border-neutral-200 p-12 text-center">
-        <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-          <Icon size={24} className="text-neutral-400" />
-        </div>
         <p className="text-sm text-neutral-500 max-w-sm mx-auto">{desc}</p>
       </div>
     </div>

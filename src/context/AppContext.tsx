@@ -11,9 +11,29 @@ interface BookingState {
   boardingPointId: string | null;
   dropOffPointId: string | null;
   selectedClassId: string | null;
-  bookingReference: string | null;
-  paidAmount: number | null;
-  demoTicket: { reference: string; amount: number } | null;
+  /**
+   * The booking created in this session, as the server recorded it.
+   *
+   * There is no demo ticket beside it: a booking either exists in the database or the
+   * checkout failed. `status` is the server's state, not this component's opinion — the
+   * confirmation page re-reads it, so a payment confirmed minutes later shows correctly.
+   */
+  activeBooking: {
+    bookingId: string;
+    pnr: string;
+    totalMinor: number;
+    currency: string;
+    status: string;
+    paymentDueAt: string | null;
+    /** True only when a collection request actually reached the provider. */
+    collectionStarted: boolean;
+    /** Why it did not, when it did not. Shown to the customer verbatim by reason code. */
+    collectionFailure: string | null;
+    /** The provider's own words, when it refused. Development only. */
+    collectionDetail: string | null;
+    /** Signed proof that this browser created the booking; required to read or pay it. */
+    accessToken: string;
+  } | null;
 }
 
 interface AppContextValue {
@@ -29,9 +49,7 @@ interface AppContextValue {
   setBoardingPointId: (id: string | null) => void;
   setDropOffPointId: (id: string | null) => void;
   setSelectedClassId: (id: string | null) => void;
-  setBookingReference: (ref: string | null) => void;
-  setPaidAmount: (amount: number | null) => void;
-  setDemoTicket: (ticket: { reference: string; amount: number } | null) => void;
+  setActiveBooking: (booking: BookingState['activeBooking']) => void;
   resetBooking: (mode: BookingMode) => void;
 }
 
@@ -51,9 +69,7 @@ const defaultBookingState = (mode: BookingMode): BookingState => ({
   boardingPointId: null,
   dropOffPointId: null,
   selectedClassId: null,
-  bookingReference: null,
-  paidAmount: null,
-  demoTicket: null,
+  activeBooking: null,
 });
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -98,21 +114,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setBookingState((prev) => ({ ...prev, selectedClassId: id }));
   }, []);
 
-  const setBookingReference = useCallback((ref: string | null) => {
-    setBookingState((prev) => ({ ...prev, bookingReference: ref, demoTicket: null }));
-  }, []);
-
-  const setPaidAmount = useCallback((amount: number | null) => {
-    setBookingState((prev) => ({ ...prev, paidAmount: amount }));
-  }, []);
-
-  const setDemoTicket = useCallback((ticket: { reference: string; amount: number } | null) => {
-    setBookingState((prev) => ({
-      ...prev,
-      bookingReference: null,
-      paidAmount: null,
-      demoTicket: ticket,
-    }));
+  const setActiveBooking = useCallback((booking: BookingState['activeBooking']) => {
+    setBookingState((prev) => ({ ...prev, activeBooking: booking }));
   }, []);
 
   const resetBooking = useCallback((mode: BookingMode) => {
@@ -134,9 +137,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setBoardingPointId,
         setDropOffPointId,
         setSelectedClassId,
-        setBookingReference,
-        setPaidAmount,
-        setDemoTicket,
+        setActiveBooking,
         resetBooking,
       }}
     >

@@ -1,0 +1,54 @@
+# Stage 4 — Sources and Evidence Register
+
+**Access date for web research:** 23 October 2026. The pages may be updated after access; re-check before signing contracts or implementing an integration.
+
+| ID | Source | Publisher / type | What it supports | Limits / follow-up |
+|---|---|---|---|---|
+| PAY-001 | https://developer.selcom.business/ | Selcom Business API docs | REST Business API, HMAC-style request signing, status endpoint, transfer/transaction processing, callback semantics | Public portal reviewed is a transfer/business API; obtain the exact customer collection/checkout API and merchant terms. |
+| PAY-002 | https://www.selcom.net/business | Selcom Paytech | Public claim of APIs covering e-commerce and disbursements; relationship/partner pathway | Does not establish Travelar's account, rates, license scope or production eligibility. |
+| PAY-003 | https://www.selcom.net/sip | Selcom Paytech | Public statement that Selcom Paytech is regulated by BoT; explanation that integration partner services do not necessarily change underlying Selcom contract | Verify named contracting entity, licence status and relevant product scope with BoT/current documents. |
+| PAY-004 | https://docs.clickpesa.com/ | ClickPesa API docs | Collections/payout product pages, API Explorer, status/callback guides | Current docs say API use is production and moves real funds; no sandbox. Recheck before any test. |
+| PAY-005 | https://docs.clickpesa.com/home/sandbox-and-testing-environment | ClickPesa | No sandbox; live testing; shared pre-KYC limit; test cautions; webhook setup | High-risk condition for development and integration test strategy; obtain written provider test plan. |
+| PAY-006 | https://clickpesa.com/payment-gateway/ | ClickPesa | Publicly listed payment method coverage and collection/payout offerings | Availability subject to account, product, country, KYC and contract. |
+| PAY-007 | https://clickpesa.com/payment-gateway/pricing/ | ClickPesa price page | Public fee schedule and stated payer (customer vs merchant) for specific methods | Not a negotiated quote. Card surcharge issue must be reconciled with applicable BoT requirements in writing. |
+| PAY-008 | https://developer.pesapal.com/ | Pesapal developer docs | API 3.0 JSON docs; API 2.0 marked deprecated; sandbox/test credentials available | Current merchant account eligibility and live terms still need onboarding. |
+| PAY-009 | https://developer.pesapal.com/how-to-integrate/e-commerce/api-30-json/gettransactionstatus | Pesapal API 3.0 | `GetTransactionStatus`, order tracking ID, documented statuses including completed/failed/reversed; IPN/callback should trigger server-side query | Verify latest version and exact behavior with test account. |
+| PAY-010 | https://developer.pesapal.com/how-to-integrate/e-commerce/api-30-json/refund-request | Pesapal API 3.0 | Refund request rules, method limitations, accepted request vs completed refund distinction | Account-specific enablement, timings, fees and updated terms need confirmation. |
+| PAY-011 | https://www.pesapal.com/tz/business/online | Pesapal Tanzania official business site | Local online checkout methods and API integration positioning | No Travelar price, payout model or SLA established. |
+| PAY-012 | https://docs.dpopay.com/dpo-pay-by-network/reference/quick-start-guide | DPO Pay by Network docs | Hosted checkout, `createToken`, redirect, callback and `verifyToken` flow | Confirm local methods, merchant of record, contract, version and production access. |
+| PAY-013 | https://docs.dpopay.com/dpo-pay-by-network/reference/payment-result-callbacks | DPO docs | Server-to-server callbacks, HTTPS and logging requirements in go-live checklist | Must implement exact current callback requirements and verify provider status. |
+| PAY-014 | https://docs.dpopay.com/dpo-pay-by-network/docs/frequently-asked-questions | DPO docs | Settlement may be delayed by fraud/compliance review; chargeback liability; refund support path | Exact reserve/holdback and refund API/contract may vary; obtain written merchant terms. |
+| LEG-001 | https://oagmis.oag.go.tz/portal/acts/80 | Office of Attorney General (Tanzania) | National Payment Systems Act; revised Act published 25 Apr 2025 and 2026 Electronic Money amendment listed | Read current consolidated Act and related regulations; counsel must assess OuterBlocks role. |
+| LEG-002 | https://bot.go.tz/PaymentSystem/regulations?lang=en | Bank of Tanzania | BoT's payment regulation remit and official regulations index | Use current instruments and written regulator advice for the transaction model. |
+| LEG-003 | https://bot.go.tz/Publications/Acts%2C%20Regulations%2C%20Circulars%2C%20Guidelines/Guidelines/en/2024071716364191.pdf | Bank of Tanzania, Guidelines on Fees and Charges for Banks and Financial Institutions (2024) | Guideline 19 prohibits banks/financial institutions and their merchants from imposing consumer fees on card merchant payments; details in guidelines | Scope for online ecommerce travel payment vs stated POS notice should be confirmed, but safest default is no card surcharge pending written advice. |
+| LEG-004 | https://www.bot.go.tz/Adverts/PressRelease/sw/2024121111254318.pdf | Bank of Tanzania notice (10 Dec 2024) | Explicit warning against card payment surcharges at POS terminals | Read with Guidelines 2024; get counsel on online marketplace application. |
+| LEG-005 | https://www.bot.go.tz/Publications/Acts%2C%20Regulations%2C%20Circulars%2C%20Guidelines/Guidelines/en/2023122922132970.pdf | Bank of Tanzania, Cloud Computing Guidelines for Financial Service Providers (2023) | Rules for financial-service providers' cloud arrangements; primary/data-centre location constraints for mission-critical data and approval criteria for non-mission critical cloud | Applies to BoT-regulated financial service providers; do not automatically assert this same rule governs Travelar as a non-PSP. A contracted PSP may be subject to it. |
+| LEG-006 | https://oagmis.oag.go.tz/portal/acts/88 | Office of Attorney General (Tanzania) | Electronic Transactions Act listing, including revised 2025 law | Detailed checkout disclosure/legal requirements should be assessed against the final mode/merchant model. |
+| LEG-007 | https://www.centralbank.go.ke/national-payments-system/ | Central Bank of Kenya | General Kenya payment-system/PSP regulatory framework | Kenya PSP onboarding and customer-fee rules require a separate legal/provider review before expansion. |
+
+## Evidence classes
+
+- **Primary documented capability:** product/API/legal content directly visible in an official provider or government source.
+- **Public price:** displayed on provider site but not necessarily contractually offered to Travelar.
+- **Partner-gated:** eligibility/account agreement/approval required.
+- **Unknown:** no sufficient public evidence or current account contract available.
+- **Decision required:** product owner / board decision after legal, finance and commercial evidence is supplied.
+
+## Critical contradiction to retain
+
+ClickPesa's public pricing page states its listed card-payment fee is charged to the customer (currently shown as 4.85%). BoT's 2024 Guidelines on Fees and Charges for Banks and Financial Institutions, guideline 19, state that a bank/financial institution and its merchant shall not impose fees/charges on consumers for card merchant payments; the BoT's December 2024 public notice also references card surcharges at POS terminals. Do not infer the legality of a Travelar online checkout surcharge from a PSP's pricing page. Obtain written interpretation and a compliant contracted pricing structure. Until then model card fees as merchant/Travelar cost, or as a separately quoted supplier/PSP cost borne by the contracting seller—not a prohibited customer surcharge.
+
+## Communications adapter evidence (added 23 October 2026)
+
+| ID | Source | Publisher / type | What it supports | Limits / follow-up |
+|---|---|---|---|---|
+| COMMS-001 | https://resend.com/features/webhooks | Resend official product/docs page | Email event webhooks and provider event visibility | Does not establish OuterBlocks account eligibility, country-specific data terms, delivery SLA or contracted price. |
+| COMMS-002 | https://resend.com/changelog/webhook-event-visibility | Resend official changelog (22 Jan 2026) | Resend event visibility and per-recipient delivery outcome event behavior as documented | API/event behavior can evolve; test current SDK/API version and review changelog during upgrades. |
+| COMMS-003 | https://resend.com/changelog/managing-webhooks-via-api | Resend official changelog (31 Oct 2025) | Webhook management via API and webhook signature verification using documented helper and headers | Must use current official verification procedure; never trust unsigned events. |
+| COMMS-004 | https://docs.aws.amazon.com/ses/latest/dg/monitor-sending-activity.html | Amazon SES official docs | Distinguishes sent, delivery, bounce, complaint, delivery delay and other email events | SES is an example provider, not a Travelar provider selection or endorsement. Delivery means recipient mail-server response, not that a person read the email. |
+| COMMS-005 | https://docs.aws.amazon.com/ses/latest/dg/setting-up-event-notifications.html | Amazon SES official docs | Event notification setup and the need to monitor bounces/complaints | SES notification setup and duplicate-event possibilities must be handled in app design. |
+| COMMS-006 | https://www.twilio.com/docs/messaging/guides/track-outbound-message-status | Twilio official docs | Outbound message status callbacks, provider-specific fields and signature validation recommendation | Does not establish Tanzania sender-ID/route coverage, eligibility, price or SLA for Travelar. |
+| COMMS-007 | https://www.twilio.com/docs/messaging/guides/outbound-message-status-in-status-callbacks | Twilio official docs | Outbound state transitions and warning that callback requests may not arrive in send order | Persist raw events and implement idempotent, out-of-order-safe processing. |
+| COMMS-008 | https://sms.sasidigital.co.tz/docs | SasiSMS public API reference | Example of regional provider API docs describing status reports, rate limits, sender-ID restrictions and service-unavailable responses | Current coverage, ownership, commercial terms, privacy terms, production performance and suitability require direct validation; not selected as a provider. |
+
+**Architecture conclusion supported by the sources:** communication providers expose different lifecycle/event semantics and can report asynchronous status. The need for a durable internal message intent, provider-attempt records, raw-event retention, normalized statuses and conservative failover is an engineering recommendation informed by those differences. Provider failover itself is not proof of guaranteed delivery.

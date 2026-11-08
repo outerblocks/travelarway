@@ -1,144 +1,209 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from '@/router';
-import { ArrowLeft, Plane, Clock, Briefcase, Check } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
+import { Link } from '@/router';
+import { ArrowLeft } from 'lucide-react';
+import { AirlineLogo } from '@/components/flights/AirlineLogo';
+import { FlightFareFacts } from '@/components/flights/FlightFareFacts';
+import { FlightItineraryList } from '@/components/flights/FlightItineraryList';
+import { ScheduleStrip } from '@/components/results/ScheduleStrip';
 import { useI18n } from '@/context/I18nContext';
-import { FLIGHT_RESULTS } from '@/data/mockData';
-import { locationMatches } from '@/domain/search';
-import { GenericResultsSkeleton } from '@/components/shared/Skeletons';
-import { LoadingState, EmptyResults, ErrorState, SearchSummaryBar } from '@/components/shared/States';
-import { formatCurrency, formatDate } from '@/utils/format';
-import type { FlightResult } from '@/types';
+import {
+  airportShort,
+  arrivesNextDayOf,
+  flightNumbers,
+  iataFromPlace,
+  journeyDurationOf,
+  marketingLabel,
+  splitRoundTrip,
+  viaAirportsOf,
+} from '@/domain/flight-results';
+import type { PublicAirLeg, PublicAirOffer } from '@/domain/air-offer';
+import { useDatabaseOffers } from '@/hooks/useDatabaseOffers';
+import { EmptyResults, LoadingState, QueryFeedback, SearchSummaryBar } from '@/components/shared/States';
+import { formatMoney } from '@/domain/money';
+import { formatClock, formatDate } from '@/utils/format';
 
 export function FlightResultsPage() {
-  const navigate = useNavigate();
-  const { bookingState, setSearchParams } = useApp();
   const { tp } = useI18n();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [results, setResults] = useState<FlightResult[]>([]);
-
-  const params = bookingState.searchParams;
-
-  useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => {
-      try {
-        let r = [...FLIGHT_RESULTS];
-        if (params.origin && params.destination) {
-          r = r.filter((f) =>
-            f.segments.some((s) =>
-              locationMatches(params.origin, [s.origin, s.originCity]) &&
-              locationMatches(params.destination, [s.destination, s.destinationCity])
-            )
-          );
-        }
-        if (r.length === 0 && !params.origin) r = FLIGHT_RESULTS;
-        setResults(r);
-        setLoading(false);
-      } catch {
-        setError(true);
-        setLoading(false);
-      }
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [params.origin, params.destination]);
-
-  const handleSelect = (flight: FlightResult) => {
-    setSearchParams({ ...params, extras: { ...params.extras, flightId: flight.id } });
-    navigate('/flights/booking');
-  };
-
-  if (loading) return (
-    <>
-      <SearchSummaryBar>
-        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link>
-        <span className="text-body font-medium text-neutral-900">{tp('flightSearch')}</span>
-      </SearchSummaryBar>
-      <GenericResultsSkeleton count={4} />
-      <LoadingState message={tp('searchingFlights')} />
-    </>
-  );
-
-  if (error) return <ErrorState message={tp('unableLoadFlights')} onRetry={() => window.location.reload()} />;
+  const { status, retry, params, flightOffers } = useDatabaseOffers('flights');
+  const dates = [
+    params.date ? formatDate(params.date) : '',
+    params.returnDate ? formatDate(params.returnDate) : '',
+  ].filter(Boolean).join(' · ');
 
   return (
+    <QueryFeedback
+      status={status}
+      onRetry={retry}
+      errorMessage={tp('unableLoadFlights')}
+      loading={(
+        <>
+          <SearchSummaryBar>
+            <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link>
+            <span className="text-body font-medium text-neutral-900">{tp('flightSearch')}</span>
+          </SearchSummaryBar>
+          <LoadingState count={4} message={tp('searchingFlights')} />
+        </>
+      )}
+    >
     <>
       <SearchSummaryBar>
         <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link>
-        <span className="text-body font-medium text-neutral-900">{params.origin || tp('departure')} → {params.destination || tp('destination')}</span>
-        <span className="text-body text-neutral-500">{params.date ? formatDate(params.date) : ''} · {tp('adultCount').replace('{count}', String(params.adults)).replace('{plural}', params.adults === 1 ? '' : 's')}</span>
+        <span className="text-body font-medium text-neutral-900">
+          {params.origin || tp('departure')} → {params.destination || tp('destination')}
+          {params.returnDate ? ` · ${tp('flightRoundTrip')}` : ''}
+        </span>
+        <span className="text-body text-neutral-500">
+          {dates} · {tp('adultCount').replace('{count}', String(params.adults)).replace('{plural}', params.adults === 1 ? '' : 's')}
+        </span>
       </SearchSummaryBar>
 
       <div className="section-container py-6">
-        <h1 className="text-page font-bold text-neutral-900 mb-6">{tp('flightCount').replace('{count}', String(results.length))}</h1>
-
-        {results.length === 0 ? (
+        <h1 className="text-page font-bold text-neutral-900 mb-6">
+          {tp('flightCount').replace('{count}', String(flightOffers.length))}
+        </h1>
+        {flightOffers.length === 0 ? (
           <EmptyResults message={tp('noFlightsFound')} subMessage={tp('tryDifferentDateRoute')} />
         ) : (
-          <div className="space-y-3">
-            {results.map((flight) => (
-              <div key={flight.id} className="ticket-row animate-fade-in p-5">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    {flight.segments.map((seg, i) => (
-                      <div key={i} className="flex items-center gap-4 mb-2">
-                        <div className="w-10 h-10 bg-brand-50 rounded-sm flex items-center justify-center">
-                          <Plane size={20} className="text-brand-600" />
-                        </div>
-                        <div>
-                          <p className="text-body font-bold text-neutral-900">{seg.airline} · {seg.flightNumber}</p>
-                          <p className="text-meta text-neutral-500">{seg.aircraft}</p>
-                        </div>
-                        <div className="flex-1 ml-4">
-                          <div className="flex items-center gap-4">
-                            <div>
-                              <p className="text-body font-bold text-neutral-900">{seg.departureTime}</p>
-                              <p className="text-meta text-neutral-500">{seg.originCity} ({seg.origin})</p>
-                            </div>
-                            <div className="flex-1 flex items-center gap-2">
-                              <div className="flex-1 h-px bg-neutral-300 relative">
-                                <Plane size={14} className="absolute left-1/2 -top-2 -translate-x-1/2 text-neutral-400 rotate-0" />
-                              </div>
-                              <span className="text-meta text-neutral-500 flex items-center gap-1">
-                                <Clock size={12} /> {seg.duration}
-                              </span>
-                              <div className="flex-1 h-px bg-neutral-300" />
-                            </div>
-                            <div>
-                              <p className="text-body font-bold text-neutral-900">{seg.arrivalTime}</p>
-                              <p className="text-meta text-neutral-500">{seg.destinationCity} ({seg.destination})</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="flex items-center gap-3 mt-2 text-meta text-neutral-500">
-                      <span className="flex items-center gap-1"><Briefcase size={12} /> {flight.baggageInfo}</span>
-                      {flight.refundable ? (
-                        <span className="flex items-center gap-1 text-accent-600"><Check size={12} /> {tp('refundable')}</span>
-                      ) : (
-                        <span>{tp('nonRefundable')}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="lg:text-right lg:border-l lg:border-neutral-200 lg:pl-6">
-                    <p className="text-meta text-neutral-500 uppercase tracking-wide">{tp('totalPrice')}</p>
-                    <p className="text-listing font-bold text-brand-600 whitespace-nowrap">
-                      {formatCurrency(flight.totalPrice, flight.currency, 'TSh')}
-                    </p>
-                    <p className="text-meta text-neutral-500">{flight.cabinClass}</p>
-                    <button onClick={() => handleSelect(flight)} className="btn-primary mt-2 whitespace-nowrap">
-                      {tp('selectFlight')}
-                    </button>
-                  </div>
-                </div>
-              </div>
+          <ul className="offer-sheet">
+            {flightOffers.map((offer) => (
+              <FlightOfferCard
+                key={offer.id}
+                offer={offer}
+                destinationCode={iataFromPlace(params.destination)}
+                viaLabel={tp('via')}
+              />
             ))}
-          </div>
+          </ul>
         )}
       </div>
     </>
+    </QueryFeedback>
+  );
+}
+
+function FlightOfferCard({
+  offer,
+  destinationCode,
+  viaLabel,
+}: {
+  offer: PublicAirOffer;
+  destinationCode?: string;
+  viaLabel: string;
+}) {
+  const { tp } = useI18n();
+  const { outbound, inbound } = splitRoundTrip(offer.itinerary, destinationCode);
+  const first = outbound[0] ?? offer.itinerary[0];
+  const cabin = [offer.cabinClass, offer.fareBrand].filter(Boolean).join(', ');
+  const airline = marketingLabel(offer);
+
+  return (
+    <li className="offer-row">
+      <div className="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-start lg:gap-8 lg:px-5">
+        <div className="flex min-w-0 items-center gap-3 lg:w-[16rem] lg:shrink-0">
+          <AirlineLogo code={first?.carrier || ''} name={first?.carrierName || airline} />
+          <div className="min-w-0">
+            <p className="truncate text-body font-semibold text-neutral-900">{airline}</p>
+            <p className="truncate text-meta text-neutral-600">{flightNumbers(offer)}</p>
+            {cabin ? <p className="truncate text-meta text-neutral-600">{cabin}</p> : null}
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-4">
+          <DirectionStrip label={inbound.length ? tp('flightOutbound') : null} legs={outbound} viaLabel={viaLabel} />
+          {inbound.length ? (
+            <DirectionStrip label={tp('flightReturn')} legs={inbound} viaLabel={viaLabel} />
+          ) : null}
+        </div>
+
+        <div className="flex items-end justify-between gap-4 border-t border-neutral-200 pt-3 lg:w-44 lg:shrink-0 lg:flex-col lg:items-end lg:border-t-0 lg:pt-0">
+          <div className="text-right">
+            <p className="whitespace-nowrap text-listing font-semibold tabular-nums text-brand-800">
+              {formatMoney(offer.totalPrice, offer.currency)}
+            </p>
+            {offer.baggageInfo ? <p className="mt-1 text-meta text-neutral-600">{offer.baggageInfo}</p> : null}
+          </div>
+          <Link to={`/flights/booking?offer=${encodeURIComponent(offer.id)}`} className="btn-primary px-4 py-2 text-label">
+            {tp('selectFlight')}
+          </Link>
+        </div>
+      </div>
+
+      <FlightItineraryDetails
+        offer={offer}
+        outbound={outbound}
+        inbound={inbound}
+      />
+    </li>
+  );
+}
+
+function DirectionStrip({
+  label,
+  legs,
+  viaLabel,
+}: {
+  label: string | null;
+  legs: PublicAirLeg[];
+  viaLabel: string;
+}) {
+  const { tp } = useI18n();
+  const first = legs[0];
+  const last = legs[legs.length - 1] ?? first;
+  if (!first || !last) return null;
+  const via = viaAirportsOf(legs);
+  const stopsLabel = legs.length <= 1
+    ? tp('flightDirect')
+    : tp('flightStops')
+      .replace('{count}', String(legs.length - 1))
+      .replace('{plural}', legs.length === 2 ? '' : 's');
+  const connection = via.length
+    ? `${stopsLabel} ${viaLabel.toLowerCase()} ${via.join(', ')}`
+    : stopsLabel;
+
+  return (
+    <div>
+      {label ? <p className="mb-1.5 text-meta font-medium text-neutral-500">{label}</p> : null}
+      <ScheduleStrip
+        startTime={formatClock(first.departure)}
+        startPlace={airportShort(first.origin, first.originName)}
+        endTime={formatClock(last.arrival)}
+        endPlace={airportShort(last.destination, last.destinationName)}
+        duration={journeyDurationOf(legs)}
+        connection={connection}
+        nextDay={arrivesNextDayOf(legs)}
+      />
+    </div>
+  );
+}
+
+function FlightItineraryDetails({
+  offer,
+  outbound,
+  inbound,
+}: {
+  offer: PublicAirOffer;
+  outbound: PublicAirLeg[];
+  inbound: PublicAirLeg[];
+}) {
+  const { tp } = useI18n();
+
+  return (
+    <details className="border-t border-neutral-200">
+      <summary className="cursor-pointer list-none px-4 py-2.5 text-label font-medium text-brand-700 marker:content-none [&::-webkit-details-marker]:hidden">
+        {tp('flightDetails')}
+      </summary>
+      <div className="px-4 pb-5">
+        {inbound.length ? <p className="pt-1 text-meta font-medium text-neutral-500">{tp('flightOutbound')}</p> : null}
+        <FlightItineraryList offer={offer} legs={outbound} />
+        {inbound.length ? (
+          <>
+            <p className="mt-4 text-meta font-medium text-neutral-500">{tp('flightReturn')}</p>
+            <FlightItineraryList offer={offer} legs={inbound} />
+          </>
+        ) : null}
+        <div className="mt-4 border-t border-neutral-100 pt-4">
+          <FlightFareFacts offer={offer} />
+        </div>
+      </div>
+    </details>
   );
 }

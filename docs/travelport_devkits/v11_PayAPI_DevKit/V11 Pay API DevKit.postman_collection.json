@@ -1,0 +1,970 @@
+{
+  "info": {
+    "_postman_id": "d7bc3595-44d4-47f1-a8b4-76bcb31de84a",
+    "name": "V11 Pay API DevKit",
+    "description": "# Introduction\nTravelport Trip Services allows developers to quickly build solutions for searching and booking travel across the full range of Travelport supplier content for air, hotel, and car. Trip Services offers developers an off-the-shelf menu of APIs to create efficient, responsive travel applications.\n\n# Overview\nRequests are RESTful JSON.\n\n# Authentication\nAuthentication with OAuth 2.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "12107330"
+  },
+  "item": [
+    {
+      "name": "OAuth",
+      "item": [
+        {
+          "name": "OAuth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonObject =JSON.parse(responseBody);",
+                  "pm.collectionVariables.set(\"token\", jsonObject.access_token);",
+                  "pm.collectionVariables.set(\"XAUTH_TRAVELPORT_ACCESSGROUP_1G\", \"\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cache-Control",
+                "value": "no-cache",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://oauth.pp.travelport.com/oauth/oauth20/token",
+              "protocol": "https",
+              "host": [
+                "oauth",
+                "pp",
+                "travelport",
+                "com"
+              ],
+              "path": [
+                "oauth",
+                "oauth20",
+                "token"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pay API",
+      "item": [
+        {
+          "name": "Auth Minimum VI",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonResponse =JSON.parse(responseBody);\r",
+                  "\r",
+                  "var approvalCode = jsonResponse.PaymentCardAuthorizationResponse.PaymentCardAuthorization.approvalCode;\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"approvalCode\", approvalCode);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{XAUTH_TRAVELPORT_ACCESSGROUP_1G}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwianRpIjoiOWFycmZ0aGpxN28xIn0..4o6kBhIF619Zj04xRP0C0g.9vqK4tfC34apr8wLsD-5KzSwVu6RPufP_NbwvmNAJornhwgXX-suP_aYJP70Sszxzng8rlMgkJiv9SO7HQ5ltI2RGh_9LqAtUff3d1rxp_xNyVEM5rFY7NC9T7DVwVYAL14YVo413mVMQ5nJ0hFRkYzb7YViw3vfjTBB4hnKiJl8NmtfH7uUtWznh4oDZIHbf384sgRZo_YGph8XMsUo-nN6WK8jc8vYQep7xkc_7vJeMwNmO4bz4oFGDzzRkyyKo-7JnNsOsOVqHv-sMsF64zDrW3CruLy7axIY9Av33VT_no4dGOdKnfxzF1esVMqlzkM7OMFt5dQjNFtaKQ7AAc6TFWch3LZl7RKNHDlFda9xT3JpHv4TZI3zMH2PdSHyYQIReCm7FL2vTjitQ-tX8Jj5vwUaXmK0kNm5sLXR_m-uQNBg9Vhb2TDfOL7zlXAUMQ7mLMgqelGZKjCAkfYplCw5HCZoIsT_8YebSoOl1Ue9Nh168JGm-fFdxJTU0l5kOyqbTrUqf3GlhzMWzdapqIkMkXNtC8cI_1LM_IE_qjXXAbpXHhyJIgnwBznYxiHy9yklqjfaicouaZZAoH6YRRLzF5l8lzlAInuRrFJIYOj9y6Vov3Cd8oQSfKp9K5CKkfpFeHt44vMWX31x2FKWxNqajkwbXCF9ScbTXEQ1Sc7hkFRPJAm0w61T8A2A-5oo0Sn8MOaS9MAOQsZWCjmD8Ta76OgnYttnYs6QriHxAK_tgz4s2C2TSrqRLBlVregFCxneFnhSg769-3gFbvxz6AG8sDcBp3dwJKME0_d7BoAbLxQvwlax14n3C3G9W4HVv-VYMVhuk55UmJMyYbteh27xIaY9iw7-TsTyBQeaXux6Z-mUJgTSBPfdzDgWk37Rs4F6zIN1NURW4585XEzdN64YVTvtJfQax4tcJtTxYxbr5fqV1lI3upfn3HVO2bhaol90Owu6sEv29PxhQ3Yk5z3zmhYrBRU1gZGxiEORskDpIQD5GSnhJbNPjFkOf57KNT8wXU7PsSPPvK0UE9mJtZ9kze9aGZ4yduFouhZSrVKGD45sRj0k4Pf7atDsVeLYu1ufRz_-BysduFwpTnhvlIw43ZM_Wntfgv1RIBErHi05htoB7Uk4rNA08inrOu8UziraAS218P9SA8FL6m_sH6sbkLDS9UyX3rEFuJILeL3eQguVu_n8Uk3KQpcOERZ6ZqyOc4hj2HN3CaAHmbX24vGuZ-up5_LsoW7-ILfpAUXOBKJMWOb5YGdP0Tk9mdRAvLK5zdYdcX71Rs9tgfNxdlYRlQ_BIep_zqPUBmwlkQcMrAI4w_r5NSTsOe-BS8MwOjcAWt18p7owSTxwfOcChHyg5D6FOWCqvyxiToRrlvv4npaCWCKn1-9BLN4NlnCClhzPBUvZebl67e2hw7Z-bGWFoOPpDJ0lsGe4cxcL7gYc97oM38SPwUoimtuN6NRvIGFFAfD27ENafHW-oAqtKCUj3M0yJsd_TI0TE5DnbHab-ChhfySTkqhJH4iGHyiTgzXc24CLMClTMzbblxnNWkSwkPRFhZ-Na5lVLqXmpLY_ieNTjBJDSkm01J0Fw5GNoMBF7QF_31D6ZzvTDlGbfjkbBtMZUJImSQIh0TYgjXhf6j9voBe197S6qfoBeY-GeapiUha-Qf0vRTVA3Wm_iYx3muAQ-69gLfLPdjdm2CNrJU9_RK_J69C-SlSMUqYBHiWA4PXRgk70iDTqL4oY6ZBAODCuXLtwYiV05AXbWpsneEW9HPjx92CUKG2eg8tgUquTGoQ2d_JTKUsdarJa-AuzuAuVLZPkpjAV38L62-TtN7Lj-U8GLwXKBPtZ5xxvja6DhrHS22mz4MD09hDbxy2CfWQiMaNKpm5oOUOmTJAE6s6JB1kc0iIv6Xdqnc8quv7iWPGnMB8fIF9KSy8TnNVBLTzcDbnN_3yto_dydA0Km5BrOjQ2hzVNqpgE6AQOB_M044RprNNN1RjHGEwF_mRpZtGr7kSo5BuT88SASLnopqDdYYmIAAZYQ0UaaMZfFMfTohlAmgTMQunl464QBj_4Q1hJ6CS8gyBe-BWpEsLlxcbH4P0r2okB5ZtvKD5U3nR6lWIMkvMtJg9wnzHYr7wlDbGnD8LmHHwDPwWJmdnFxYpB5m-G81zhx4GjfJqqpNlefbOcg30xHAEQ6sj47SLBonKbD2J4V8pKxNUOQghSo0tyoScFEnIhGXCxQeIKgPngJFNuvWrSBjw_BheJOYlEyFGuiWgde4g2gT1Ihu-qyqiH93SLgnstw5dAoALFD33OMF5BoL73zDnNiiTu3BSVsPOSwB6CU34Vu5LTSIBD-NmeLM9ltltC3TJkqqGr74PKCbQHZ45IIQHpwaACvQEzY-0d4j1jr8vS5SCnsm7kUZ5m-R6BSX09tOq8CMhD6IdmDLDm0XVg8pkdENNCmavNJ5KwHTouPTWL1uFFPIXedwqltJKo5xGx3UM-FDLcoMMTqgfdwj__FgWPsZrSojq_1NxnQA_3E3nr-OcNWbRCmzDw4JMb4XR1xexWGXtpCEDOEyYy1eqkOI_CPocfRFQX3BmMseXK9BW8zhEdCiX2oe3JSMQe5Dp_xvAJYPshGbc4uUK8-C54tILTyaf6fkkNBjn7kBsrlGn98P0UPO07-xKiLlxfrxFDSmmIt0IzEQLgeZX3c3egut3bVXMkEmdkeC1qigKzoS1z3nThJTzd95bXDlEfygXfqGb2iEqcXMhrP0RS14ChyX-Xz53Mm2CDpTkRoUoqlsTA2Nkl5Bj5ZA4lFNUe3xvSW3XA_lzuCe4gIHztcrEU12Bv5puSrW7HbqvNOPHFKw7oxmbDYNSa_PHiSf8R0U7BW_MaKZDIIv0d8ThOmb4Jv4UBMHsArr-eQoHLi2KyWVL3L4sL4DYG2BU9i50zIMqDFhE9QYKdjgQEaqwdAXcPppRZsABhjMwsPHuvFXdHzGkGc8ItpYCcMIcTuiufpp7KNRLj3ueRKUn8xcbH1cidoDravIB6scbAiijY0ldPfvM2mM8CUpJ-SOfQN_SaNTZZis8empesqQLTSQ6eC85AiFMx6cd3Kp-tzYAPfvYNmYHS-Hfuk8TI3XUDQMsMFOA0KnHjLf4eSrOmQhzRhxGui29JgWohhpufcRAJ483XmjMbNqO_cJCcZOnl-wD3lxAM3zzSSB0AhBL82G9kcIeR1wb3lrJ8Vg.hIXmxEc1XEYInCejmeHnxQ",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PaymentCardAuthorizationRequest\": {\r\n        \"PaymentCardAuthorizationQueryRequest\": {\r\n            \"PaymentCardRequest\": {\r\n                \"airlineMerchantCode\": \"AA\",\r\n                \"expireDate\": \"1223\",\r\n                \"agentSignOn\": \"ABC123BZ\",\r\n                \"localDateTime\": \"2022-08-02T09:45:00\",\r\n                \"paymentCardCode\": \"VI\",\r\n                \"PrimaryAccountNumber\": \"4012001037141112\",\r\n                \"CurrencyAmount\": {\r\n                    \"value\": \"130\",\r\n                    \"code\": \"USD\"\r\n                }\r\n            }\r\n        }\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "https://api.apim-a.adc.pp.travelport.io:443/11/payment/paymentcardauthorizations/AUTH",
+              "protocol": "https",
+              "host": [
+                "api",
+                "apim-a",
+                "adc",
+                "pp",
+                "travelport",
+                "io"
+              ],
+              "port": "443",
+              "path": [
+                "11",
+                "payment",
+                "paymentcardauthorizations",
+                "AUTH"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth 3DS VI",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonResponse =JSON.parse(responseBody);\r",
+                  "\r",
+                  "var approvalCode = jsonResponse.PaymentCardAuthorizationResponse.PaymentCardAuthorization.approvalCode;\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"approvalCode\", approvalCode);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{XAUTH_TRAVELPORT_ACCESSGROUP_1G}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwianRpIjoiOWFycmZ0aGpxN28xIn0..4o6kBhIF619Zj04xRP0C0g.9vqK4tfC34apr8wLsD-5KzSwVu6RPufP_NbwvmNAJornhwgXX-suP_aYJP70Sszxzng8rlMgkJiv9SO7HQ5ltI2RGh_9LqAtUff3d1rxp_xNyVEM5rFY7NC9T7DVwVYAL14YVo413mVMQ5nJ0hFRkYzb7YViw3vfjTBB4hnKiJl8NmtfH7uUtWznh4oDZIHbf384sgRZo_YGph8XMsUo-nN6WK8jc8vYQep7xkc_7vJeMwNmO4bz4oFGDzzRkyyKo-7JnNsOsOVqHv-sMsF64zDrW3CruLy7axIY9Av33VT_no4dGOdKnfxzF1esVMqlzkM7OMFt5dQjNFtaKQ7AAc6TFWch3LZl7RKNHDlFda9xT3JpHv4TZI3zMH2PdSHyYQIReCm7FL2vTjitQ-tX8Jj5vwUaXmK0kNm5sLXR_m-uQNBg9Vhb2TDfOL7zlXAUMQ7mLMgqelGZKjCAkfYplCw5HCZoIsT_8YebSoOl1Ue9Nh168JGm-fFdxJTU0l5kOyqbTrUqf3GlhzMWzdapqIkMkXNtC8cI_1LM_IE_qjXXAbpXHhyJIgnwBznYxiHy9yklqjfaicouaZZAoH6YRRLzF5l8lzlAInuRrFJIYOj9y6Vov3Cd8oQSfKp9K5CKkfpFeHt44vMWX31x2FKWxNqajkwbXCF9ScbTXEQ1Sc7hkFRPJAm0w61T8A2A-5oo0Sn8MOaS9MAOQsZWCjmD8Ta76OgnYttnYs6QriHxAK_tgz4s2C2TSrqRLBlVregFCxneFnhSg769-3gFbvxz6AG8sDcBp3dwJKME0_d7BoAbLxQvwlax14n3C3G9W4HVv-VYMVhuk55UmJMyYbteh27xIaY9iw7-TsTyBQeaXux6Z-mUJgTSBPfdzDgWk37Rs4F6zIN1NURW4585XEzdN64YVTvtJfQax4tcJtTxYxbr5fqV1lI3upfn3HVO2bhaol90Owu6sEv29PxhQ3Yk5z3zmhYrBRU1gZGxiEORskDpIQD5GSnhJbNPjFkOf57KNT8wXU7PsSPPvK0UE9mJtZ9kze9aGZ4yduFouhZSrVKGD45sRj0k4Pf7atDsVeLYu1ufRz_-BysduFwpTnhvlIw43ZM_Wntfgv1RIBErHi05htoB7Uk4rNA08inrOu8UziraAS218P9SA8FL6m_sH6sbkLDS9UyX3rEFuJILeL3eQguVu_n8Uk3KQpcOERZ6ZqyOc4hj2HN3CaAHmbX24vGuZ-up5_LsoW7-ILfpAUXOBKJMWOb5YGdP0Tk9mdRAvLK5zdYdcX71Rs9tgfNxdlYRlQ_BIep_zqPUBmwlkQcMrAI4w_r5NSTsOe-BS8MwOjcAWt18p7owSTxwfOcChHyg5D6FOWCqvyxiToRrlvv4npaCWCKn1-9BLN4NlnCClhzPBUvZebl67e2hw7Z-bGWFoOPpDJ0lsGe4cxcL7gYc97oM38SPwUoimtuN6NRvIGFFAfD27ENafHW-oAqtKCUj3M0yJsd_TI0TE5DnbHab-ChhfySTkqhJH4iGHyiTgzXc24CLMClTMzbblxnNWkSwkPRFhZ-Na5lVLqXmpLY_ieNTjBJDSkm01J0Fw5GNoMBF7QF_31D6ZzvTDlGbfjkbBtMZUJImSQIh0TYgjXhf6j9voBe197S6qfoBeY-GeapiUha-Qf0vRTVA3Wm_iYx3muAQ-69gLfLPdjdm2CNrJU9_RK_J69C-SlSMUqYBHiWA4PXRgk70iDTqL4oY6ZBAODCuXLtwYiV05AXbWpsneEW9HPjx92CUKG2eg8tgUquTGoQ2d_JTKUsdarJa-AuzuAuVLZPkpjAV38L62-TtN7Lj-U8GLwXKBPtZ5xxvja6DhrHS22mz4MD09hDbxy2CfWQiMaNKpm5oOUOmTJAE6s6JB1kc0iIv6Xdqnc8quv7iWPGnMB8fIF9KSy8TnNVBLTzcDbnN_3yto_dydA0Km5BrOjQ2hzVNqpgE6AQOB_M044RprNNN1RjHGEwF_mRpZtGr7kSo5BuT88SASLnopqDdYYmIAAZYQ0UaaMZfFMfTohlAmgTMQunl464QBj_4Q1hJ6CS8gyBe-BWpEsLlxcbH4P0r2okB5ZtvKD5U3nR6lWIMkvMtJg9wnzHYr7wlDbGnD8LmHHwDPwWJmdnFxYpB5m-G81zhx4GjfJqqpNlefbOcg30xHAEQ6sj47SLBonKbD2J4V8pKxNUOQghSo0tyoScFEnIhGXCxQeIKgPngJFNuvWrSBjw_BheJOYlEyFGuiWgde4g2gT1Ihu-qyqiH93SLgnstw5dAoALFD33OMF5BoL73zDnNiiTu3BSVsPOSwB6CU34Vu5LTSIBD-NmeLM9ltltC3TJkqqGr74PKCbQHZ45IIQHpwaACvQEzY-0d4j1jr8vS5SCnsm7kUZ5m-R6BSX09tOq8CMhD6IdmDLDm0XVg8pkdENNCmavNJ5KwHTouPTWL1uFFPIXedwqltJKo5xGx3UM-FDLcoMMTqgfdwj__FgWPsZrSojq_1NxnQA_3E3nr-OcNWbRCmzDw4JMb4XR1xexWGXtpCEDOEyYy1eqkOI_CPocfRFQX3BmMseXK9BW8zhEdCiX2oe3JSMQe5Dp_xvAJYPshGbc4uUK8-C54tILTyaf6fkkNBjn7kBsrlGn98P0UPO07-xKiLlxfrxFDSmmIt0IzEQLgeZX3c3egut3bVXMkEmdkeC1qigKzoS1z3nThJTzd95bXDlEfygXfqGb2iEqcXMhrP0RS14ChyX-Xz53Mm2CDpTkRoUoqlsTA2Nkl5Bj5ZA4lFNUe3xvSW3XA_lzuCe4gIHztcrEU12Bv5puSrW7HbqvNOPHFKw7oxmbDYNSa_PHiSf8R0U7BW_MaKZDIIv0d8ThOmb4Jv4UBMHsArr-eQoHLi2KyWVL3L4sL4DYG2BU9i50zIMqDFhE9QYKdjgQEaqwdAXcPppRZsABhjMwsPHuvFXdHzGkGc8ItpYCcMIcTuiufpp7KNRLj3ueRKUn8xcbH1cidoDravIB6scbAiijY0ldPfvM2mM8CUpJ-SOfQN_SaNTZZis8empesqQLTSQ6eC85AiFMx6cd3Kp-tzYAPfvYNmYHS-Hfuk8TI3XUDQMsMFOA0KnHjLf4eSrOmQhzRhxGui29JgWohhpufcRAJ483XmjMbNqO_cJCcZOnl-wD3lxAM3zzSSB0AhBL82G9kcIeR1wb3lrJ8Vg.hIXmxEc1XEYInCejmeHnxQ",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PaymentCardAuthorizationRequest\": {\r\n        \"PaymentCardAuthorizationQueryRequest\": {\r\n            \"PaymentCardRequest\": {\r\n                \"airlineMerchantCode\": \"AA\",\r\n                \"extendedPaymentInstallments\": \"06\",\r\n                \"expireDate\": \"1223\",\r\n                \"eCI\": \"05\",\r\n                \"cAVV\": \"AAACBGESJIMBIFMBZhIkAAAAAAA=\",\r\n                \"xID\": \"MDAwMDAwMDAwMDEyMzQ2Njc4OTA=\",\r\n                \"agentSignOn\": \"ZD1C05\",\r\n                \"localDateTime\": \"2022-06-08T09:45:00\",\r\n                \"paymentCardCode\": \"VI\",\r\n                \"PrimaryAccountNumber\": \"4012001037141112\",\r\n                \"CurrencyAmount\": {\r\n                    \"value\": \"20066\",\r\n                    \"code\": \"USD\"\r\n                },\r\n                \"CardHolder\": {\r\n                    \"@type\": \"CardHolder\",\r\n                    \"CardHolderName\": \"John Doe\",\r\n                    \"IP4Address\": \"111.222.0.0\",\r\n                    \"Person\": {\r\n                        \"dob\": \"2011-01-24\",\r\n                        \"PersonName\": {\r\n                            \"Given\": \"John\",\r\n                            \"Middle\": \"E\",\r\n                            \"Surname\": \"Doe\"\r\n                        },\r\n                        \"Address\": [\r\n                            {\r\n                                \"AddressLine\": [\r\n                                    \"123 Main St\"\r\n                                ],\r\n                                \"City\": \"YourCity\",\r\n                                \"StateProv\": {\r\n                                    \"value\": \"CO\"\r\n                                },\r\n                                \"Country\": {\r\n                                    \"value\": \"IN\"\r\n                                },\r\n                                \"PostalCode\": \"80010\"\r\n                            }\r\n                        ],\r\n                        \"Telephone\": [\r\n                            {\r\n                                \"role\": \"Mobile\",\r\n                                \"phoneNumber\": \"5551212\"\r\n                            }\r\n                        ],\r\n                        \"Email\": [\r\n                            {\r\n                                \"value\": \"happy.customer@travelport.com\"\r\n                            }\r\n                        ]\r\n                    }\r\n                },\r\n                \"TravelInfoAir\": {\r\n                    \"departureDate\": \"2018-08-28\",\r\n                    \"numberOfTravelers\": 1,\r\n                    \"fareBasisCode\": \"Y\",\r\n                    \"LocatorCode\": {\r\n                        \"value\": \"ZXG25P\",\r\n                        \"source\": \"1G\"\r\n                    },\r\n                    \"FirstFlightNumber\": \"1123\",\r\n                    \"FirstFlightDepartureTime\": \"09:45:00-06:00\",\r\n                    \"FirstSegmentClass\": \"F\",\r\n                    \"AirportCodes\": [\r\n                        \"DEN\",\r\n                        \"ORD\",\r\n                        \"DEN\",\r\n                        \"DFW\"\r\n                    ],\r\n                    \"AirlineCodes\": [\r\n                        \"AA\",\r\n                        \"BA\",\r\n                        \"DL\"\r\n                    ]\r\n                }\r\n            }\r\n        }\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "https://api.apim-a.adc.pp.travelport.io:443/11/payment/paymentcardauthorizations/AUTH",
+              "protocol": "https",
+              "host": [
+                "api",
+                "apim-a",
+                "adc",
+                "pp",
+                "travelport",
+                "io"
+              ],
+              "port": "443",
+              "path": [
+                "11",
+                "payment",
+                "paymentcardauthorizations",
+                "AUTH"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth Superset CA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonResponse =JSON.parse(responseBody);\r",
+                  "\r",
+                  "var approvalCode = jsonResponse.PaymentCardAuthorizationResponse.PaymentCardAuthorization.approvalCode;\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"approvalCode\", approvalCode);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{XAUTH_TRAVELPORT_ACCESSGROUP_1G}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwianRpIjoiOWFycmZ0aGpxN28xIn0..4o6kBhIF619Zj04xRP0C0g.9vqK4tfC34apr8wLsD-5KzSwVu6RPufP_NbwvmNAJornhwgXX-suP_aYJP70Sszxzng8rlMgkJiv9SO7HQ5ltI2RGh_9LqAtUff3d1rxp_xNyVEM5rFY7NC9T7DVwVYAL14YVo413mVMQ5nJ0hFRkYzb7YViw3vfjTBB4hnKiJl8NmtfH7uUtWznh4oDZIHbf384sgRZo_YGph8XMsUo-nN6WK8jc8vYQep7xkc_7vJeMwNmO4bz4oFGDzzRkyyKo-7JnNsOsOVqHv-sMsF64zDrW3CruLy7axIY9Av33VT_no4dGOdKnfxzF1esVMqlzkM7OMFt5dQjNFtaKQ7AAc6TFWch3LZl7RKNHDlFda9xT3JpHv4TZI3zMH2PdSHyYQIReCm7FL2vTjitQ-tX8Jj5vwUaXmK0kNm5sLXR_m-uQNBg9Vhb2TDfOL7zlXAUMQ7mLMgqelGZKjCAkfYplCw5HCZoIsT_8YebSoOl1Ue9Nh168JGm-fFdxJTU0l5kOyqbTrUqf3GlhzMWzdapqIkMkXNtC8cI_1LM_IE_qjXXAbpXHhyJIgnwBznYxiHy9yklqjfaicouaZZAoH6YRRLzF5l8lzlAInuRrFJIYOj9y6Vov3Cd8oQSfKp9K5CKkfpFeHt44vMWX31x2FKWxNqajkwbXCF9ScbTXEQ1Sc7hkFRPJAm0w61T8A2A-5oo0Sn8MOaS9MAOQsZWCjmD8Ta76OgnYttnYs6QriHxAK_tgz4s2C2TSrqRLBlVregFCxneFnhSg769-3gFbvxz6AG8sDcBp3dwJKME0_d7BoAbLxQvwlax14n3C3G9W4HVv-VYMVhuk55UmJMyYbteh27xIaY9iw7-TsTyBQeaXux6Z-mUJgTSBPfdzDgWk37Rs4F6zIN1NURW4585XEzdN64YVTvtJfQax4tcJtTxYxbr5fqV1lI3upfn3HVO2bhaol90Owu6sEv29PxhQ3Yk5z3zmhYrBRU1gZGxiEORskDpIQD5GSnhJbNPjFkOf57KNT8wXU7PsSPPvK0UE9mJtZ9kze9aGZ4yduFouhZSrVKGD45sRj0k4Pf7atDsVeLYu1ufRz_-BysduFwpTnhvlIw43ZM_Wntfgv1RIBErHi05htoB7Uk4rNA08inrOu8UziraAS218P9SA8FL6m_sH6sbkLDS9UyX3rEFuJILeL3eQguVu_n8Uk3KQpcOERZ6ZqyOc4hj2HN3CaAHmbX24vGuZ-up5_LsoW7-ILfpAUXOBKJMWOb5YGdP0Tk9mdRAvLK5zdYdcX71Rs9tgfNxdlYRlQ_BIep_zqPUBmwlkQcMrAI4w_r5NSTsOe-BS8MwOjcAWt18p7owSTxwfOcChHyg5D6FOWCqvyxiToRrlvv4npaCWCKn1-9BLN4NlnCClhzPBUvZebl67e2hw7Z-bGWFoOPpDJ0lsGe4cxcL7gYc97oM38SPwUoimtuN6NRvIGFFAfD27ENafHW-oAqtKCUj3M0yJsd_TI0TE5DnbHab-ChhfySTkqhJH4iGHyiTgzXc24CLMClTMzbblxnNWkSwkPRFhZ-Na5lVLqXmpLY_ieNTjBJDSkm01J0Fw5GNoMBF7QF_31D6ZzvTDlGbfjkbBtMZUJImSQIh0TYgjXhf6j9voBe197S6qfoBeY-GeapiUha-Qf0vRTVA3Wm_iYx3muAQ-69gLfLPdjdm2CNrJU9_RK_J69C-SlSMUqYBHiWA4PXRgk70iDTqL4oY6ZBAODCuXLtwYiV05AXbWpsneEW9HPjx92CUKG2eg8tgUquTGoQ2d_JTKUsdarJa-AuzuAuVLZPkpjAV38L62-TtN7Lj-U8GLwXKBPtZ5xxvja6DhrHS22mz4MD09hDbxy2CfWQiMaNKpm5oOUOmTJAE6s6JB1kc0iIv6Xdqnc8quv7iWPGnMB8fIF9KSy8TnNVBLTzcDbnN_3yto_dydA0Km5BrOjQ2hzVNqpgE6AQOB_M044RprNNN1RjHGEwF_mRpZtGr7kSo5BuT88SASLnopqDdYYmIAAZYQ0UaaMZfFMfTohlAmgTMQunl464QBj_4Q1hJ6CS8gyBe-BWpEsLlxcbH4P0r2okB5ZtvKD5U3nR6lWIMkvMtJg9wnzHYr7wlDbGnD8LmHHwDPwWJmdnFxYpB5m-G81zhx4GjfJqqpNlefbOcg30xHAEQ6sj47SLBonKbD2J4V8pKxNUOQghSo0tyoScFEnIhGXCxQeIKgPngJFNuvWrSBjw_BheJOYlEyFGuiWgde4g2gT1Ihu-qyqiH93SLgnstw5dAoALFD33OMF5BoL73zDnNiiTu3BSVsPOSwB6CU34Vu5LTSIBD-NmeLM9ltltC3TJkqqGr74PKCbQHZ45IIQHpwaACvQEzY-0d4j1jr8vS5SCnsm7kUZ5m-R6BSX09tOq8CMhD6IdmDLDm0XVg8pkdENNCmavNJ5KwHTouPTWL1uFFPIXedwqltJKo5xGx3UM-FDLcoMMTqgfdwj__FgWPsZrSojq_1NxnQA_3E3nr-OcNWbRCmzDw4JMb4XR1xexWGXtpCEDOEyYy1eqkOI_CPocfRFQX3BmMseXK9BW8zhEdCiX2oe3JSMQe5Dp_xvAJYPshGbc4uUK8-C54tILTyaf6fkkNBjn7kBsrlGn98P0UPO07-xKiLlxfrxFDSmmIt0IzEQLgeZX3c3egut3bVXMkEmdkeC1qigKzoS1z3nThJTzd95bXDlEfygXfqGb2iEqcXMhrP0RS14ChyX-Xz53Mm2CDpTkRoUoqlsTA2Nkl5Bj5ZA4lFNUe3xvSW3XA_lzuCe4gIHztcrEU12Bv5puSrW7HbqvNOPHFKw7oxmbDYNSa_PHiSf8R0U7BW_MaKZDIIv0d8ThOmb4Jv4UBMHsArr-eQoHLi2KyWVL3L4sL4DYG2BU9i50zIMqDFhE9QYKdjgQEaqwdAXcPppRZsABhjMwsPHuvFXdHzGkGc8ItpYCcMIcTuiufpp7KNRLj3ueRKUn8xcbH1cidoDravIB6scbAiijY0ldPfvM2mM8CUpJ-SOfQN_SaNTZZis8empesqQLTSQ6eC85AiFMx6cd3Kp-tzYAPfvYNmYHS-Hfuk8TI3XUDQMsMFOA0KnHjLf4eSrOmQhzRhxGui29JgWohhpufcRAJ483XmjMbNqO_cJCcZOnl-wD3lxAM3zzSSB0AhBL82G9kcIeR1wb3lrJ8Vg.hIXmxEc1XEYInCejmeHnxQ",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PaymentCardAuthorizationRequest\": {\r\n        \"PaymentCardAuthorizationQueryRequest\": {\r\n            \"PaymentCardRequest\": {\r\n                \"airlineMerchantCode\": \"AA\",\r\n                \"extendedPaymentInstallments\": \"12\",\r\n                \"expireDate\": \"1225\",\r\n                \"agentSignOn\": \"ZD1C05\",\r\n                \"localDateTime\": \"2022-06-08T09:45:00\",\r\n                \"paymentCardSecurityCode\": \"134\",\r\n                \"paymentCardCode\": \"CA\",\r\n                \"PrimaryAccountNumber\": \"5100039999901594\",\r\n                \"CurrencyAmount\": {\r\n                    \"value\": \"11245\",\r\n                    \"code\": \"USD\"\r\n                },\r\n                \"AgencyPCCDetail\": {\r\n                    \"StateProv\": \"CO\",\r\n                    \"PostalCode\": \"12345\"\r\n                },\r\n                \"CardHolder\": {\r\n                    \"@type\": \"CardHolder\",\r\n                    \"CardHolderName\": \"John Doe\",\r\n                    \"IP4Address\": \"111.222.0.0\",\r\n                    \"Person\": {\r\n                        \"dob\": \"2011-01-24\",\r\n                        \"PersonName\": {\r\n                            \"Given\": \"John\",\r\n                            \"Middle\": \"E\",\r\n                            \"Surname\": \"Doe\"\r\n                        },\r\n                        \"Address\": [\r\n                            {\r\n                                \"AddressLine\": [\r\n                                    \"123 Main St\"\r\n                                ],\r\n                                \"City\": \"YourCity\",\r\n                                \"StateProv\": {\r\n                                    \"value\": \"CO\"\r\n                                },\r\n                                \"Country\": {\r\n                                    \"value\": \"US\"\r\n                                },\r\n                                \"PostalCode\": \"80010\"\r\n                            }\r\n                        ],\r\n                        \"Telephone\": [\r\n                            {\r\n                                \"role\": \"Mobile\",\r\n                                \"phoneNumber\": \"5551212.0\"\r\n                            }\r\n                        ],\r\n                        \"Email\": [\r\n                            {\r\n                                \"value\": \"happy.customer@travelport.com\"\r\n                            }\r\n                        ]\r\n                    }\r\n                },\r\n                \"TravelInfoAir\": {\r\n                    \"departureDate\": \"2019-08-04\",\r\n                    \"numberOfTravelers\": \"1\",\r\n                    \"fareBasisCode\": \"Y\",\r\n                    \"LocatorCode\": {\r\n                        \"value\": \"ZXG25P\",\r\n                        \"source\": \"1G\"\r\n                    },\r\n                    \"FirstFlightNumber\": \"1123\",\r\n                    \"FirstFlightDepartureTime\": \"09:45:00-06:00\",\r\n                    \"FirstSegmentClass\": \"F\",\r\n                    \"AirportCodes\": [\r\n                        \"DEN\",\r\n                        \"ORD\",\r\n                        \"DEN\",\r\n                        \"DFW\"\r\n                    ],\r\n                    \"AirlineCodes\": [\r\n                        \"AA\",\r\n                        \"BA\",\r\n                        \"DL\"\r\n                    ]\r\n                }\r\n            }\r\n        }\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "https://api.apim-a.adc.pp.travelport.io:443/11/payment/paymentcardauthorizations/AUTH",
+              "protocol": "https",
+              "host": [
+                "api",
+                "apim-a",
+                "adc",
+                "pp",
+                "travelport",
+                "io"
+              ],
+              "port": "443",
+              "path": [
+                "11",
+                "payment",
+                "paymentcardauthorizations",
+                "AUTH"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Revs/Deauth VI",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{XAUTH_TRAVELPORT_ACCESSGROUP_1G}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PaymentCardAuthorizationRequest\": {\r\n        \"PaymentCardAuthorizationQueryRequest\": {\r\n            \"PaymentCardRequest\": {\r\n                \"airlineMerchantCode\": \"DL\",\r\n                \"localDateTime\": \"2022-06-08T09:45:00\",\r\n                \"paymentCardCode\": \"VI\",\r\n                \"PrimaryAccountNumber\": \"4012001037141112\",\r\n                \"approvalCode\": \"{{approvalCode}}\"\r\n            }\r\n        }\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "https://api.apim-a.adc.pp.travelport.io:443/11/payment/paymentcardauthorizations/REVS",
+              "protocol": "https",
+              "host": [
+                "api",
+                "apim-a",
+                "adc",
+                "pp",
+                "travelport",
+                "io"
+              ],
+              "port": "443",
+              "path": [
+                "11",
+                "payment",
+                "paymentcardauthorizations",
+                "REVS"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Revs/Deauth CA",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{XAUTH_TRAVELPORT_ACCESSGROUP_1G}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PaymentCardAuthorizationRequest\": {\r\n        \"PaymentCardAuthorizationQueryRequest\": {\r\n            \"PaymentCardRequest\": {\r\n                \"airlineMerchantCode\": \"DL\",\r\n                \"agentSignOn\": \"ABC123BZ\",\r\n                \"localDateTime\": \"2022-06-08T09:45:00\",\r\n                \"paymentCardCode\": \"CA\",\r\n                \"PrimaryAccountNumber\": \"5100039999901594\",\r\n                \"approvalCode\": \"{{approvalCode}}\"\r\n            }\r\n        }\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "https://api.apim-a.adc.pp.travelport.io:443/11/payment/paymentcardauthorizations/REVS",
+              "protocol": "https",
+              "host": [
+                "api",
+                "apim-a",
+                "adc",
+                "pp",
+                "travelport",
+                "io"
+              ],
+              "port": "443",
+              "path": [
+                "11",
+                "payment",
+                "paymentcardauthorizations",
+                "REVS"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Vald VI",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{XAUTH_TRAVELPORT_ACCESSGROUP_1G}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PaymentCardAuthorizationRequest\": {\r\n        \"PaymentCardAuthorizationQueryRequest\": {\r\n            \"PaymentCardRequest\": {\r\n                \"expireDate\": \"1223\",\r\n                \"localDateTime\": \"2022-08-02T09:45:00\",\r\n                \"paymentCardCode\": \"VI\",\r\n                \"PrimaryAccountNumber\": \"4005520000000129\"\r\n            }\r\n        }\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "https://api.apim-a.adc.pp.travelport.io:443/11/payment/paymentcardauthorizations/VALD",
+              "protocol": "https",
+              "host": [
+                "api",
+                "apim-a",
+                "adc",
+                "pp",
+                "travelport",
+                "io"
+              ],
+              "port": "443",
+              "path": [
+                "11",
+                "payment",
+                "paymentcardauthorizations",
+                "VALD"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Aavs VI",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{XAUTH_TRAVELPORT_ACCESSGROUP_1G}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PaymentCardAuthorizationRequest\": {\r\n        \"PaymentCardAuthorizationQueryRequest\": {\r\n            \"PaymentCardRequest\": {\r\n                \"airlineMerchantCode\": \"AA\",\r\n                \"expireDate\": \"1223\",\r\n                \"agentSignOn\": \"ZD1C05\",\r\n                \"localDateTime\": \"2022-06-08T09:45:00\",\r\n                \"paymentCardCode\": \"VI\",\r\n                \"PrimaryAccountNumber\": \"4012001037141112\",\r\n                \"CurrencyAmount\": {\r\n                    \"value\": \"000\",\r\n                    \"code\": \"USD\"\r\n                },\r\n                \"CardHolder\": {\r\n                    \"@type\": \"CardHolder\",\r\n                    \"Person\": {\r\n                        \"Address\": [\r\n                            {\r\n                                \"AddressLine\": [\r\n                                    \"201 Tenth Street\"\r\n                                ],\r\n                                \"City\": \"Denver\",\r\n                                \"StateProv\": {\r\n                                    \"value\": \"CO\"\r\n                                },\r\n                                \"Country\": {\r\n                                    \"value\": \"US\"\r\n                                },\r\n                                \"PostalCode\": \"30329\"\r\n                            }\r\n                        ]\r\n                    }\r\n                }\r\n            }\r\n        }\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "https://api.apim-a.adc.pp.travelport.io:443/11/payment/paymentcardauthorizations/AAVS",
+              "protocol": "https",
+              "host": [
+                "api",
+                "apim-a",
+                "adc",
+                "pp",
+                "travelport",
+                "io"
+              ],
+              "port": "443",
+              "path": [
+                "11",
+                "payment",
+                "paymentcardauthorizations",
+                "AAVS"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "console.log(\"Base URL from collection variable: \" + pm.collectionVariables.get(\"baseURL\"))",
+          "",
+          "console.log(\"Version of the API from collection variable: \" + pm.collectionVariables.get(\"version\"))"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "var responseHeaders = pm.response.headers.all();",
+          "",
+          "console.log(responseHeaders[1])",
+          "",
+          "var cv = pm.collectionVariables.get(\"version\")",
+          "",
+          "var contentVersion = responseHeaders[2]",
+          "pm.collectionVariables.unset(\"receipt\")",
+          "if(cv == 6){",
+          "    pm.collectionVariables.set(\"receipt\", \"receipts?OfferIdentifier=123\");",
+          "}",
+          "else{",
+          "    pm.collectionVariables.set(\"receipt\", \"receipts\")",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseURL",
+      "value": "api.pp.travelport.com"
+    },
+    {
+      "key": "getFullPayload",
+      "value": ""
+    },
+    {
+      "key": "getRefPricePayload",
+      "value": ""
+    },
+    {
+      "key": "getFareFamilyRefPricePayload",
+      "value": "{\"OfferQueryBuildFromCatalogProductOfferings\":{\"BuildFromCatalogProductOfferingsRequest\":{\"@type\":\"BuildFromCatalogProductOfferingsRequest\",\"CatalogProductOfferingsIdentifier\":{\"Identifier\":{\"value\":\"test-OffersID\"}},\"CatalogProductOfferingIdentifier\":{\"Identifier\":{\"value\":\"o0\"}},\"ProductIdentifier\":[]}}}"
+    },
+    {
+      "key": "getFareFamilyPricePayload",
+      "value": ""
+    },
+    {
+      "key": "getSearchRefPricePayload",
+      "value": "{\"OfferQueryBuildFromCatalogProductOfferings\":{\"BuildFromCatalogProductOfferingsRequest\":{\"@type\":\"BuildFromCatalogProductOfferingsRequest\",\"CatalogProductOfferingsIdentifier\":{\"Identifier\":{\"value\":\"test-OffersID\"}},\"CatalogProductOfferingSelection\":[{\"CatalogProductOfferingIdentifier\":{\"Identifier\":{\"value\":\"o0\"}},\"ProductIdentifier\":[]}]}}}"
+    },
+    {
+      "key": "FFSBaseURL",
+      "value": "https://api.apim-a.zu2.pp.travelport.io"
+    },
+    {
+      "key": "getSearchFullPricePayload",
+      "value": "{\"OfferQueryBuildFromProducts\":{\"BuildFromProductsRequest\":{\"@type\":\"BuildFromProductsRequestAir\",\"PassengerCriteria\":[],\"ProductCriteriaAir\":[{\"SpecificFlightCriteria\":[]}]}}}"
+    },
+    {
+      "key": "flightIdPreCommitResponse",
+      "value": "s13"
+    },
+    {
+      "key": "offerIdPreCommitResponse",
+      "value": "offer_1"
+    },
+    {
+      "key": "productIdPreCommitResponse",
+      "value": "p0"
+    },
+    {
+      "key": "NDCofferIdPreCommitResponse",
+      "value": "91d7e86a-8e03-42ac-a04a-3bd7167d2e40"
+    },
+    {
+      "key": "version",
+      "value": 6
+    },
+    {
+      "key": "catalogOfferingIdentifierAuthoritySearchRsp",
+      "value": ""
+    },
+    {
+      "key": "catalogOfferingIdentifierValueSearchRsp",
+      "value": ""
+    },
+    {
+      "key": "NDCFlightIdPostCommitResponse",
+      "value": ""
+    },
+    {
+      "key": "NDCreservationResponseReservationOfferIdentifierId",
+      "value": ""
+    },
+    {
+      "key": "eCacheId",
+      "value": ""
+    },
+    {
+      "key": "productIdPostCommitResponse",
+      "value": ""
+    },
+    {
+      "key": "reservationResponseReservationOfferIdentifierId",
+      "value": ""
+    },
+    {
+      "key": "NDCOfferId",
+      "value": ""
+    },
+    {
+      "key": "NDCflightSegmentIdPreCommitResponse",
+      "value": ""
+    },
+    {
+      "key": "NDC_PNR",
+      "value": ""
+    },
+    {
+      "key": "PNR",
+      "value": ""
+    },
+    {
+      "key": "addTravelerAdult",
+      "value": ""
+    },
+    {
+      "key": "travelerResponseIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "InitialDeparture",
+      "value": ""
+    },
+    {
+      "key": "ThreeDayTrip",
+      "value": ""
+    },
+    {
+      "key": "WeekTrip",
+      "value": ""
+    },
+    {
+      "key": "guid",
+      "value": ""
+    },
+    {
+      "key": "lastSeatAvailablilityValue",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "OfferResponseOfferIdentifierAuthorityPriceRsp",
+      "value": ""
+    },
+    {
+      "key": "OfferResponseOfferIdentifierValuePriceRsp",
+      "value": ""
+    },
+    {
+      "key": "OfferResponseOfferid",
+      "value": ""
+    },
+    {
+      "key": "reservationId",
+      "value": ""
+    },
+    {
+      "key": "price_request_template_mc",
+      "value": "{\n\t\"OfferQueryBuildFromProducts\": {\n\t\t\"fareRuleType\": \"{{fareRuleType}}\",\n\t\t\"lowFareFinderInd\": \"{{lowFareFinderInd}}\",\n\t\t\"returnBrandedFaresInd\": \"{{returnBrandedFaresInd}}\",\n\t\t\"reCheckInventoryInd\": \"true\",\n\t\t\"BuildFromProductsRequest\": {\n\t\t\t\"@type\": \"BuildFromProductsRequestAir\",\n\t\t\t\"PassengerCriteria\": [{\n\t\t\t\t\"passengerTypeCode\": \"ADT\",\n\t\t\t\t\"number\": 1,\n\t\t\t\t\"age\": 24\n\t\t\t}],\n\t\t\t\"ProductCriteriaAir\": []\n\t\t}\n\t}\n}"
+    },
+    {
+      "key": "price_segment",
+      "value": "{\n  \"@type\": \"SpecificFlightCriteria\",\n  \"carrier\": \"Example String Value\",\n  \"flightNumber\": \"Example String Value\",\n  \"departureDate\": \"2011-01-24\",\n  \"departureTime\": \"09:45:00\",\n  \"arrivalDate\": \"2011-01-24\",\n  \"arrivalTime\": \"14:15:00\",\n  \"from\": \"Example String Value\",\n  \"to\": \"Example String Value\",\n  \"cabin\": \"PremiumFirst\",\n  \"classOfService\": \"Example String Value\",\n  \"segmentSequence\": 2345\n}"
+    },
+    {
+      "key": "totalPrice",
+      "value": ""
+    },
+    {
+      "key": "reservationResponseReservationOfferIdentifierAuthority",
+      "value": ""
+    },
+    {
+      "key": "reservationResponseReservationOfferIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "travelerRefPostCommit",
+      "value": ""
+    },
+    {
+      "key": "ticket_Number",
+      "value": ""
+    },
+    {
+      "key": "offerIdentiferValuePreCommitResponse",
+      "value": ""
+    },
+    {
+      "key": "reservationIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "flightNumber",
+      "value": ""
+    },
+    {
+      "key": "catalogOfferingsID_IdentfierValue",
+      "value": ""
+    },
+    {
+      "key": "catalogOfferingsAncillaryListResponseIdentiferValue",
+      "value": ""
+    },
+    {
+      "key": "offerResponseIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "source",
+      "value": ""
+    },
+    {
+      "key": "SourceDate",
+      "value": ""
+    },
+    {
+      "key": "destination",
+      "value": ""
+    },
+    {
+      "key": "offerId",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "key": "searchId",
+      "value": ""
+    },
+    {
+      "key": "searchVersion",
+      "value": ""
+    },
+    {
+      "key": "offerListResponseIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "priceProductId",
+      "value": ""
+    },
+    {
+      "key": "receipt",
+      "value": ""
+    },
+    {
+      "key": "productIdentifierPreCommitResponse",
+      "value": ""
+    },
+    {
+      "key": "offerAuthority",
+      "value": ""
+    },
+    {
+      "key": "catalogOfferings_IdentfierValue",
+      "value": ""
+    },
+    {
+      "key": "flightSequencePreCommitResponse",
+      "value": ""
+    },
+    {
+      "key": "XAUTH_TRAVELPORT_ACCESSGROUP_1G",
+      "value": ""
+    },
+    {
+      "key": "setAddOfferRequest",
+      "value": ""
+    },
+    {
+      "key": "setSegmentPriceRequest",
+      "value": ""
+    },
+    {
+      "key": "getFareFamilyPriceFullPayload",
+      "value": ""
+    },
+    {
+      "key": "priceVersion",
+      "value": ""
+    },
+    {
+      "key": "currencyCode",
+      "value": ""
+    },
+    {
+      "key": "fareRuleType",
+      "value": ""
+    },
+    {
+      "key": "identiferValue",
+      "value": ""
+    },
+    {
+      "key": "catalogOfferingsAncillaryListResponseIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "reservationResponseIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "reservationResponseAuthority",
+      "value": ""
+    },
+    {
+      "key": "reservationResponseOfferIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "reservationResponseProductId",
+      "value": ""
+    },
+    {
+      "key": "flightSequence",
+      "value": ""
+    },
+    {
+      "key": "reservationResponseProductIdentiferValue",
+      "value": ""
+    },
+    {
+      "key": "productIdentifierValuePreCommitResponse",
+      "value": ""
+    },
+    {
+      "key": "catalogProductOfferingsResponseIdentifierValue",
+      "value": ""
+    },
+    {
+      "key": "getSearch+RefPayload",
+      "value": ""
+    },
+    {
+      "key": "getNextLeg",
+      "value": ""
+    },
+    {
+      "key": "ancilaryPriceIdentifier",
+      "value": ""
+    },
+    {
+      "key": "catalogOfferingsAncpriReqIdentifier",
+      "value": ""
+    },
+    {
+      "key": "catalogOfferingsAncpriReqProductIdentifier",
+      "value": ""
+    },
+    {
+      "key": "TravelerIdentifierRefIndentifier",
+      "value": ""
+    },
+    {
+      "key": "catalogOfferingIdentifier",
+      "value": ""
+    },
+    {
+      "key": "productIdentifier",
+      "value": ""
+    },
+    {
+      "key": "travelerIdentifier",
+      "value": ""
+    },
+    {
+      "key": "ancillaryProductIdentifier",
+      "value": ""
+    },
+    {
+      "key": "ancillaryCatalogOfferingIdentifier",
+      "value": ""
+    },
+    {
+      "key": "setFareFamilyFullPayload",
+      "value": "{\"OfferQueryBuildFromProducts\":{\"BuildFromProductsRequest\":{\"@type\":\"BuildFromProductsRequestAir\",\"PassengerCriteria\":[],\"ProductCriteriaAir\":[{\"SpecificFlightCriteria\":[]}]}}}"
+    },
+    {
+      "key": "setFareFamilyRefPrice",
+      "value": ""
+    },
+    {
+      "key": "approvalCode",
+      "value": ""
+    }
+  ]
+}

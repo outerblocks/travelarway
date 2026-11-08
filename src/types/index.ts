@@ -6,6 +6,8 @@ export type Gender = 'male' | 'female';
 
 export type IdType = 'driving_licence' | 'national_id' | 'passport' | 'voter_card';
 
+export type TrainResidency = 'resident' | 'non_resident';
+
 export type PaymentMethod = 'mobile_money' | 'card' | 'coupon';
 
 export type BookingStatus =
@@ -19,12 +21,12 @@ export type BookingStatus =
 export type PaymentStatus =
   | 'idle'
   | 'processing'
+  /** The booking exists and is waiting for the provider to confirm the money. */
   | 'pending'
   | 'success'
   | 'failed'
   | 'timeout'
-  | 'unavailable'
-  | 'demo_complete';
+  | 'unavailable';
 
 export interface Country {
   code: string;
@@ -47,17 +49,24 @@ export interface MarketConfig {
 
 export interface PassengerInfo {
   id: string;
+  /** Seat for the outbound leg (SGR: `coach-seat`, e.g. `2-14`). */
   seatId?: string;
-  category: PassengerCategory;
+  /** Seat for the return leg on a round trip. */
+  returnSeatId?: string;
+  /** Fare category, chosen by the traveller. It prices the seat, so nothing may assume it. */
+  category?: PassengerCategory;
   fullName: string;
   email: string;
   phone: string;
   phoneCountryCode: string;
-  gender: Gender;
+  gender?: Gender;
   countryOfResidence: string;
   idType?: IdType;
   idNumber?: string;
   idCountryOfIssue?: string;
+  trainResidency?: TrainResidency;
+  trainHasLuggage?: boolean;
+  trainRequiresWheelchair?: boolean;
 }
 
 export interface Location {
@@ -66,6 +75,12 @@ export interface Location {
   region: string;
   type: 'city' | 'town' | 'terminal' | 'station' | 'port' | 'airport';
   country: string;
+  /**
+   * Modes that actually serve this place. Omitted means every mode with a matching
+   * location list. Zanzibar and Pemba are cities but islands: reachable by ferry and air,
+   * never by intercity bus, and offering them in a bus search always ended in no results.
+   */
+  modes?: BookingMode[];
 }
 
 export interface BusStop {
@@ -189,7 +204,34 @@ export interface TrainService {
   arrivalTime: string;
   departureDate: string;
   duration: string;
+  /** Operator trip number printed on the ticket (SGR "Trips No"). */
+  tripNumber?: string;
   classes: TrainClass[];
+}
+
+/** A single seat inside a coach, as printed on an SGR ticket (coach + seat no). */
+export interface TrainSeat {
+  /** `${coachNumber}-${number}`, the value stored on the passenger. */
+  id: string;
+  number: number;
+  row: number;
+  /** 1–4 across the carriage; the aisle sits between lanes 2 and 3. */
+  lane: number;
+  wheelchair: boolean;
+  taken: boolean;
+  /**
+   * The inventory state when it is known. `taken` alone cannot tell a passenger that a seat
+   * is somebody else's held seat from one the operator never put on sale, and those need
+   * different answers on the map.
+   */
+  state?: 'AVAILABLE' | 'HELD' | 'SOLD' | 'BLOCKED' | 'NOT_SELLABLE';
+}
+
+export interface TrainCoach {
+  number: number;
+  className: string;
+  capacity: number;
+  seats: TrainSeat[];
 }
 
 export interface TrainClass {
@@ -199,6 +241,8 @@ export interface TrainClass {
   currency: string;
   availableSeats: number;
   hasSeatSelection: boolean;
+  /** Coach inventory for this class on this service. */
+  coaches?: TrainCoach[];
 }
 
 export interface StayProperty {

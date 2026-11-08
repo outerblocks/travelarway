@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, Link } from '@/router';
-import { ArrowLeft, CreditCard, Smartphone, Ticket as TicketIcon, Loader2, CheckCircle2, XCircle, Clock, ShieldCheck } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { formatMoney } from '@/domain/money';
-import { quoteForBooking } from '@/domain/pricing';
+import { safePaymentRedirectUrl } from '@/domain/payment-redirect';
+import { dialCodeForMarket } from '@/data/locations';
 import type { PaymentStatus } from '@/types';
 import airtelMoney from '@/assets/payments/airtel-money-logo.png';
 import haloPesa from '@/assets/payments/halopesa-logo.png';
@@ -30,60 +31,251 @@ const CARD_LOGOS = [
 
 const STEP_LABELS = ['Search', 'Select', 'Details', 'Payment'];
 
+const MODE_LABELS: Record<string, string> = {
+  bus: 'Bus',
+  ferry: 'Ferry',
+  train: 'Train',
+  flights: 'Flights',
+  flight: 'Flights',
+  stays: 'Stays',
+  experiences: 'Experiences',
+};
+
+/** What the server says this segment costs. The page displays it; it never recomputes it. */
+interface ServerQuote {
+  currency: string;
+  grossMinor: number;
+  lines: { kind: 'adult' | 'child'; unitMinor: number; quantity: number; amountMinor: number }[];
+}
+
+interface SgrQuoteBody {
+  currency?: string;
+  total?: number;
+  lines?: { label?: string; count?: number; amount?: number }[];
+}
+
+/**
+ * Folds the SGR quote into the shape the page already renders.
+ *
+ * A round trip answers with one quote per leg and they are **added**, not chosen between.
+ * Pricing only the outward half would put a two-train ticket on a one-train charge, and the
+ * shortfall would not be visible anywhere until reconciliation.
+ */
+function toSgrServerQuote(bodies: (SgrQuoteBody | null)[]): ServerQuote | null {
+  const priced = bodies.filter((body): body is SgrQuoteBody => typeof body?.total === 'number');
+  if (priced.length === 0 || priced.length !== bodies.length) return null;
+
+  const lines = priced.flatMap((body) =>
+    (body.lines ?? []).map((line) => {
+      const quantity = Number(line.count ?? 0);
+      const unitMinor = Number(line.amount ?? 0);
+      return {
+        kind: line.label === 'child' ? ('child' as const) : ('adult' as const),
+        unitMinor,
+        quantity,
+        amountMinor: unitMinor * quantity,
+      };
+    }),
+  );
+
+  return {
+    currency: priced[0].currency ?? 'TZS',
+    grossMinor: priced.reduce((sum, body) => sum + Number(body.total ?? 0), 0),
+    lines,
+  };
+}
+
+/** The two server calls a checkout makes, in order. */
+type PayStage = 'creating' | 'requesting';
+
 export function CheckoutPage() {
   const navigate = useNavigate();
-  const { bookingState, market, setDemoTicket } = useApp();
+  const { bookingState, market, setActiveBooking } = useApp();
   const { tp } = useI18n();
   const [paymentMethod, setPaymentMethod] = useState<'mobile_money' | 'card'>('mobile_money');
-  const [mobileProvider, setMobileProvider] = useState(market.mobileMoneyProviders[0] || '');
+  // No provider pre-selected. The first in the list is not the customer's network, and a
+  // payment request sent to the wrong one is declined on their behalf.
+  const [mobileProvider, setMobileProvider] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [couponCode, setCouponCode] = useState('');
-  const [couponStatus, setCouponStatus] = useState<'idle' | 'valid' | 'invalid' | 'checking'>('idle');
-  const [discount, setDiscount] = useState(0);
+  const [serverQuote, setServerQuote] = useState<ServerQuote | null>(null);
+  const [quoteUnavailable, setQuoteUnavailable] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('idle');
+  const [stage, setStage] = useState<PayStage>('creating');
   const [errorMsg, setErrorMsg] = useState('');
-  const simulationTimer = useRef<number | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
+  const timers = useRef<number[]>([]);
 
-  useEffect(() => () => {
-    if (simulationTimer.current !== null) window.clearTimeout(simulationTimer.current);
-  }, []);
+  const clearTimers = () => {
+    timers.current.forEach((id) => window.clearTimeout(id));
+    timers.current = [];
+  };
 
-  if (!bookingState.selectedServiceId && !bookingState.bookingReference) {
+  useEffect(() => () => clearTimers(), []);
+
+  const params = bookingState.searchParams;
+  const tripId = params.extras?.tripId ?? bookingState.selectedServiceId;
+  const fromStopId = bookingState.boardingPointId;
+  const toStopId = bookingState.dropOffPointId;
+  // SGR carries its trip in a different field, and its price comes from the fare table rather
+  // than a per-stop segment. Both modes are priced by the server for the same reason: the
+  // number on a checkout is the number we intend to charge.
+  const sgrTripId = params.extras?.trainId;
+  const sgrClassCode = params.extras?.classId;
+  const usesServerQuote = bookingState.mode === 'bus' || bookingState.mode === 'train';
+  // Only server-priced modes can take money. Ferry, flights, stays and experiences still show
+  // sample (fixture) prices; offering a Pay button beside a number nobody will honour invites
+  // a customer to try paying for a trip that does not exist (audit M-001).
+  const isPayableMode = usesServerQuote;
+
+  // Bus and train prices come from the server for the exact thing being bought. The old path
+  // priced the route's origin from a fixture module: for a trip that only exists in the
+  // database it returned nothing at all, which is why the pay button could not be pressed.
+  useEffect(() => {
+    if (!usesServerQuote) return;
+
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const legId = bookingState.mode === 'train' ? sgrTripId : tripId;
+
+    // A trip is a database row with a UUID. Anything else (a stale selection, a fixture id)
+    // has no price to fetch, and pretending to wait for one leaves the button spinning.
+    if (
+      !legId ||
+      !UUID.test(legId) ||
+      (bookingState.mode === 'bus' && (!fromStopId || !toStopId)) ||
+      (bookingState.mode === 'train' && !sgrClassCode)
+    ) {
+      setServerQuote(null);
+      setQuoteUnavailable(true);
+      return;
+    }
+
+    const controller = new AbortController();
+    const search = new URLSearchParams({
+      adults: String(params.adults),
+      children: String(params.children),
+    });
+
+    if (bookingState.mode === 'train') {
+      // Every leg the traveller selected, priced by the server. A missing return quote fails
+      // the whole checkout rather than falling back to the outbound price alone.
+      const legs = [{ tripId: legId, classCode: sgrClassCode, fromSeq: params.extras?.fromSeq ?? '0', toSeq: params.extras?.toSeq ?? '1' }];
+      const retTripId = params.extras?.returnTrainId;
+      const retClass = params.extras?.returnClassId;
+      if (retTripId && retClass) {
+        legs.push({
+          tripId: retTripId,
+          classCode: retClass,
+          fromSeq: params.extras?.returnFromSeq ?? '0',
+          toSeq: params.extras?.returnToSeq ?? '1',
+        });
+      }
+
+      Promise.all(
+        legs.map((leg) =>
+          fetch(
+            `/api/sgr/trips/${leg.tripId}/quote?class=${leg.classCode}&from=${leg.fromSeq}&to=${leg.toSeq}&${search.toString()}`,
+            {
+              signal: controller.signal,
+              cache: 'no-store',
+            },
+          )
+            .then(async (response) => (response.ok ? ((await response.json()) as SgrQuoteBody) : null))
+            .catch((error: unknown) => {
+              if (error instanceof Error && error.name === 'AbortError') throw error;
+              return null;
+            }),
+        ),
+      )
+        .then((bodies) => {
+          const quote = toSgrServerQuote(bodies);
+          setServerQuote(quote);
+          setQuoteUnavailable(quote === null);
+        })
+        .catch((error: unknown) => {
+          if (error instanceof Error && error.name === 'AbortError') return;
+          setServerQuote(null);
+          setQuoteUnavailable(true);
+        });
+
+      return () => controller.abort();
+    }
+
+    fetch(`/api/trip-detail?id=${legId}&from=${fromStopId}&to=${toStopId}&${search.toString()}`, {
+      signal: controller.signal,
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as Record<string, unknown>;
+      })
+      .then((body) => {
+        const quote = (body as { data?: { quote?: ServerQuote } })?.data?.quote ?? null;
+        setServerQuote(quote);
+        setQuoteUnavailable(quote === null);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        setServerQuote(null);
+        setQuoteUnavailable(true);
+      });
+
+    return () => controller.abort();
+  }, [usesServerQuote, bookingState.mode, tripId, sgrTripId, sgrClassCode, params.extras, fromStopId, toStopId, params.adults, params.children]);
+
+  // Unmodelled modes have no catalogue price. Bus and train wait for the server quote.
+  const clientQuote = null;
+
+  // A booking is in place once the traveller has chosen something and given details.
+  const hasBooking =
+    bookingState.selectedServiceId !== null ||
+    bookingState.passengers.length > 0 ||
+    bookingState.activeBooking !== null;
+
+  const totalAmount = usesServerQuote ? serverQuote?.grossMinor ?? null : clientQuote?.total ?? null;
+
+  if (!hasBooking && totalAmount === null) {
     return (
       <div className="section-container py-16 text-center">
-        <p className="text-body text-neutral-500 mb-4">{tp('checkoutNoBooking')}</p>
+        <p className="text-body mb-4 text-neutral-500">{tp('checkoutNoBooking')}</p>
         <Link to="/" className="btn-primary">{tp('backToHome')}</Link>
       </div>
     );
   }
 
-  const quote = quoteForBooking({
-    params: bookingState.searchParams,
-    passengerCount: bookingState.passengers.length,
-    selectedServiceId: bookingState.selectedServiceId,
-    selectedClassId: bookingState.selectedClassId,
-  });
+  const currency =
+    (usesServerQuote ? serverQuote?.currency : clientQuote?.currency) ?? market.currency;
+  const isProcessing = paymentStatus === 'processing';
+  // Waiting for the server's price is a different state from "no price exists". Showing a
+  // dead button in both made the first case look broken.
+  const isQuoteLoading = bookingState.mode === 'bus' && totalAmount === null && !quoteUnavailable;
+  const passengerCount = bookingState.passengers.length || 1;
+  const modeLabel = MODE_LABELS[bookingState.mode] ?? bookingState.mode;
 
-  const totalAmount = quote?.total ?? null;
-  const finalAmount = totalAmount === null ? null : Math.max(0, totalAmount - discount);
-  const currency = quote?.currency ?? market.currency;
-
-  const validateCoupon = () => {
-    if (!couponCode || totalAmount === null) return;
-    setCouponStatus('checking');
-    setTimeout(() => {
-      if (couponCode.toUpperCase() === 'TRAVELAR10') {
-        setDiscount(Math.round(totalAmount * 0.1));
-        setCouponStatus('valid');
-      } else {
-        setDiscount(0);
-        setCouponStatus('invalid');
-      }
-    }, 800);
+  /** Turns a provider reason code into the sentence a customer can act on. */
+  const reasonCopy = (failure: string | null): string => {
+    switch (failure) {
+      case 'not_enabled':
+        return tp('confirmFailureNotEnabled');
+      case 'not_configured':
+        return tp('confirmFailureNotConfigured');
+      case 'invalid_phone':
+        return tp('confirmFailureInvalidPhone');
+      case 'phone_required':
+        return tp('confirmFailurePhone');
+      case 'card_requires_usd':
+        return tp('confirmFailureCardUsd');
+      case 'method_unsupported':
+        return tp('confirmFailureMethod');
+      case 'rate_limited':
+        return tp('confirmFailureRateLimited');
+      default:
+        return tp('confirmFailureProvider');
+    }
   };
 
   const handlePay = () => {
-    if (finalAmount === null) {
+    if (!isPayableMode) return;
+    if (totalAmount === null) {
       setPaymentStatus('unavailable');
       setErrorMsg(tp('checkoutQuoteUnavailable'));
       return;
@@ -94,30 +286,192 @@ export function CheckoutPage() {
       return;
     }
 
+    clearTimers();
     setPaymentStatus('processing');
+    setStage('creating');
     setErrorMsg('');
-    simulationTimer.current = window.setTimeout(() => {
-      const reference = `DEMO-${Date.now().toString(36).toUpperCase()}`;
-      setDemoTicket({ reference, amount: finalAmount });
-      setPaymentStatus('demo_complete');
-      simulationTimer.current = window.setTimeout(() => {
+    setErrorDetail(null);
+
+    void (async () => {
+      // Two server calls, both real: create the booking, then ask the provider to collect.
+      // Nothing here decides that a payment happened — only a signed provider callback can
+      // do that, and it arrives at the server, not at this page.
+      const tripId = bookingState.searchParams.extras?.tripId ?? bookingState.selectedServiceId;
+      const buyer = bookingState.passengers[0];
+      const seats = bookingState.selectedSeats;
+      const fromStopId = bookingState.boardingPointId;
+      const toStopId = bookingState.dropOffPointId;
+      const adults = bookingState.searchParams.adults;
+      const children = bookingState.searchParams.children;
+
+      // The segment identifies what is being priced. Without it the server cannot quote
+      // the journey, so we refuse rather than send an amount we made up.
+      if (!tripId || seats.length === 0 || !fromStopId || !toStopId) {
+        setPaymentStatus('unavailable');
+        setErrorMsg(tp('checkoutQuoteUnavailable'));
+        return;
+      }
+
+      try {
+        // A retry must not book again: the booking and its holds already exist, and a second
+        // commit would fail on seats that this browser now owns. Only create one when there
+        // is not already a pending booking for this checkout.
+        const existing = bookingState.activeBooking;
+        let booking: {
+          bookingId: string;
+          pnr: string;
+          totalMinor: number;
+          currency: string;
+          status: string;
+          paymentDueAt: string;
+          accessToken: string;
+        };
+
+        if (existing && existing.status === 'pending_payment') {
+          booking = {
+            bookingId: existing.bookingId,
+            pnr: existing.pnr,
+            totalMinor: existing.totalMinor,
+            currency: existing.currency,
+            status: existing.status,
+            paymentDueAt: existing.paymentDueAt ?? '',
+            accessToken: existing.accessToken,
+          };
+        } else {
+          const response = await fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              tripId,
+              fromStopId,
+              toStopId,
+              seats,
+              adults,
+              children,
+              customerName: buyer?.fullName ?? '',
+              customerEmail: buyer?.email ?? '',
+              customerPhone: buyer ? `${buyer.phoneCountryCode} ${buyer.phone}` : '',
+              passengers: bookingState.passengers.map((passenger, index) => ({
+                fullName: passenger.fullName,
+                category: passenger.category,
+                seatNo: passenger.seatId ?? seats[index] ?? '',
+              })),
+            }),
+          });
+
+          if (!response.ok) {
+            // Show the server's reason code rather than a slogan.
+            const failure = (await response.json().catch(() => null)) as {
+              error?: string;
+              reason?: string;
+            } | null;
+            const code = failure?.reason ? `${failure.error}: ${failure.reason}` : failure?.error ?? `HTTP ${response.status}`;
+            setPaymentStatus('failed');
+            setErrorMsg(code);
+            return;
+          }
+
+          booking = (await response.json()) as typeof booking;
+        }
+
+        setStage('requesting');
+
+        // A failure here is not a failed booking: the seats stay held until the deadline
+        // and the confirmation page says plainly that no money has been taken.
+        let collectionStarted = false;
+        let collectionFailure: string | null = null;
+        let collectionDetail: string | null = null;
+        let redirectUrl: string | null = null;
+        try {
+          const started = await fetch('/api/payments/start', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              bookingId: booking.bookingId,
+              method: paymentMethod,
+              phoneNumber: phoneNumber.trim(),
+              accessToken: booking.accessToken,
+            }),
+          });
+          const attempt = (await started.json()) as {
+            collectionStarted?: boolean;
+            failure?: string | null;
+            detail?: string | null;
+            redirectUrl?: string | null;
+          };
+          collectionStarted = started.ok && attempt.collectionStarted === true;
+          collectionFailure = started.ok ? null : attempt.failure ?? 'provider_error';
+          collectionDetail = started.ok ? null : attempt.detail ?? null;
+          redirectUrl = started.ok ? attempt.redirectUrl ?? null : null;
+
+          if (!started.ok) {
+            // The single most useful line when a payment will not start.
+            console.warn('[checkout] payment start failed', {
+              status: started.status,
+              failure: collectionFailure,
+              detail: collectionDetail,
+            });
+          }
+        } catch {
+          collectionFailure = 'provider_error';
+        }
+
+        setActiveBooking({
+          bookingId: booking.bookingId,
+          pnr: booking.pnr,
+          totalMinor: booking.totalMinor,
+          currency: booking.currency,
+          status: booking.status,
+          paymentDueAt: booking.paymentDueAt,
+          collectionStarted,
+          collectionFailure,
+          collectionDetail,
+          accessToken: booking.accessToken,
+        });
+
+        // Card payments continue on the provider's hosted page. Leaving the site is the
+        // only way to enter a card number without this origin entering PCI scope.
+        const providerCheckout = safePaymentRedirectUrl(redirectUrl);
+        if (providerCheckout) {
+          window.location.assign(providerCheckout);
+          return;
+        }
+
+        if (!collectionStarted) {
+          // Stay here. The booking and its seats are real, but sending the customer to a
+          // confirmation page that can only say "waiting" hides the one thing they need:
+          // what the provider actually objected to, and the chance to fix it and retry.
+          setPaymentStatus('failed');
+          setErrorMsg(reasonCopy(collectionFailure));
+          setErrorDetail(collectionDetail);
+          return;
+        }
+
+        setPaymentStatus('pending');
         navigate('/confirmation');
-        simulationTimer.current = null;
-      }, 900);
-    }, 2300);
+      } catch (error) {
+        setPaymentStatus('failed');
+        setErrorMsg(error instanceof Error ? error.message : tp('bookingServiceTryAgain'));
+      }
+    })();
   };
 
-  const isProcessing = paymentStatus === 'processing';
+  const retry = () => {
+    setPaymentStatus('idle');
+    setStage('creating');
+    setErrorMsg('');
+    setErrorDetail(null);
+  };
 
   return (
     <div className="bg-background">
-      <div className="section-container max-w-3xl py-8">
-        <button onClick={() => navigate(-1)} className="btn-ghost mb-3 px-2">
-          <ArrowLeft size={18} /> {tp('checkoutBack')}
+      <div className="section-container max-w-5xl py-6 sm:py-8">
+        <button onClick={() => navigate(-1)} className="btn-ghost mb-4 px-2">
+          ← {tp('checkoutBack')}
         </button>
 
         {/* Progress steps */}
-        <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
+        <div className="mb-6 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
           {STEP_LABELS.map((step, i) => {
             const isActive = i === 3;
             const isCompleted = i < 3;
@@ -125,12 +479,12 @@ export function CheckoutPage() {
               <div key={step} className="flex items-center gap-2 last:flex-none">
                 <span
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-label font-bold transition-colors ${
-                    isActive ? 'bg-brand-600 text-white' : isCompleted ? 'bg-brand-50 text-brand-600' : 'bg-neutral-200 text-neutral-500'
+                    isActive ? 'bg-ink text-white' : isCompleted ? 'bg-brand-50 text-brand-600' : 'bg-neutral-200 text-neutral-500'
                   }`}
                 >
-                  {isCompleted ? <CheckCircle2 size={15} /> : i + 1}
+                  {isCompleted ? '✓' : i + 1}
                 </span>
-                <span className={`hidden text-meta font-medium sm:inline ${isActive ? 'text-brand-600' : isCompleted ? 'text-neutral-700' : 'text-neutral-400'}`}>
+                <span className={`hidden text-meta font-medium sm:inline ${isActive ? 'text-ink' : isCompleted ? 'text-neutral-700' : 'text-neutral-400'}`}>
                   {step}
                 </span>
                 {i < STEP_LABELS.length - 1 && (
@@ -141,216 +495,320 @@ export function CheckoutPage() {
           })}
         </div>
 
-        <div className="mb-6">
+        <div className="mb-8 text-center">
           <h1 className="text-page font-bold tracking-tight text-neutral-900">{tp('checkoutTitle')}</h1>
-          <p className="mt-1 text-body text-neutral-500">{tp('checkoutIntro')}</p>
+          <p className="mt-1 text-body text-neutral-500">{tp('checkoutChoosePayment')}</p>
         </div>
 
-        <div className="card">
-          <header className="flex items-center gap-3 rounded-t-xl border-b border-neutral-200 px-5 py-4 sm:px-6">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-label font-bold text-white">4</span>
-            <div className="min-w-0">
-              <h2 className="text-listing font-bold text-neutral-900">{tp('checkoutPaymentMethod')}</h2>
-              <p className="mt-0.5 text-meta text-neutral-500">{tp('checkoutChoosePayment')}</p>
-            </div>
-          </header>
+        <div className="mx-auto max-w-2xl">
+          {/* Payment column */}
+          <div className="space-y-4">
+            {paymentStatus !== 'idle' && (
+              <PaymentStatusStrip
+                status={paymentStatus}
+                stage={stage}
+                method={paymentMethod === 'card' ? tp('checkoutCardLabel') : mobileProvider}
+                message={errorMsg}
+                detail={errorDetail}
+              />
+            )}
 
-          <div className="px-5 py-5 sm:px-6">
-            <div className="space-y-5">
-              <p className="rounded-lg border border-warning-200 bg-warning-50 p-3 text-label text-warning-700" role="note">
-                {tp('checkoutDemoNotice')}
-              </p>
+            <div className="card">
+              <div className="px-4 py-4 sm:px-6 sm:py-5">
+                <fieldset disabled={isProcessing}>
+                  <legend className="text-listing font-bold text-neutral-900">{tp('checkoutPaymentMethod')}</legend>
+                  <div className="mt-3 divide-y divide-neutral-200 border-y border-neutral-200">
+                    {market.paymentMethods.includes('mobile_money') && (
+                      <MethodOption
+                        id="method_mobile_money"
+                        name="payment_method"
+                        checked={paymentMethod === 'mobile_money'}
+                        onSelect={() => setPaymentMethod('mobile_money')}
+                        icon={<span className="text-body font-bold">M</span>}
+                        title={tp('checkoutMobileMoney')}
+                        hint={tp('checkoutPayWithWallet')}
+                      />
+                    )}
+                    {market.paymentMethods.includes('card') && (
+                      <MethodOption
+                        id="method_card"
+                        name="payment_method"
+                        checked={paymentMethod === 'card'}
+                        onSelect={() => setPaymentMethod('card')}
+                        icon={<span className="text-body font-bold">C</span>}
+                        title={tp('checkoutCardPayment')}
+                        hint={tp('checkoutCreditDebit')}
+                      />
+                    )}
+                  </div>
+                </fieldset>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {market.paymentMethods.includes('mobile_money') && (
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('mobile_money')}
-                    disabled={isProcessing}
-                    aria-pressed={paymentMethod === 'mobile_money'}
-                    className={`flex min-h-16 items-center gap-3 rounded-lg border p-4 text-left transition-colors ${
-                      paymentMethod === 'mobile_money'
-                        ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600'
-                        : 'border-neutral-200 bg-white hover:border-neutral-400'
-                    }`}
-                  >
-                    <Smartphone size={22} className={paymentMethod === 'mobile_money' ? 'text-brand-600' : 'text-neutral-400'} />
-                    <span>
-                      <span className="block text-body font-semibold text-neutral-900">{tp('checkoutMobileMoney')}</span>
-                      <span className="mt-0.5 block text-meta text-neutral-500">{tp('checkoutPayWithWallet')}</span>
-                    </span>
-                  </button>
+                {paymentMethod === 'mobile_money' && (
+                  <div className="mt-6">
+                    <span className="input-label">{tp('checkoutMobileMoneyProvider')}</span>
+                    {!mobileProvider && (
+                      <p className="mt-1 text-meta text-neutral-500">{tp('chooseProviderFirst')}</p>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {market.mobileMoneyProviders.map((provider) => {
+                        const isSelected = mobileProvider === provider;
+                        const logo = MOBILE_MONEY_LOGOS[provider];
+                        return (
+                          <button
+                            key={provider}
+                            type="button"
+                            aria-pressed={isSelected}
+                            disabled={isProcessing}
+                            onClick={() => setMobileProvider(provider)}
+                            className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 text-label font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                              isSelected
+                                ? 'border-ink bg-brand-50 text-ink'
+                                : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400'
+                            }`}
+                          >
+                            {logo && <img src={logo.image} alt="" aria-hidden="true" className="h-5 w-auto object-contain" />}
+                            {provider}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-5">
+                      <label htmlFor="mm_phone" className="input-label">{tp('checkoutPhoneNumber')}</label>
+                      <div className="mt-1 flex items-stretch">
+                        <span className="flex items-center rounded-l-lg border border-r-0 border-neutral-200 bg-neutral-50 px-3 text-body font-medium text-neutral-600">
+                          {dialCodeForMarket(market.countryCode)}
+                        </span>
+                        <input
+                          id="mm_phone"
+                          type="tel"
+                          inputMode="tel"
+                          autoComplete="tel-national"
+                          className="input-field min-w-0 rounded-l-none"
+                          placeholder="712 345 678"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          disabled={isProcessing}
+                          required
+                          aria-describedby="mm_phone_hint"
+                        />
+                      </div>
+                      <p id="mm_phone_hint" className="mt-2 text-meta text-neutral-500">
+                        {tp('checkoutPhoneHint')}
+                      </p>
+                    </div>
+                  </div>
                 )}
-                {market.paymentMethods.includes('card') && (
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('card')}
-                    disabled={isProcessing}
-                    aria-pressed={paymentMethod === 'card'}
-                    aria-label={tp('checkoutCardPaymentAria')}
-                    className={`flex min-h-16 items-center gap-3 rounded-lg border p-4 text-left transition-colors ${
-                      paymentMethod === 'card'
-                        ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600'
-                        : 'border-neutral-200 bg-white hover:border-neutral-400'
-                    }`}
-                  >
-                    <CreditCard size={22} className={paymentMethod === 'card' ? 'text-brand-600' : 'text-neutral-400'} />
-                    <span>
-                      <span className="block text-body font-semibold text-neutral-900">{tp('checkoutCardPayment')}</span>
-                      <span className="mt-0.5 block text-meta text-neutral-500">{tp('checkoutCreditDebit')}</span>
-                    </span>
-                  </button>
+
+                {paymentMethod === 'card' && (
+                  <div className="mt-6">
+                    <p className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-label text-neutral-700">
+                      {tp('checkoutCardHostedNotice')}
+                    </p>
+                    <PaymentLogoRow logos={CARD_LOGOS} />
+                  </div>
                 )}
               </div>
 
-              {paymentMethod === 'mobile_money' && (
-                <div className="animate-fade-in">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor="mm_provider" className="input-label">{tp('checkoutMobileMoneyProvider')}</label>
-                      <select
-                        id="mm_provider"
-                        className="input-field"
-                        value={mobileProvider}
-                        onChange={(e) => setMobileProvider(e.target.value)}
-                        disabled={isProcessing}
-                      >
-                        {market.mobileMoneyProviders.map((p) => (
-                          <option key={p} value={p}>{p}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="mm_phone" className="input-label">{tp('checkoutPhoneNumber')}</label>
-                      <input
-                        id="mm_phone"
-                        type="tel"
-                        className="input-field"
-                        placeholder="712 345 678"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        disabled={isProcessing}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <PaymentLogoRow
-                    logos={market.mobileMoneyProviders.flatMap((provider) => {
-                      const logo = MOBILE_MONEY_LOGOS[provider];
-                      return logo ? [logo] : [];
-                    })}
-                  />
+              {/* The amount and the one action, directly under the form. */}
+              <div className="border-t border-neutral-200 px-4 py-4 sm:px-6 sm:py-5">
+                <div className="flex items-baseline justify-between gap-4">
+                  <span className="text-label text-neutral-500">{tp('checkoutAmountDue')}</span>
+                  <span className="font-display text-listing font-bold tabular-nums text-neutral-900">
+                    {totalAmount === null ? '—' : formatMoney(totalAmount, currency)}
+                  </span>
                 </div>
-              )}
-
-              {paymentMethod === 'card' && (
-                <div className="animate-fade-in">
-                  <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-label text-neutral-700">
-                    {tp('checkoutCardHostedNotice')}
-                  </div>
-                  <PaymentLogoRow logos={CARD_LOGOS} />
-                </div>
-              )}
-
-              {paymentStatus === 'processing' && (
-                <PaymentProgressPanel method={paymentMethod === 'card' ? tp('checkoutCardLabel') : mobileProvider} />
-              )}
-              {paymentStatus === 'failed' && (
-                <div className="flex flex-col items-center py-6 animate-fade-in">
-                  <XCircle size={40} className="text-error-600 mb-3" />
-                  <p className="text-body text-error-600 font-medium">{tp('checkoutPaymentFailed')}</p>
-                  <p className="text-meta text-neutral-500 mt-1">{errorMsg}</p>
-                </div>
-              )}
-              {paymentStatus === 'unavailable' && (
-                <div className="flex flex-col items-center py-6 text-center animate-fade-in" role="status">
-                  <Clock size={40} className="mb-3 text-warning-600" />
-                  <p className="text-body font-medium text-neutral-900">{errorMsg}</p>
-                </div>
-              )}
-              {paymentStatus === 'demo_complete' && (
-                <div className="rounded-lg border border-accent-100 bg-accent-50 p-4 text-center animate-fade-in" role="status">
-                  <p className="text-body font-semibold text-accent-700">{tp('checkoutDemoResult')}</p>
-                  <p className="mt-1 text-label text-accent-700">{tp('checkoutDemoTicketStarting')}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t border-neutral-200 px-5 py-5 sm:px-6">
-            <div className="mb-3">
-              <h3 className="text-listing font-bold text-neutral-900">{tp('checkoutCouponTitle')}</h3>
-              <p className="mt-0.5 text-meta text-neutral-500">{tp('checkoutPromoHint')}</p>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="input-field min-w-0"
-                placeholder={tp('checkoutCouponPlaceholder')}
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                disabled={isProcessing || couponStatus === 'valid'}
-              />
-              <button
-                type="button"
-                onClick={validateCoupon}
-                className="btn-secondary whitespace-nowrap px-5"
-                disabled={isProcessing || couponStatus === 'valid' || !couponCode || totalAmount === null}
-              >
-                {couponStatus === 'checking' ? <Loader2 size={16} className="animate-spin" /> : tp('checkoutApply')}
-              </button>
-            </div>
-            {couponStatus === 'valid' && (
-              <p className="mt-2 text-body text-accent-600 font-medium flex items-center gap-1">
-                <CheckCircle2 size={16} /> {tp('checkoutCouponApplied')} {tp('checkoutTenPercentDiscount')}
-              </p>
-            )}
-            {couponStatus === 'invalid' && (
-              <p className="mt-2 text-body text-error-600 font-medium flex items-center gap-1">
-                <XCircle size={16} /> {tp('checkoutInvalidCoupon')}
-              </p>
-            )}
-          </div>
-
-          <footer className="rounded-b-xl border-t border-neutral-200 bg-neutral-50/70 px-5 py-4 sm:px-6">
-            {(paymentStatus === 'idle' || paymentStatus === 'failed' || paymentStatus === 'unavailable') && (
-              <button
-                type="button"
-                onClick={handlePay}
-                className="btn-primary w-full py-3.5"
-                disabled={finalAmount === null || (paymentMethod === 'mobile_money' && !phoneNumber.trim())}
-              >
-                <CreditCard size={18} />
-                {tp('checkoutSimulateRequest')}
-                {finalAmount !== null && <> · {formatMoney(finalAmount, currency)}</>}
-              </button>
-            )}
-
-            {paymentStatus === 'failed' && (
-              <button
-                type="button"
-                onClick={() => { setPaymentStatus('idle'); setErrorMsg(''); }}
-                className="btn-ghost mt-2 w-full"
-              >
-                {tp('checkoutTryAgain')}
-              </button>
-            )}
-
-            <div className="mt-4 flex flex-col items-center justify-center gap-2 text-meta text-neutral-400 sm:flex-row sm:gap-5">
-              {paymentStatus === 'idle' && (
-                <p className="flex items-center gap-1">
-                  <TicketIcon size={12} />
-                  {tp('checkoutTicketAfterPayment')}
+                <p className="mt-1 text-meta text-neutral-500">
+                  {modeLabel} · {passengerCount}{' '}
+                  {passengerCount === 1 ? tp('passengerOne') : tp('passengersMany')}
                 </p>
-              )}
-              <p className="flex items-center gap-1">
-                <ShieldCheck size={12} className="text-brand-600" />
-                {tp('checkoutSecurePayment')}
-              </p>
+
+                {serverQuote && serverQuote.lines.length > 0 && (
+                  <dl className="mt-2 space-y-0.5 text-meta text-neutral-500">
+                    {serverQuote.lines.map((line) => (
+                      <div key={line.kind} className="flex justify-between gap-4">
+                        <dt>
+                          {line.kind === 'adult' ? tp('adults') : tp('children')} × {line.quantity}
+                        </dt>
+                        <dd className="tabular-nums">{formatMoney(line.amountMinor, currency)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+
+                {bookingState.mode === 'bus' && quoteUnavailable && (
+                  <p className="mt-3 text-meta text-warning-700" role="alert">
+                    {tp('checkoutQuoteUnavailable')}
+                  </p>
+                )}
+
+                <div className="mt-4">
+                  {isQuoteLoading && (
+                    <button type="button" className="btn-primary w-full py-3.5" disabled aria-busy="true">
+                      <Loader2 size={18} className="animate-spin" />
+                      {tp('checkoutQuoteLoading')}
+                    </button>
+                  )}
+
+                  {!isQuoteLoading &&
+                    (paymentStatus === 'idle' || paymentStatus === 'failed' || paymentStatus === 'unavailable') && (
+                    <button
+                      type="button"
+                      onClick={handlePay}
+                      className="btn-primary w-full py-3.5"
+                      disabled={
+                        !isPayableMode ||
+                        totalAmount === null ||
+                        (paymentMethod === 'mobile_money' && (!mobileProvider || !phoneNumber.trim()))
+                      }
+                    >
+                      {!isPayableMode ? tp('comingSoon') : tp('checkoutPayAmount').replace(
+                        '{amount}',
+                        totalAmount === null ? '' : formatMoney(totalAmount, currency),
+                      )}
+                    </button>
+                  )}
+
+                  {isProcessing && (
+                    <button type="button" className="btn-primary w-full py-3.5" disabled>
+                      <Loader2 size={18} className="animate-spin" />
+                      {tp('checkoutStateProcessing')}
+                    </button>
+                  )}
+
+                  {paymentStatus === 'failed' && (
+                    <button type="button" onClick={retry} className="btn-secondary mt-2 w-full py-3">
+                      {tp('checkoutTryAgain')}
+                    </button>
+                  )}
+                </div>
+
+                <p className="mt-3 flex items-start gap-1.5 text-meta text-neutral-500">
+                  
+                  {tp('checkoutSecurePayment')}
+                </p>
+                {paymentStatus === 'idle' && (
+                  <p className="mt-1.5 flex items-start gap-1.5 text-meta text-neutral-500">
+                    
+                    {tp('checkoutTicketAfterPayment')}
+                  </p>
+                )}
+              </div>
             </div>
-          </footer>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MethodOption({
+  id,
+  name,
+  checked,
+  onSelect,
+  icon,
+  title,
+  hint,
+}: {
+  id: string;
+  name: string;
+  checked: boolean;
+  onSelect: () => void;
+  icon: ReactNode;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={`flex min-h-16 cursor-pointer items-center gap-3 py-3 transition-colors focus-within:bg-brand-50/60 ${
+        checked ? 'text-ink' : 'text-neutral-700'
+      }`}
+    >
+      <input
+        id={id}
+        type="radio"
+        name={name}
+        checked={checked}
+        onChange={onSelect}
+        className="h-4 w-4 shrink-0 accent-[var(--ink)]"
+      />
+      <span className={checked ? 'text-ink' : 'text-neutral-400'}>{icon}</span>
+      <span className="min-w-0">
+        <span className="block text-body font-semibold text-neutral-900">{title}</span>
+        <span className="mt-0.5 block text-meta text-neutral-500">{hint}</span>
+      </span>
+    </label>
+  );
+}
+
+function PaymentStatusStrip({
+  status,
+  stage,
+  method,
+  message,
+  detail,
+}: {
+  status: PaymentStatus;
+  stage: PayStage;
+  method: string;
+  message?: string;
+  detail?: string | null;
+}) {
+  const { tp } = useI18n();
+
+  if (status === 'failed' || status === 'unavailable') {
+    return (
+      <div className="rounded-xl border border-error-200 bg-error-50 px-4 py-3" role="alert">
+        <p className="flex items-center gap-2 text-label font-semibold text-error-700">
+          <XCircle size={16} />
+          {status === 'failed' ? tp('checkoutStartFailed') : tp('checkoutQuoteUnavailable')}
+        </p>
+        {message && <p className="mt-1 pl-6 text-label text-error-700">{message}</p>}
+        {detail && (
+          <p className="mt-1 pl-6 font-mono text-meta break-words text-neutral-700">
+            {detail}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Only the work this page actually performs. "Waiting for approval" is not a step here:
+  // that happens between the customer and their handset, and inventing a tick for it
+  // would be the same lie as inventing a payment.
+  const steps: { key: PayStage; label: string }[] = [
+    { key: 'creating', label: tp('checkoutStatusSending') },
+    { key: 'requesting', label: tp('checkoutStatusAwaiting') },
+  ];
+  const currentIndex = stage === 'creating' ? 0 : 1;
+
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3" role="status" aria-live="polite">
+      <p className="flex items-center gap-2 text-label font-medium text-neutral-900">
+        {status === 'pending' ? (
+          <CheckCircle2 size={15} className="text-success-600" />
+        ) : (
+          <Loader2 size={15} className="animate-spin text-ink" />
+        )}
+        {status === 'pending' ? tp('bookingCreatedNotice') : method}
+      </p>
+      <ol className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-meta">
+        {steps.map((step, index) => {
+          const done = index < currentIndex;
+          const active = index === currentIndex && status !== 'pending';
+          return (
+            <li
+              key={step.key}
+              className={`flex items-center gap-1.5 ${done || status === 'pending' ? 'text-success-700' : active ? 'font-semibold text-ink' : 'text-neutral-400'}`}
+            >
+              {done || status === 'pending' ? <CheckCircle2 size={12} /> : <Clock size={12} />}
+              {step.label}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
@@ -367,40 +825,5 @@ function PaymentLogoRow({ logos }: { logos: { name: string; image: string }[] })
         </li>
       ))}
     </ul>
-  );
-}
-
-function PaymentProgressPanel({ method }: { method: string }) {
-  const { tp } = useI18n();
-
-  return (
-    <div className="animate-fade-in rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-5">
-      <div className="mx-auto flex max-w-xs flex-col items-center">
-        <div className="relative mb-4 h-32 w-40" aria-hidden="true">
-          <div className="absolute bottom-0 left-1/2 z-10 h-24 w-32 -translate-x-1/2 rounded-xl border border-brand-800 bg-brand-900 p-2.5 shadow-lg">
-            <div className="flex h-9 items-center justify-center rounded bg-accent-50 px-2 text-center font-mono text-[9px] font-semibold text-accent-700">
-              {tp('checkoutDemoProcessing')}
-              <span className="payment-cursor ml-0.5">_</span>
-            </div>
-            <div className="mx-auto mt-2 grid w-20 grid-cols-3 gap-1">
-              {Array.from({ length: 9 }, (_, index) => (
-                <span key={index} className="h-1.5 rounded-sm bg-brand-700" />
-              ))}
-            </div>
-          </div>
-          <div className="payment-card absolute left-1/2 top-1 z-20 h-16 w-24 -translate-x-1/2 rounded-lg border border-white/20 bg-brand-600 p-2.5 shadow-md">
-            <span className="block h-3 w-5 rounded-sm bg-accent" />
-            <span className="mt-4 block font-mono text-[8px] tracking-widest text-white/90">••••  ••••</span>
-          </div>
-        </div>
-        <p className="flex items-center gap-2 text-center text-label font-semibold text-neutral-800" role="status" aria-live="polite">
-          <Loader2 size={16} className="shrink-0 animate-spin text-brand-600" />
-          {tp('checkoutDemoProcessing')}
-        </p>
-        <p className="mt-1 text-center text-meta text-neutral-500">
-          {tp('checkoutDemoFlow').replace('{method}', method)}
-        </p>
-      </div>
-    </div>
   );
 }

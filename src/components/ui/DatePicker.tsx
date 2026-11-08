@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/context/I18nContext';
+import { parseIsoDate, toIsoDate } from '@/utils/format';
 
 interface DatePickerProps {
   id: string;
@@ -33,7 +34,7 @@ export function DatePicker({
   const [isOpen, setIsOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => {
     if (value) {
-      const d = new Date(value);
+      const d = parseIsoDate(value);
       return new Date(d.getFullYear(), d.getMonth(), 1);
     }
     return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -62,7 +63,7 @@ export function DatePicker({
   }, [isOpen]);
 
   const displayValue = value
-    ? new Date(value).toLocaleDateString(lang === 'fr' ? 'fr-FR' : lang === 'sw' ? 'sw-TZ' : 'en-GB', {
+    ? parseIsoDate(value).toLocaleDateString(lang === 'fr' ? 'fr-FR' : lang === 'sw' ? 'sw-TZ' : 'en-GB', {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
@@ -70,12 +71,13 @@ export function DatePicker({
       })
     : '';
 
-  const minDateObj = minDate ? new Date(minDate) : undefined;
+  const minDateObj = minDate ? parseIsoDate(minDate) : undefined;
 
   const handleDateClick = (day: number) => {
     const selected = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), day);
-    const iso = selected.toISOString().split('T')[0];
-    onChange(iso);
+    // Local calendar day, never UTC: toISOString() would move it to the previous day in
+    // any timezone east of Greenwich (Dar es Salaam is UTC+3).
+    onChange(toIsoDate(selected));
     setIsOpen(false);
   };
 
@@ -90,7 +92,7 @@ export function DatePicker({
   const daysInMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1).getDay();
 
-  const selectedDate = value ? new Date(value) : null;
+  const selectedDate = value ? parseIsoDate(value) : null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -103,8 +105,10 @@ export function DatePicker({
       <div className="relative">
         <input
           id={id}
+          name={`${id}-no-autofill`}
           type="text"
           readOnly
+          autoComplete="off"
           className={`input-field pr-10 cursor-pointer ${error ? 'border-error-500' : ''}`}
           placeholder={placeholder}
           value={displayValue}

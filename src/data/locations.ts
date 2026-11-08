@@ -60,8 +60,8 @@ export const TANZANIA_LOCATIONS: Location[] = [
   { id: 'moshi', name: 'Moshi', region: 'Kilimanjaro', type: 'city', country: 'Tanzania' },
   { id: 'tanga', name: 'Tanga', region: 'Tanga', type: 'city', country: 'Tanzania' },
   { id: 'mwanza', name: 'Mwanza', region: 'Mwanza', type: 'city', country: 'Tanzania' },
-  { id: 'zanzibar', name: 'Zanzibar', region: 'Zanzibar', type: 'city', country: 'Tanzania' },
-  { id: 'pemba', name: 'Pemba', region: 'Pemba', type: 'city', country: 'Tanzania' },
+  { id: 'zanzibar', name: 'Zanzibar', region: 'Zanzibar', type: 'city', country: 'Tanzania', modes: ['stays', 'experiences'] },
+  { id: 'pemba', name: 'Pemba', region: 'Pemba', type: 'city', country: 'Tanzania', modes: ['stays', 'experiences'] },
   { id: 'songwe', name: 'Songwe', region: 'Mbeya', type: 'city', country: 'Tanzania' },
   { id: 'kahama', name: 'Kahama', region: 'Shinyanga', type: 'city', country: 'Tanzania' },
   { id: 'tabora', name: 'Tabora', region: 'Tabora', type: 'city', country: 'Tanzania' },
@@ -130,9 +130,9 @@ export const MODE_LABELS: Record<BookingMode, string> = {
 export const MODE_DESCRIPTIONS: Record<BookingMode, string> = {
   bus: 'Travel between cities and towns with trusted bus operators across Tanzania.',
   ferry: 'Sail to Zanzibar, Pemba, and across the lakes with reliable ferry services.',
-  flights: 'Book domestic and international flights with leading airlines.',
-  train: 'Ride the SGR and Madaraka Express for fast, comfortable rail travel.',
-  stays: 'Find hotels, lodges, and guesthouses for your journey.',
+  flights: 'Search worldwide flights through the GDS, not only East Africa.',
+  train: 'Ride TRC SGR and Kenya Railways Madaraka Express locally; international rail follows GDS entitlement.',
+  stays: 'Find hotels and lodges worldwide wherever the GDS returns properties.',
   experiences: 'Discover tours, safaris, and activities at your destination.',
 };
 
@@ -144,3 +144,9 @@ export const MODE_ICONS: Record<BookingMode, string> = {
   stays: 'BedDouble',
   experiences: 'Compass',
 };
+
+
+/** Looks up the dial code for a market by its country code. Falls back to +255 (Tanzania). */
+export function dialCodeForMarket(countryCode: string): string {
+  return COUNTRIES.find((country) => country.code === countryCode)?.dialCode ?? '+255';
+}

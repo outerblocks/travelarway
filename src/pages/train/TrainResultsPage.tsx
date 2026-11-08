@@ -1,14 +1,61 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from '@/router';
-import { ArrowLeft, Clock, TrainFront, Users } from 'lucide-react';
+import { ScheduleStrip } from '@/components/results/ScheduleStrip';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { TRAIN_SERVICES } from '@/data/mockData';
-import { locationMatches } from '@/domain/search';
-import { GenericResultsSkeleton } from '@/components/shared/Skeletons';
-import { LoadingState, EmptyResults, ErrorState, SearchSummaryBar } from '@/components/shared/States';
+import { LoadingState, EmptyResults, ErrorState, OfflineState, SearchSummaryBar } from '@/components/shared/States';
+import { queryFailureStatus } from '@/hooks/query-status';
+import { useOnlineRetry } from '@/hooks/useOnlineRetry';
+import { originToken, destinationToken } from '@/domain/search-tokens';
+import { useHydrateSearchFromUrl } from '@/hooks/useHydrateSearchFromUrl';
 import { formatCurrency, formatDate } from '@/utils/format';
-import type { TrainService } from '@/types';
+
+/**
+ * SGR search results, read from the database.
+ *
+ * This page used to filter a hardcoded timetable and print a fake seat count derived from a
+ * hash of the seat number — a number that looked live and was not. It now asks
+ * `/api/sgr/services`, which computes availability from the same seat segments the hold will
+ * be written against, so the count on the card and the seat the passenger later takes cannot
+ * disagree.
+ *
+ * A class with no fare on file is shown as pending with its button disabled rather than
+ * priced at zero. The alternative — defaulting a missing price — is how a booking site ends
+ * up selling a 90,500 seat for nothing.
+ */
+
+interface ServiceClass {
+  seatClassCode: string;
+  name: string;
+  fare: number | null;
+  currency: string | null;
+  fareSource: string | null;
+  available: number;
+  totalSellable: number;
+  soldOut: boolean;
+}
+
+interface SgrService {
+  tripId: string;
+  serviceRef: string;
+  tripNumber: string;
+  name: string;
+  operatorName: string;
+  servicePattern: string | null;
+  origin: string;
+  destination: string;
+  /** Null for an intermediate stop: the operator has not published a time for it. */
+  departureTime: string | null;
+  arrivalTime: string | null;
+  departureDate: string;
+  duration: string;
+  fromSeq: number;
+  toSeq: number;
+  /** The train's own endpoints, which differ from the pair searched when joining mid-line. */
+  serviceOrigin: string;
+  serviceDestination: string;
+  classes: ServiceClass[];
+}
 
 export function TrainResultsPage() {
   const navigate = useNavigate();
@@ -16,124 +63,249 @@ export function TrainResultsPage() {
   const { tp } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [results, setResults] = useState<TrainService[]>([]);
+  const [offline, setOffline] = useState(false);
+  const [results, setResults] = useState<SgrService[]>([]);
+  const [unresolved, setUnresolved] = useState<string[]>([]);
+  const [returnSelection, setReturnSelection] = useState(false);
 
   const params = bookingState.searchParams;
+  useHydrateSearchFromUrl();
+  const isRoundTrip = params.returnDate !== undefined && params.extras?.tripType === 'return';
+  const selectedDate = (returnSelection ? params.returnDate : params.date) ?? '';
+  const origin = (returnSelection ? destinationToken(params) : originToken(params)) || '';
+  const destination = (returnSelection ? originToken(params) : destinationToken(params)) || '';
+  const routeSummary = results[0] ? `${results[0].origin} → ${results[0].destination}` : '';
+
+  const load = useCallback(async () => {
+    if (!origin || !destination || !selectedDate) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(false);
+    setOffline(false);
+    try {
+      const search = new URLSearchParams({ from: origin, to: destination, date: selectedDate });
+      const response = await fetch(`/api/sgr/services?${search.toString()}`);
+      if (!response.ok) {
+        setError(true);
+        setResults([]);
+        return;
+      }
+      const payload = (await response.json()) as { data?: SgrService[]; unresolved_places?: string[] };
+      setResults(payload.data ?? []);
+      setUnresolved(payload.unresolved_places ?? []);
+    } catch (caught: unknown) {
+      if (queryFailureStatus(caught) === 'offline') setOffline(true);
+      else setError(true);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [origin, destination, selectedDate]);
 
   useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => {
-      try {
-        let r = [...TRAIN_SERVICES];
-        if (params.origin && params.destination) {
-          r = r.filter((t) =>
-            locationMatches(params.origin, [t.departureStation]) &&
-            locationMatches(params.destination, [t.arrivalStation])
-          );
-        }
-        if (r.length === 0 && !params.origin) r = TRAIN_SERVICES;
-        setResults(r);
-        setLoading(false);
-      } catch {
-        setError(true);
-        setLoading(false);
-      }
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [params.origin, params.destination]);
+    void load();
+  }, [load]);
+  useOnlineRetry(load);
 
-  const handleSelect = (service: TrainService, classId: string) => {
-    setSearchParams({ ...params, extras: { ...params.extras, trainId: service.id, classId } });
-    navigate('/train/booking');
+  const handleSelect = (service: SgrService, selected: ServiceClass) => {
+    const extras = params.extras ?? {};
+    // Carried as strings because the shared search state is a string map; the booking page
+    // reads them back with Number() and refuses the leg if they no longer parse.
+    const leg = {
+      trainId: service.tripId,
+      classId: selected.seatClassCode,
+      fromSeq: String(service.fromSeq),
+      toSeq: String(service.toSeq),
+    };
+
+    /**
+     * What the review page prints. These are display strings, not money: the price is asked
+     * from the server again at review, because a total that travelled through the client is
+     * one the client could have changed. The journey description is safe to carry — it is the
+     * same fact the ticket will state either way.
+     */
+    const legDisplay = {
+      trainName: service.name,
+      operatorName: service.operatorName,
+      legOrigin: service.origin,
+      legDestination: service.destination,
+      legDeparture: service.departureTime ?? '',
+      legArrival: service.arrivalTime ?? '',
+      legDuration: service.duration,
+      legDate: service.departureDate,
+      classLabel: selected.name,
+    };
+
+    if (returnSelection) {
+      setSearchParams({
+        ...params,
+        extras: {
+          ...extras,
+          returnTrainId: leg.trainId,
+          returnClassId: leg.classId,
+          // The return leg runs between its own pair of stops, which is not the outbound
+          // interval mirrored: a trip that starts at seq 0 and ends at 2 has its own numbers.
+          returnFromSeq: String(service.fromSeq),
+          returnToSeq: String(service.toSeq),
+          returnTrainName: legDisplay.trainName,
+          returnOperatorName: legDisplay.operatorName,
+          returnLegOrigin: legDisplay.legOrigin,
+          returnLegDestination: legDisplay.legDestination,
+          returnLegDeparture: legDisplay.legDeparture,
+          returnLegArrival: legDisplay.legArrival,
+          returnLegDuration: legDisplay.legDuration,
+          returnLegDate: legDisplay.legDate,
+          returnClassLabel: legDisplay.classLabel,
+        },
+      });
+      navigate('/train/booking');
+      return;
+    }
+
+    const { returnTrainId: _r, returnClassId: _c, ...outboundExtras } = extras;
+    setSearchParams({ ...params, extras: { ...outboundExtras, ...leg, ...legDisplay } });
+
+    if (isRoundTrip) {
+      setReturnSelection(true);
+    } else {
+      navigate('/train/booking');
+    }
   };
 
-  if (loading) return (
-    <>
-      <SearchSummaryBar>
-        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link>
-        <span className="text-body text-neutral-500">
-          {params.date ? formatDate(params.date) : ''}
-          {params.returnDate ? ` · ${tp('return')} ${formatDate(params.returnDate)}` : ''}
-        </span>
-      </SearchSummaryBar>
-      <GenericResultsSkeleton count={3} />
-      <LoadingState message={tp('searchingTrainServices')} />
-    </>
-  );
+  if (loading) {
+    return (
+      <>
+        <SearchSummaryBar>
+          <Link to="/" className="btn-ghost text-label">← {tp('modifySearch')}</Link>
+          <span className="text-body text-neutral-500">
+            {selectedDate ? formatDate(selectedDate) : ''}
+          </span>
+        </SearchSummaryBar>
+        <LoadingState count={3} />
+      </>
+    );
+  }
 
-  if (error) return <ErrorState message={tp('unableLoadTrains')} onRetry={() => window.location.reload()} />;
+  if (offline) {
+    return <OfflineState onRetry={() => void load()} />;
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        message={tp('unableLoadTrains')}
+        subMessage={tp('bookingServiceTryAgain')}
+        onRetry={() => void load()}
+      />
+    );
+  }
+
+  const anyProvisional = results.some((service) =>
+    service.classes.some((entry) => entry.fareSource === 'PROVISIONAL'),
+  );
 
   return (
     <>
       <SearchSummaryBar>
-        <Link to="/" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('modifySearch')}</Link>
+        <Link to="/" className="btn-ghost text-label">← {tp('modifySearch')}</Link>
         <span className="text-body font-medium text-neutral-900">
-          {tp('trainSearch')}
-          {params.date ? ` · ${formatDate(params.date)}` : ''}
-          {params.returnDate ? ` · ${tp('return')} ${formatDate(params.returnDate)}` : ''}
+          {returnSelection ? `${tp('return')} ${tp('trainSearch')}` : tp('trainSearch')}
+          {selectedDate ? ` · ${formatDate(selectedDate)}` : ''}
         </span>
       </SearchSummaryBar>
 
       <div className="section-container py-6">
-        <h1 className="text-page font-bold text-neutral-900 mb-6">{tp('trainServiceCount').replace('{count}', String(results.length))}</h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-page font-bold text-neutral-900">
+              {returnSelection
+                ? `${tp('return')} ${tp('trainSearch')}`
+                : tp('trainServiceCount').replace('{count}', String(results.length))}
+            </h1>
+            <p className="mt-1 text-body text-neutral-500">
+              {routeSummary}{routeSummary && selectedDate ? ' · ' : ''}
+              {selectedDate ? formatDate(selectedDate) : ''}
+            </p>
+          </div>
+          {returnSelection && (
+            <button type="button" onClick={() => setReturnSelection(false)} className="btn-ghost text-label">
+              ← {tp('departure')}
+            </button>
+          )}
+        </div>
+
+        {unresolved.length > 0 && (
+          <p className="mb-5 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-meta text-error-700">
+            {tp('trainUnknownPlace').replace('{places}', unresolved.join(', '))}
+          </p>
+        )}
+
+        {anyProvisional && (
+          <p className="mb-5 rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-meta text-warning-800">
+            {tp('trainProvisionalFareNotice')}
+          </p>
+        )}
 
         {results.length === 0 ? (
           <EmptyResults message={tp('noTrainsFound')} subMessage={tp('tryDifferentDateRoute')} />
         ) : (
-          <div className="space-y-3">
+          <div className="offer-sheet">
             {results.map((service) => (
-              <div key={service.id} className="ticket-row animate-fade-in p-5">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-brand-50 rounded-sm flex items-center justify-center">
-                    <TrainFront size={20} className="text-brand-600" />
+              <article key={service.tripId} className="offer-row">
+                <div className="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:gap-8 lg:px-5">
+                  <div className="flex min-w-0 items-center gap-3 lg:w-[13.5rem] lg:shrink-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-ink text-label font-semibold text-white">SGR</div>
+                    <div className="min-w-0">
+                      <p className="truncate text-body font-semibold text-neutral-900">{service.name}</p>
+                      <p className="truncate text-meta text-neutral-600">
+                        {service.operatorName}, {service.tripNumber}
+                        {service.serviceOrigin && service.serviceDestination
+                          && (service.origin !== service.serviceOrigin || service.destination !== service.serviceDestination)
+                          ? `, ${tp('trainViaService').replace('{from}', service.serviceOrigin).replace('{to}', service.serviceDestination)}`
+                          : ''}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-body font-bold text-neutral-900">{service.trainName}</p>
-                    <p className="text-meta text-neutral-500">{service.operatorName}</p>
-                  </div>
+
+                  <ScheduleStrip
+                    startTime={service.departureTime ?? '—'}
+                    startPlace={service.origin}
+                    endTime={service.arrivalTime ?? '—'}
+                    endPlace={service.destination}
+                    duration={service.duration}
+                    connection={formatDate(service.departureDate)}
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <p className="text-meta text-neutral-500 uppercase tracking-wide">{tp('departure')}</p>
-                    <p className="text-body font-bold text-neutral-900">{service.departureTime}</p>
-                    <p className="text-meta text-neutral-500">{service.departureStation}</p>
-                  </div>
-                  <div>
-                    <p className="text-meta text-neutral-500 uppercase tracking-wide">{tp('arrival')}</p>
-                    <p className="text-body font-bold text-neutral-900">{service.arrivalTime}</p>
-                    <p className="text-meta text-neutral-500">{service.arrivalStation}</p>
-                  </div>
-                  <div>
-                    <p className="text-meta text-neutral-500 uppercase tracking-wide">{tp('durationLabel')}</p>
-                    <p className="text-body font-medium text-neutral-900 flex items-center gap-1"><Clock size={14} /> {service.duration}</p>
-                  </div>
-                  <div>
-                    <p className="text-meta text-neutral-500 uppercase tracking-wide">{tp('ticketDate')}</p>
-                    <p className="text-body font-medium text-neutral-900">{formatDate(service.departureDate)}</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-neutral-200 pt-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {service.classes.map((cls) => (
-                      <div key={cls.id} className="border border-neutral-200 rounded-sm p-3 flex items-center justify-between">
-                        <div>
-                          <p className="text-body font-bold text-neutral-900">{cls.name}</p>
-                          <p className="text-meta text-neutral-500 flex items-center gap-1">
-                            <Users size={12} /> {cls.availableSeats} seats
-                          </p>
-                          {!cls.hasSeatSelection && <p className="text-meta text-neutral-400">{tp('seatSelectionUnavailable')}</p>}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-body font-bold text-brand-600">{formatCurrency(cls.fare, cls.currency, cls.currency === 'KES' ? 'KSh' : 'TSh')}</p>
-                          <button onClick={() => handleSelect(service, cls.id)} className="btn-primary text-meta px-3 py-1.5 mt-1">{tp('bookButton')}</button>
-                        </div>
-                      </div>
+                <table className="w-full border-t border-neutral-200 text-left">
+                  <tbody>
+                    {service.classes.map((entry) => (
+                      <tr key={entry.seatClassCode} className="border-t border-neutral-100 first:border-t-0">
+                        <td className="px-4 py-3 text-body font-medium text-neutral-900 lg:px-5">{entry.name}</td>
+                        <td className="px-2 py-3 text-meta text-neutral-600">
+                          {entry.available} {tp('seatsAvailableShort')}
+                          {entry.fare === null ? ` · ${tp('trainFarePending')}` : ''}
+                        </td>
+                        <td className="px-2 py-3 text-right text-body font-semibold tabular-nums text-brand-800">
+                          {entry.fare === null ? '—' : formatCurrency(entry.fare, entry.currency ?? 'TZS', 'TSh')}
+                        </td>
+                        <td className="px-4 py-3 text-right lg:px-5">
+                          <button
+                            onClick={() => handleSelect(service, entry)}
+                            disabled={entry.soldOut || entry.fare === null}
+                            className="btn-primary text-meta px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {entry.soldOut ? tp('soldOut') : tp('bookButton')}
+                          </button>
+                        </td>
+                      </tr>
                     ))}
-                  </div>
-                </div>
-              </div>
+                  </tbody>
+                </table>
+              </article>
             ))}
           </div>
         )}

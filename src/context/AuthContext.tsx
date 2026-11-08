@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { stubAuthPolicy } from '@/auth/stubAuth';
 
 interface AuthUser {
   email: string;
@@ -17,6 +18,8 @@ interface AuthContextValue {
 
 const STORAGE_KEY = 'travelar_auth_user';
 const PROVIDERS: ReadonlyArray<AuthUser['provider']> = ['email', 'google', 'apple'];
+const STUB_UNAVAILABLE =
+  'Sign-in is not available until the identity provider is configured.';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -74,6 +77,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // localStorage is browser-only, so the server render and the hydration render
+    // are both the signed-out shape. In Vite dev the stored stub is adopted after
+    // mount. Production builds discard it — it is not a session.
+    if (!stubAuthPolicy.isAllowed()) {
+      localStorage.removeItem(STORAGE_KEY);
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     setUser(loadUser());
     setLoading(false);
   }, []);
@@ -84,18 +96,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithEmail = useCallback(async (email: string, _password: string) => {
-    await delay(800);
+    if (!stubAuthPolicy.isAllowed()) return { error: STUB_UNAVAILABLE };
     persistUser({ email, name: email.split('@')[0], provider: 'email' });
     return { error: null };
   }, [persistUser]);
 
   const signUpWithEmail = useCallback(async (email: string, _password: string) => {
-    await delay(1000);
+    if (!stubAuthPolicy.isAllowed()) return { error: STUB_UNAVAILABLE };
     persistUser({ email, name: email.split('@')[0], provider: 'email' });
     return { error: null };
   }, [persistUser]);
 
   const signInWithProvider = useCallback(async (provider: 'google' | 'apple') => {
+    if (!stubAuthPolicy.isAllowed()) return { error: STUB_UNAVAILABLE };
     await delay(1000);
     const fakeEmail = provider === 'google' ? 'user@gmail.com' : 'user@icloud.com';
     persistUser({ email: fakeEmail, name: 'Travelar User', provider });

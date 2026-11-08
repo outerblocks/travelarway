@@ -7,6 +7,7 @@ const PUBLIC_ROUTES = [
   '/signin',
   '/register',
   '/manage-booking',
+  '/parcels',
   '/help',
   '/partners',
   '/about',
@@ -60,16 +61,25 @@ test('checkout with no booking shows the empty state', async ({ page }) => {
   await expect(page).toHaveScreenshot('checkout-empty.png', { fullPage: true });
 });
 
-test('manage booking: validation and not-found states', async ({ page }) => {
+test('manage booking: PNR validation and not-found state', async ({ page }) => {
   await page.goto('/manage-booking');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Find booking' }).click();
-  await expect(page.getByText('Please enter your booking reference.')).toBeVisible();
-  await page.getByLabel('Booking reference').fill('TRV-123456');
+  await expect(page.getByText('Enter your PNR or tracking number.')).toBeVisible();
+
+  await page.getByLabel('PNR').fill('TRV-123456');
   await page.getByRole('button', { name: 'Find booking' }).click();
-  await expect(page.getByText('Please enter the email used for the booking.')).toBeVisible();
-  await page.getByLabel('Email used for booking').fill('jane@example.com');
-  await page.getByRole('button', { name: 'Find booking' }).click();
-  await expect(page.getByText(/No booking found with reference "TRV-123456"/)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/No booking found with PNR "TRV-123456"/)).toBeVisible();
   await expect(page).toHaveScreenshot('manage-booking-not-found.png', { fullPage: true });
+});
+
+test('parcel tracking: validation and an honest empty result', async ({ page }) => {
+  await page.goto('/parcels');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'Find parcel' }).click();
+  await expect(page.getByText('Enter your PNR or tracking number.')).toBeVisible();
+
+  await page.getByLabel('PNR or tracking number').fill('TRV-ABC123');
+  await page.getByRole('button', { name: 'Find parcel' }).click();
+  await expect(page.getByText(/No parcel movement is recorded under TRV-ABC123/)).toBeVisible();
 });

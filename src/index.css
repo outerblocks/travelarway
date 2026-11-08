@@ -59,11 +59,14 @@
   --color-brand-700: #0044b0;
   --color-brand-800: #003a8c;
   --color-brand-900: #003375;
-  --color-accent-50: #f0fdf4;
-  --color-accent-100: #dcfce7;
-  --color-accent-500: #22c55e;
-  --color-accent-600: #16a34a;
-  --color-accent-700: #15803d;
+  /* Colour roles. brand = action and structure. accent = brand flourish only
+     (hairlines, card edges, badges, headline words) and never an interactive
+     surface. success / warning / error = state only, AA on their own tint. */
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
   --color-warning-50: #fffbeb;
   --color-warning-100: #fef3c7;
   --color-warning-500: #f59e0b;
@@ -124,7 +127,7 @@
   --destructive: oklch(0.55 0.18 25);
   --destructive-foreground: oklch(0.99 0 0);
   --success: #0055dd;
-  /* Brand blue — the footer background colour, used for every solid navy surface and button. */
+  /* Brand blue — used for solid ink surfaces and buttons. */
   --ink: #0055dd;
   --ink-foreground: #ffffff;
   --highlight: #585856;
@@ -195,6 +198,7 @@
 }
 
 .hero-heading {
+  letter-spacing: -0.03em;
   font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
 }
 
@@ -219,12 +223,23 @@
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-body font-medium text-neutral-600 transition-colors hover:bg-white hover:text-ink;
   }
 
-  .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 text-body font-bold text-ink transition-colors hover:bg-[#efac10] active:bg-[#e0a00c] disabled:cursor-not-allowed disabled:bg-neutral-300;
+  .btn-light {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-body font-semibold text-ink transition-colors hover:bg-brand-50 active:bg-brand-100 disabled:cursor-not-allowed disabled:bg-neutral-300;
   }
 
   .input-field {
     @apply w-full rounded-lg border border-neutral-300 bg-white px-4 py-3 text-body text-neutral-900 placeholder:text-neutral-400 transition-colors hover:border-neutral-400;
+  }
+
+  .native-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: none;
+  }
+
+  .native-select::-ms-expand {
+    display: none;
   }
 
   .input-label {
@@ -267,7 +282,7 @@
   }
 
   .search-form .search-submit {
-    @apply min-h-[3.25rem] rounded-xl bg-accent px-7 font-bold text-ink hover:bg-[#efac10] active:bg-[#e0a00c];
+    @apply min-h-[3.25rem] rounded-xl px-7 font-bold text-white;
   }
 
   .field-error {
@@ -278,14 +293,77 @@
     @apply mx-auto max-w-container px-4 sm:px-6 lg:px-8;
   }
 
-  .card {
-    @apply rounded-xl border border-neutral-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(0,85,221,0.35)];
+  /* Official store artwork is not the same aspect ratio. A shared 40×135 slot
+     keeps App Store and Google Play the same size; Play's PNG is scaled to
+     cancel its empty padding. */
+  .store-badge {
+    @apply inline-flex h-10 w-[135px] shrink-0 items-center justify-center overflow-hidden bg-transparent p-0;
   }
 
-  .ticket-row {
-    @apply overflow-hidden rounded-xl border border-neutral-200 bg-white;
-    border-left-width: 4px;
-    border-left-color: var(--accent);
+  .store-badge img {
+    @apply h-10 w-auto max-w-none;
+  }
+
+  .store-badge[data-fit="play"] img {
+    height: 3.75rem;
+  }
+
+  .card {
+    @apply rounded-xl border border-neutral-200/80 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.06),0_1px_2px_-1px_rgba(0,0,0,0.06)];
+  }
+
+  /* Each offer is its own panel, with a gap between them. */
+  .offer-sheet {
+    @apply flex flex-col gap-3;
+  }
+
+  .offer-row {
+    @apply border border-neutral-300 bg-white;
+    border-left: 3px solid var(--ink);
+  }
+
+  .guides-masthead {
+    border-bottom: 3px solid var(--accent);
+  }
+
+  .guides-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 768px) {
+    .guides-board {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 2.5rem;
+    }
+  }
+
+  .guides-board > ul {
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .guides-story + .guides-story {
+    @apply border-t border-neutral-200;
+  }
+
+  .guides-headline {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .guides-headline:hover {
+    color: var(--color-brand-700);
+  }
+
+  /* Passenger blocks in a list. The form has no shell of its own — every page that uses it
+     already wraps it in a card, and a bordered box inside a card is what made the step read
+     as a stack of boxes rather than a set of fields. Without a shell, consecutive travellers
+     need a rule between them, and only between them. */
+  .passenger-block + .passenger-block {
+    @apply border-t border-neutral-200 pt-8;
   }
 
   .skeleton {
@@ -480,66 +558,41 @@
 
 @media print {
   @page {
-    size: 80mm auto;
-    margin: 0;
+    size: A4;
+    margin: 12mm;
   }
 
   body {
     margin: 0 !important;
+    background: #fff !important;
   }
 
   body * {
     visibility: hidden !important;
   }
 
-  .receipt-print-region,
-  .receipt-print-region * {
+  /* The ticket is the only thing that prints. The 80mm variant is produced
+     separately by the download path, so this rule targets A4 only. */
+  #thermal-ticket,
+  #thermal-ticket * {
     visibility: visible !important;
   }
 
-  .receipt-print-region {
-    position: fixed !important;
-    inset: 0 auto auto 0 !important;
-    display: block !important;
-    width: 80mm !important;
-    max-width: 80mm !important;
-    margin: 0 !important;
-  }
-
-  .receipt-printer-machine {
-    display: none !important;
-  }
-
-  .receipt-printer-output,
-  .ticket-print-container,
-  .ticket-print-overflow {
-    width: 80mm !important;
-    max-width: 80mm !important;
-    height: auto !important;
-    overflow: visible !important;
-    padding: 0 !important;
-  }
-
-  .receipt-ticket-paper {
-    width: 80mm !important;
-    min-height: 0 !important;
-    padding: 4mm !important;
-    border: 0 !important;
-    box-shadow: none !important;
-  }
-
   #thermal-ticket {
-    position: fixed !important;
-    inset: 0 auto auto 0 !important;
-    box-sizing: border-box !important;
-    width: 80mm !important;
-    max-width: 80mm !important;
+    position: static !important;
+    width: auto !important;
+    max-width: 100% !important;
     margin: 0 !important;
     color: #000 !important;
     background: #fff !important;
     box-shadow: none !important;
+    border: 1px solid #d4d4d4 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
     transform: none !important;
     animation: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
@@ -571,21 +624,6 @@
 
 .animate-slide-up {
   animation: slide-up 0.4s ease-out forwards;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton-shimmer {
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
 }
 
 ::-webkit-scrollbar {

@@ -1,0 +1,581 @@
+{
+  "info": {
+    "_postman_id": "9406cfb6-e3e9-44a2-b3fd-b6189e51bbc9",
+    "name": "Hotel JSON API - v12 SearchComplete",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "3740891"
+  },
+  "item": [
+    {
+      "name": "Bearer auth",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonResponse = JSON.parse(responseBody);\r",
+              "\r",
+              "pm.test(\"Check Existence of Bearer token\", function () {\r",
+              "    var token = jsonResponse.access_token;\r",
+              "\r",
+              "    pm.expect(token).to.exist;    \r",
+              "});\r",
+              "\r",
+              "var token = jsonResponse.access_token;\r",
+              "\r",
+              "pm.collectionVariables.set(\"bearerToken\", token);\r",
+              "\r",
+              "// Function to add days to the current date and format it\r",
+              "function addDaysAndGetFormattedDate(daysToAdd) {\r",
+              "    const today = new Date();\r",
+              "    today.setDate(today.getDate() + daysToAdd);\r",
+              "\r",
+              "    const year = today.getFullYear();\r",
+              "    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed\r",
+              "    const day = String(today.getDate()).padStart(2, '0');\r",
+              "\r",
+              "    return `${year}-${month}-${day}`;\r",
+              "}\r",
+              "\r",
+              "// Example usage: calculate a date 30 days in the future\r",
+              "const arrival_date = addDaysAndGetFormattedDate(30);\r",
+              "const departure_date = addDaysAndGetFormattedDate(31);\r",
+              "\r",
+              "// Set the calculated date as a variable in Postman\r",
+              "pm.collectionVariables.set(\"checkIndate\", arrival_date);\r",
+              "pm.collectionVariables.set(\"checkOutdate\", departure_date);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "content-type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "password",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}",
+              "type": "text"
+            },
+            {
+              "key": "username",
+              "value": "{{username}}",
+              "type": "text",
+              "uuid": "b25c3937-deb1-4abf-b0e4-2170187db640"
+            },
+            {
+              "key": "password",
+              "value": "{{password}}",
+              "type": "text",
+              "uuid": "be701bcc-ee6e-4df2-81f0-56f9424e725c"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{authUrl}}",
+          "host": [
+            "{{authUrl}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "v12 Search by City IATACode",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{bearerToken}}",
+            "type": "text"
+          },
+          {
+            "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "value": "{{accessgroup}}",
+            "type": "text"
+          },
+          {
+            "key": "TVP-Trace-Id",
+            "value": "use a newly generated TraceId for each request",
+            "type": "text",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"stayDetails\": {\r\n        \"checkInDateLocal\": \"{{checkIndate}}\",\r\n        \"checkOutDateLocal\": \"{{checkOutdate}}\",\r\n        \"guests\": {\r\n            \"adults\": 1\r\n        }\r\n    },\r\n    \"propertyFilter\": {\r\n        \"aggregators\": [\r\n            \"TVPT\"\r\n        ],\r\n        \"location\": {\r\n            \"type\": \"cityIATACode\",\r\n            \"details\": {\r\n                \"iataCode\": \"PAR\"\r\n            },\r\n            \"radius\": {\r\n                \"value\": 25,\r\n                \"unit\": \"mi\"\r\n            }\r\n        }\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/12/hotel/search/searchcomplete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "12",
+            "hotel",
+            "search",
+            "searchcomplete"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "v12 Search by Airport IATACode",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{bearerToken}}",
+            "type": "text"
+          },
+          {
+            "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "value": "{{accessgroup}}",
+            "type": "text"
+          },
+          {
+            "key": "TVP-Trace-Id",
+            "value": "use a newly generated TraceId for each request",
+            "type": "text",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"stayDetails\": {\r\n        \"checkInDateLocal\": \"{{checkIndate}}\",\r\n        \"checkOutDateLocal\": \"{{checkOutdate}}\",\r\n        \"guests\": {\r\n            \"adults\": 1\r\n        }\r\n    },\r\n    \"propertyFilter\": {\r\n        \"aggregators\": [\r\n            \"TVPT\"\r\n        ],\r\n        \"location\": {\r\n            \"type\": \"airportIATACode\",\r\n            \"details\": {\r\n                \"iataCode\": \"JFK\"\r\n            },\r\n            \"radius\": {\r\n                \"value\": 25,\r\n                \"unit\": \"mi\"\r\n            }\r\n        }\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/12/hotel/search/searchcomplete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "12",
+            "hotel",
+            "search",
+            "searchcomplete"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "v12 Search by Coordinates",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{bearerToken}}",
+            "type": "text"
+          },
+          {
+            "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "value": "{{accessgroup}}",
+            "type": "text"
+          },
+          {
+            "key": "TVP-Trace-Id",
+            "value": "use a newly generated TraceId for each request",
+            "type": "text",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"stayDetails\": {\r\n        \"checkInDateLocal\": \"{{checkIndate}}\",\r\n        \"checkOutDateLocal\": \"{{checkOutdate}}\",\r\n        \"guests\": {\r\n            \"adults\": 1\r\n        }\r\n    },\r\n    \"propertyFilter\": {\r\n        \"aggregators\": [\r\n            \"TVPT\"\r\n        ],\r\n        \"location\": {\r\n            \"type\": \"coordinates\",\r\n            \"details\": {\r\n                \"latitude\": \"48.8566\",\r\n                \"longitude\": \"2.3522\"\r\n            },\r\n            \"radius\": {\r\n                \"value\": 25,\r\n                \"unit\": \"mi\"\r\n            }\r\n        }\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/12/hotel/search/searchcomplete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "12",
+            "hotel",
+            "search",
+            "searchcomplete"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "v12 Search by Address",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{bearerToken}}",
+            "type": "text"
+          },
+          {
+            "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "value": "{{accessgroup}}",
+            "type": "text"
+          },
+          {
+            "key": "TVP-Trace-Id",
+            "value": "use a newly generated TraceId for each request",
+            "type": "text",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"stayDetails\": {\r\n        \"checkInDateLocal\": \"{{checkIndate}}\",\r\n        \"checkOutDateLocal\": \"{{checkOutdate}}\",\r\n        \"guests\": {\r\n            \"adults\": 1\r\n        }\r\n    },\r\n    \"propertyFilter\": {\r\n        \"aggregators\": [\r\n            \"TVPT\"\r\n        ],\r\n        \"location\": {\r\n            \"type\": \"address\",\r\n            \"details\": {\r\n                \"countryCode\": \"US\",\r\n                \"stateProvince\": \"CO\",\r\n                \"cityName\": \"Denver\"\r\n            },\r\n            \"radius\": {\r\n                \"value\": 25,\r\n                \"unit\": \"mi\"\r\n            }\r\n        }\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/12/hotel/search/searchcomplete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "12",
+            "hotel",
+            "search",
+            "searchcomplete"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "v12 Search by PropertyId",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{bearerToken}}",
+            "type": "text"
+          },
+          {
+            "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "value": "{{accessgroup}}",
+            "type": "text"
+          },
+          {
+            "key": "TVP-Trace-Id",
+            "value": "use a newly generated TraceId for each request",
+            "type": "text",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"requestedCurrency\": \"EUR\",\r\n    \"stayDetails\": {\r\n        \"checkInDateLocal\": \"{{checkIndate}}\",\r\n        \"checkOutDateLocal\": \"{{checkOutdate}}\",\r\n        \"rooms\": 1,\r\n        \"guests\": {\r\n            \"adults\": 1\r\n        }\r\n    },\r\n    \"propertyFilter\": {\r\n        \"aggregators\": [\r\n            \"TVPT\"\r\n        ],\r\n        \"propertyKeys\": [            \r\n            {\r\n                \"chainCode\": \"PH\",\r\n                \"propertyCode\": \"H2103\"\r\n            },\r\n            {\r\n                \"chainCode\": \"YX\",\r\n                \"propertyCode\": \"G9075\"\r\n            }\r\n        ]\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/12/hotel/search/searchcomplete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "12",
+            "hotel",
+            "search",
+            "searchcomplete"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "12 Search by City IATACode – All Filters (Example Role)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{bearerToken}}",
+            "type": "text"
+          },
+          {
+            "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "value": "{{accessgroup}}",
+            "type": "text"
+          },
+          {
+            "key": "TVP-Trace-Id",
+            "value": "use a newly generated TraceId for each request",
+            "type": "text",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"excludeResponseFields\": [\r\n        \"roomTypes\",\r\n        \"roomRates\"\r\n    ],\r\n    \"requestedCurrency\": \"EUR\",\r\n    \"stayDetails\": {\r\n        \"checkInDateLocal\": \"{{checkIndate}}\",\r\n        \"checkOutDateLocal\": \"{{checkOutdate}}\",\r\n        \"rooms\": 1,\r\n        \"guests\": {\r\n            \"adults\": 1,\r\n            \"children\": [\r\n                {\r\n                    \"age\": 3\r\n                },\r\n                {\r\n                    \"age\": 5\r\n                }\r\n            ]\r\n        }\r\n    },\r\n    \"propertyFilter\": {\r\n        \"maxWaitTime\": 5000,\r\n        \"location\": {\r\n            \"type\": \"cityIATACode\",\r\n            \"details\": {\r\n                \"iataCode\": \"LON\"\r\n            },\r\n            \"radius\": {\r\n                \"value\": 15,\r\n                \"unit\": \"mi\"\r\n            }\r\n        },\r\n        \"aggregators\": [\r\n            \"TVPT\"\r\n        ],\r\n        \"chainCodes\": [\r\n            \"RT\",\r\n            \"HY\",\r\n            \"WV\",\r\n            \"DA\",\r\n            \"CC\",\r\n            \"SM\"\r\n        ],\r\n        \"propertyType\": [\r\n            \"Hotel\"\r\n        ],\r\n        \"customerLoyaltyCards\": [\r\n            {\r\n                \"value\": \"132456\",\r\n                \"supplierCode\": \"HL\"\r\n            }\r\n        ],\r\n        \"hotelNameContains\": \"hotel\",\r\n        \"privateRateType\": {\r\n            \"negotiatedCodes\": [\r\n                \"LOREAL\",\r\n                \"AAA\",\r\n                \"IBM\",\r\n                \"PFI\",\r\n                \"4TM\",\r\n                \"THX\"\r\n            ],\r\n            \"masterRateCode\": \"1ABC23\"\r\n        },\r\n        \"returnOnlyAvailableProperties\": false,\r\n        \"imageSize\": \"Large\",\r\n        \"returnAllImageURLs\": false,\r\n        \"returnRateSummaryInfo\": true,\r\n        \"recommendedPropertyAmenitiesInd\": true,\r\n        \"removeSpecialRates\": true,\r\n        \"applyLenientPropertyListRules\": true,\r\n        \"categories\": [\r\n            \"All\",\r\n            \"Weekend\",\r\n            \"Package\"\r\n        ]\r\n    },\r\n    \"roomFilter\": {\r\n        \"nonSmoking\": true,\r\n        \"balcony\": true,\r\n        \"accessible\": true,\r\n        \"connecting\": true,\r\n        \"family\": true,\r\n        \"highFloor\": true,\r\n        \"maxOccupancy\": 4,\r\n        \"bedConfiguration\": {\r\n            \"minimumQuantity\": 2,\r\n            \"type\": \"King\"\r\n        },\r\n        \"amenityCodes\": [\r\n            2,\r\n            92,\r\n            107\r\n        ],\r\n        \"recommendedRoomAmenitiesInd\": true\r\n    },\r\n    \"rateFilter\": {\r\n        \"rateFlags\": {\r\n            \"refundable\": true,\r\n            \"commissionable\": true,\r\n            \"deposit\": true,\r\n            \"prepay\": true,\r\n            \"postpay\": true,\r\n            \"breakfast\": true,\r\n            \"lunch\": true,\r\n            \"dinner\": true\r\n        },\r\n        \"publicRateBlacklist\": [\r\n            \"gold\"\r\n        ]\r\n    },\r\n    \"returnCompleteNightlyRateBreakdown\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/12/hotel/search/searchcomplete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "12",
+            "hotel",
+            "search",
+            "searchcomplete"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "v12 Search NextPage",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{bearerToken}}",
+            "type": "text"
+          },
+          {
+            "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "value": "{{accessgroup}}",
+            "type": "text"
+          },
+          {
+            "key": "TVP-Trace-Id",
+            "value": "use a newly generated TraceId for each request",
+            "type": "text",
+            "disabled": true
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/12/hotel/search/searchcomplete/{paginationToken}?pageNumber=2",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "12",
+            "hotel",
+            "search",
+            "searchcomplete",
+            "{paginationToken}"
+          ],
+          "query": [
+            {
+              "key": "pageNumber",
+              "value": "2"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "// Function to add days to the current date and format it\r",
+          "function addDaysAndGetFormattedDate(daysToAdd) {\r",
+          "    const today = new Date();\r",
+          "    today.setDate(today.getDate() + daysToAdd);\r",
+          "\r",
+          "    const year = today.getFullYear();\r",
+          "    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed\r",
+          "    const day = String(today.getDate()).padStart(2, '0');\r",
+          "\r",
+          "    return `${year}-${month}-${day}`;\r",
+          "}\r",
+          "\r",
+          "// Example usage: calculate a date 30 days in the future\r",
+          "const arrival_date = addDaysAndGetFormattedDate(30);\r",
+          "const departure_date = addDaysAndGetFormattedDate(31);\r",
+          "\r",
+          "// Set the calculated date as a variable in Postman\r",
+          "pm.collectionVariables.set(\"checkIndate\", arrival_date);\r",
+          "pm.collectionVariables.set(\"checkOutdate\", departure_date);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "authUrl",
+      "value": "https://auth.pp.travelport.net/oauth/token"
+    },
+    {
+      "key": "client_id",
+      "value": "Your_Client_Id"
+    },
+    {
+      "key": "client_secret",
+      "value": "Your_Client_Secret"
+    },
+    {
+      "key": "baseUrl",
+      "value": "https://api.pp.travelport.net"
+    },
+    {
+      "key": "bearerToken",
+      "value": "This will be generated automatically by the Bearer auth call"
+    },
+    {
+      "key": "accessgroup",
+      "value": "Your_AccessGroup"
+    },
+    {
+      "key": "checkIndate",
+      "value": "This will be populated by the first call"
+    },
+    {
+      "key": "checkOutdate",
+      "value": "This will be populated by the first call"
+    },
+    {
+      "key": "username",
+      "value": "Your_Client_Username"
+    },
+    {
+      "key": "password",
+      "value": "Your_Client_Password"
+    }
+  ]
+}

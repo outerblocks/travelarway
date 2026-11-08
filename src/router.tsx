@@ -6,11 +6,18 @@ import {
   useRouter,
 } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
+import { RouteError, RoutePending } from '@/components/shared/RouteStates';
 
 export function getRouter() {
   return createRouter({
     routeTree,
     scrollRestoration: true,
+    // Hold the previous screen for a beat so quick navigations never flash a
+    // loader, and show it only when a route genuinely takes time.
+    defaultPendingComponent: RoutePending,
+    defaultPendingMs: 150,
+    defaultPendingMinMs: 300,
+    defaultErrorComponent: RouteError,
   });
 }
 
@@ -41,6 +48,14 @@ export function useNavigate() {
   return useCallback((to: string | number, options?: { replace?: boolean }) => {
     if (typeof to === 'number') {
       router.history.go(to);
+      return;
+    }
+
+    // Search-form URLs carry `?from=` and similar. Passing that whole string as
+    // `to` does not match a file route, so the click looked like a no-op.
+    if (to.includes('?') || to.includes('#')) {
+      if (options?.replace) router.history.replace(to);
+      else router.history.push(to);
       return;
     }
 

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, X } from 'lucide-react';
 import { useI18n } from '@/context/I18nContext';
 
 interface Option {
@@ -12,7 +11,8 @@ interface AutocompleteProps {
   id: string;
   label: string;
   placeholder?: string;
-  options: Option[];
+  options?: Option[];
+  loadOptions?: (query: string) => Promise<Option[]>;
   value: string;
   onChange: (id: string, name: string) => void;
   error?: string;
@@ -23,7 +23,8 @@ export function Autocomplete({
   id,
   label,
   placeholder = 'Search...',
-  options,
+  options = [],
+  loadOptions,
   value,
   onChange,
   error,
@@ -33,13 +34,13 @@ export function Autocomplete({
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedName, setSelectedName] = useState(value);
+  const [remoteOptions, setRemoteOptions] = useState<Option[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSelectedName(value);
   }, [value]);
 
-  // Only attach listener while open; clean up when closed or unmounted.
   useEffect(() => {
     if (!isOpen) return;
 
@@ -60,9 +61,33 @@ export function Autocomplete({
     };
   }, [isOpen]);
 
-  const filtered = query
-    ? options.filter((o) => o.name.toLowerCase().includes(query.toLowerCase()))
-    : options;
+  useEffect(() => {
+    if (!loadOptions || !isOpen) return;
+    const needle = query.trim();
+    if (needle.length < 2 && !/^[A-Za-z]{3}$/.test(needle)) {
+      setRemoteOptions([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void loadOptions(needle).then((rows) => {
+        if (!cancelled) setRemoteOptions(rows);
+      });
+    }, 150);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [isOpen, loadOptions, query]);
+
+  const needle = query.trim().toLowerCase();
+  const filtered = loadOptions
+    ? remoteOptions
+    : needle
+      ? options.filter((o) => {
+          return o.name.toLowerCase().includes(needle) || (o.subText?.toLowerCase().includes(needle) ?? false);
+        })
+      : [];
 
   const handleSelect = (opt: Option) => {
     setSelectedName(opt.name);
@@ -75,6 +100,7 @@ export function Autocomplete({
     setSelectedName('');
     onChange('', '');
     setQuery('');
+    setRemoteOptions([]);
   };
 
   return (
@@ -86,7 +112,14 @@ export function Autocomplete({
       <div className="relative">
         <input
           id={id}
+          name={`${id}-no-autofill`}
           type="text"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
           className={`input-field pr-16 ${error ? 'border-error-500' : ''}`}
           placeholder={placeholder}
           value={isOpen ? query : selectedName}
@@ -97,6 +130,7 @@ export function Autocomplete({
           onFocus={() => {
             setIsOpen(true);
             setQuery('');
+            setRemoteOptions([]);
           }}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
@@ -113,13 +147,15 @@ export function Autocomplete({
               className="text-neutral-400 hover:text-neutral-600"
               aria-label={tp('clearSelection')}
             >
-              <X size={16} />
+              <span aria-hidden="true" className="text-sm leading-none">✕</span>
             </button>
           )}
-          <ChevronDown
-            size={16}
-            className={`text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          />
+          <span
+            aria-hidden="true"
+            className={`inline-block text-sm leading-none text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          >
+            ▾
+          </span>
         </div>
       </div>
 
@@ -134,8 +170,6 @@ export function Autocomplete({
               <button
                 type="button"
                 onPointerDown={(e) => {
-                  // Prevent the document pointerdown from closing the dropdown
-                  // before the click is registered.
                   e.stopPropagation();
                 }}
                 onClick={() => handleSelect(opt)}
@@ -153,7 +187,7 @@ export function Autocomplete({
 
       {isOpen && filtered.length === 0 && (
         <div className="absolute left-0 top-full z-[200] mt-1 w-full rounded-xl border border-neutral-200 bg-white p-4 text-meta text-neutral-500 shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)]">
-          {tp('noMatchesFound')}
+          {needle ? tp('noMatchesFound') : tp('typeToSearchPlaces')}
         </div>
       )}
 

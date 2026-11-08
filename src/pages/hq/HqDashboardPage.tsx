@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Navigate } from '@/router';
 import { CheckCircle2, CircleSlash, DollarSign, Route as RouteIcon, Ticket, Users } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useI18n } from '@/context/I18nContext';
+import { RoutePending } from '@/components/shared/RouteStates';
 import { useOperations } from '@/hooks/useOperations';
 import { setOperatorApproval, setBookingStatus, type OpsMode } from '@/data/operations';
 
@@ -16,7 +16,6 @@ const nf = (value: number, currency: string) =>
  */
 export function HqDashboardPage() {
   const { user, loading } = useAuth();
-  const { t } = useI18n();
   const ops = useOperations();
   const [mode, setMode] = useState<'all' | OpsMode>('all');
   const [channel, setChannel] = useState<'all' | 'online' | 'otc'>('all');
@@ -48,7 +47,8 @@ export function HqDashboardPage() {
     return { operator, totals };
   });
 
-  if (loading) return <div className="p-12 text-center" role="status">{t('loadingAccount')}</div>;
+  // One frame while the browser session is adopted, then the console or sign-in.
+  if (loading) return <RoutePending />;
   if (!user) return <Navigate to="/operator/hims-signin" replace />;
 
   return (
@@ -101,6 +101,9 @@ export function HqDashboardPage() {
                 </tr>
               </thead>
               <tbody>
+                {revenueByOperator.length === 0 && (
+                  <tr><td colSpan={7} className="px-4 py-6 text-center text-sm text-neutral-500">No operators are provisioned yet.</td></tr>
+                )}
                 {revenueByOperator.map(({ operator, totals }) => {
                   const operatorBookings = ops.bookings.filter((booking) => booking.operatorId === operator.id);
                   return (
@@ -131,7 +134,7 @@ export function HqDashboardPage() {
                           type="button"
                           onClick={() => setOperatorApproval(operator.id, !operator.hqApproved)}
                           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                            operator.hqApproved ? 'bg-accent-50 text-accent-700' : 'bg-error-50 text-error-600'
+                            operator.hqApproved ? 'bg-success-50 text-success-700' : 'bg-error-50 text-error-600'
                           }`}
                         >
                           {operator.hqApproved ? <CheckCircle2 size={13} /> : <CircleSlash size={13} />}
@@ -148,6 +151,9 @@ export function HqDashboardPage() {
 
         <Panel title="Network routes" subtitle="Configured in OIMS by each operator">
           <div className="divide-y divide-neutral-100">
+            {ops.routes.filter((route) => (mode === 'all' ? true : route.mode === mode)).length === 0 && (
+              <p className="px-4 py-6 text-center text-sm text-neutral-500">No routes configured yet.</p>
+            )}
             {ops.routes
               .filter((route) => (mode === 'all' ? true : route.mode === mode))
               .map((route) => {

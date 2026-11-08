@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
 import { useI18n } from '@/context/I18nContext';
 
 interface SelectOption {
@@ -29,9 +28,7 @@ export function Select({
   placeholder = 'Select...',
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const fieldRef = useRef<HTMLDivElement>(null);
 
   // Only attach listener while open; clean up when closed or unmounted.
   useEffect(() => {
@@ -57,41 +54,32 @@ export function Select({
   const selected = options.find((o) => o.value === value);
   const displayValue = selected ? selected.label : '';
 
-  // Open upwards when the menu would not fit below the field.
-  const toggle = () => {
-    const field = fieldRef.current;
-    if (field) {
-      const rect = field.getBoundingClientRect();
-      const menuHeight = Math.min(options.length * 44 + 8, 240);
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setDropUp(spaceBelow < menuHeight && rect.top > spaceBelow);
-    }
-    setIsOpen((prev) => !prev);
-  };
-
   return (
     <div ref={containerRef} className="relative">
       <label htmlFor={id} className="input-label">
         {label}
         {required && <span className="text-error-600 ml-0.5">*</span>}
       </label>
-      <div ref={fieldRef} className="relative">
+      <div className="relative">
         <button
           id={id}
           type="button"
-          onClick={toggle}
+          onClick={() => setIsOpen((prev) => !prev)}
           className={`input-field text-left flex items-center justify-between ${error ? 'border-error-500' : ''} ${!value ? 'text-neutral-400' : ''}`}
           aria-haspopup="listbox"
           aria-expanded={isOpen}
           aria-controls={isOpen ? `${id}-listbox` : undefined}
+          aria-required={required}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
         >
           <span>{displayValue || placeholder}</span>
-          <ChevronDown size={18} className={`text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <span className={`text-neutral-400 text-body transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true">▾</span>
         </button>
         {isOpen && (
           <ul
             id={`${id}-listbox`}
-            className={`absolute left-0 z-[200] w-full rounded-xl border border-neutral-200 bg-white shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)] max-h-60 overflow-y-auto ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}
+            className="absolute left-0 top-full z-[200] mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)]"
             role="listbox"
             onPointerDown={(e) => e.stopPropagation()}
           >
@@ -103,7 +91,7 @@ export function Select({
                     onChange(opt.value);
                     setIsOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-body transition-colors hover:bg-brand-50 ${
+                  className={`w-full text-left px-4 py-3 sm:py-2.5 text-body transition-colors hover:bg-brand-50 ${
                     value === opt.value ? 'bg-brand-50 text-brand-600 font-medium' : 'text-neutral-700'
                   }`}
                   role="option"
@@ -116,7 +104,7 @@ export function Select({
           </ul>
         )}
       </div>
-      {error && <p className="field-error">{error}</p>}
+      {error && <p id={`${id}-error`} className="field-error">{error}</p>}
     </div>
   );
 }

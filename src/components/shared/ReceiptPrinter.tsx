@@ -57,7 +57,7 @@ function ReceiptPrinterRoot({ animate = true, children, feedMotion = 'stepped', 
 
 function ReceiptPrinterMachine({ children, className = '' }: ReceiptPrinterPartProps) {
   return (
-    <div className={`relative z-20 isolate w-full overflow-visible rounded-xl border border-neutral-300 bg-gradient-to-b from-white via-neutral-100 to-neutral-200 p-4 pb-6 shadow-lg ${className}`}>
+    <div className={`relative z-20 isolate w-full overflow-visible rounded-xl border border-neutral-300 bg-neutral-100 p-4 pb-6 shadow-lg ${className}`}>
       {children}
       <div aria-hidden="true" className="absolute inset-x-8 bottom-2 z-40 h-3 rounded-full border border-brand-900 bg-brand-900 shadow-inner">
         <span className="absolute inset-x-2 top-px h-px rounded-full bg-brand-500/60" />

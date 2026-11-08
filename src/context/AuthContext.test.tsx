@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { stubAuthPolicy } from '@/auth/stubAuth';
 
 const KEY = 'travelar_auth_user';
 const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
@@ -29,27 +30,21 @@ describe('AuthContext (current simulated behaviour)', () => {
     expect(result.current.user).toBeNull();
   });
 
-  it('signInWithEmail accepts any password after 800ms and persists the user', async () => {
+  it('signInWithEmail accepts any password and persists the user without simulated latency', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
     let res: { error: string | null } | undefined;
     await act(async () => {
-      const p = result.current.signInWithEmail('jane@example.com', 'wrong');
-      await vi.advanceTimersByTimeAsync(800);
-      res = await p;
+      res = await result.current.signInWithEmail('jane@example.com', 'wrong');
     });
     expect(res).toEqual({ error: null });
     expect(result.current.user).toEqual({ email: 'jane@example.com', name: 'jane', provider: 'email' });
     expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(result.current.user);
   });
 
-  it('signUpWithEmail signs the user in after 1000ms', async () => {
+  it('signUpWithEmail signs the user in immediately', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
     await act(async () => {
-      const p = result.current.signUpWithEmail('new@example.com', 'pw');
-      await vi.advanceTimersByTimeAsync(999);
-      expect(result.current.user).toBeNull();
-      await vi.advanceTimersByTimeAsync(1);
-      await p;
+      await result.current.signUpWithEmail('new@example.com', 'pw');
     });
     expect(result.current.user?.name).toBe('new');
   });
@@ -83,5 +78,24 @@ describe('AuthContext (current simulated behaviour)', () => {
 
   it('useAuth throws outside AuthProvider', () => {
     expect(() => renderHook(() => useAuth())).toThrow('useAuth must be used within AuthProvider');
+  });
+});
+
+describe('AuthContext (production fail-closed)', () => {
+  it('refuses stub sign-in and clears a forged localStorage user', async () => {
+    const allowed = vi.spyOn(stubAuthPolicy, 'isAllowed').mockReturnValue(false);
+    localStorage.setItem(KEY, JSON.stringify({ email: 'x@y.z', name: 'x', provider: 'email' }));
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    expect(result.current.user).toBeNull();
+    expect(localStorage.getItem(KEY)).toBeNull();
+
+    let res: { error: string | null } | undefined;
+    await act(async () => {
+      res = await result.current.signInWithEmail('jane@example.com', 'any');
+    });
+    expect(res?.error).toMatch(/identity provider/i);
+    expect(result.current.user).toBeNull();
+    allowed.mockRestore();
   });
 });

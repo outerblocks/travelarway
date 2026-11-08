@@ -1,0 +1,8 @@
+# ADR-GDS-002 — Amadeus Access Path and Enterprise Schema Gate
+
+**Status:** Accepted as a research/architecture gate on 28 October 2026. It does not select a commercial contract or establish access.  
+**Context:** Earlier Travelar research referenced Amadeus Self-Service flight flows and public developer specifications. The current Amadeus for Developers portal says Self-Service was decommissioned on 17 July and directs users to Enterprise APIs; public reporting in February 2026 describes API keys being disabled on 17 July 2026.  
+**Decision:** For new Travelar planning, use Amadeus Enterprise as the candidate access route unless Amadeus provides written contrary instructions for an existing authorized account. Do not build a production adapter on archived Self-Service docs, API keys or generated schemas.  
+**Consequences:** Obtain the precise Enterprise product catalogue, API family and version, schema files or portal references, authentication/office/account identifiers, sandbox credentials, supported countries/markets, booking/ticketing/after-sales functions, airline/hotel content scope, production access process, fees and support commitments. Some products use REST/JSON; others use SOAP/XML, so schema and client strategy is selected per product family. Mark unverified operations `unknown` or `mock-only`.  
+**Revisit when:** Amadeus account manager or official Enterprise documentation identifies the actual enabled package and contract.  
+**Evidence:** https://developers.amadeus.com/toolbox ; https://developers.amadeus.com/enterprise/category/booking-management/api/pnr-elements ; https://phocuswire.com/amadeus-shut-down-self-service-apis-portal-developers

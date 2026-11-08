@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from '@/router';
-import { Menu, X, LogOut, ChevronDown } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
@@ -20,117 +19,158 @@ export function Header() {
 
   const handleSignOut = async () => {
     await signOut();
-    // Drop the in-memory booking, so passenger names, emails and phone numbers
-    // do not survive a sign-out on a shared device.
     resetBooking(bookingState.mode);
     setMobileOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-ink/8 bg-white/90 backdrop-blur-md">
-      <div className="h-0.5 w-full bg-accent" />
+    <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white">
       <div className="section-container">
-        <div className="flex h-[4.25rem] items-center justify-between">
+        <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex-shrink-0" aria-label="Travelar home">
             <Logo size="md" />
           </Link>
 
-          <div className="hidden items-center gap-1 lg:flex">
-            {/* Language switcher — clean pill style, no icon */}
-            <div className="relative">
+          {/* Desktop navigation */}
+          <nav className="hidden items-center gap-6 lg:flex" aria-label="Main navigation">
+            <Link
+              to="/help"
+              className="text-label font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+            >
+              {tp('help')}
+            </Link>
+            <Link
+              to="/parcels"
+              className="text-label font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+            >
+              {tp('trackParcel')}
+            </Link>
+            <Link
+              to="/manage-booking"
+              className="text-label font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+            >
+              {tp('manageBooking')}
+            </Link>
+
+            <span className="h-5 w-px bg-neutral-200" aria-hidden="true" />
+
+            {/* Language switcher */}
+            <select
+              value={lang}
+              onChange={(event) => setLang(event.target.value as typeof lang)}
+              aria-label={tp('languageLabel')}
+              className="h-8 cursor-pointer appearance-none rounded border border-neutral-200 bg-neutral-50 px-2.5 pr-6 text-meta font-semibold text-neutral-700 outline-none transition-colors hover:border-neutral-300 hover:bg-neutral-100"
+            >
+              {LANGUAGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/dashboard"
+                  className="text-label font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+                >
+                  {tp('dashboard')}
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="rounded-lg border border-neutral-200 px-4 py-1.5 text-label font-semibold text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+                >
+                  {tp('signOut')}
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/signin"
+                className="rounded-lg bg-ink px-5 py-2 text-label font-semibold text-white transition-colors hover:bg-brand-700"
+              >
+                {tp('signIn')}
+              </Link>
+            )}
+          </nav>
+
+          {/* Mobile menu button — text-only, no icon */}
+          <button
+            className="rounded-lg border border-neutral-200 px-3 py-1.5 text-label font-semibold text-neutral-700 lg:hidden"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={tp('toggleMenu')}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? 'Close' : 'Menu'}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <nav className="border-t border-neutral-200 bg-white lg:hidden" aria-label="Mobile navigation">
+          <div className="section-container py-4">
+            <div className="flex flex-col gap-1">
               <select
                 value={lang}
                 onChange={(event) => setLang(event.target.value as typeof lang)}
                 aria-label={tp('languageLabel')}
-                className="h-9 cursor-pointer appearance-none rounded-full border border-neutral-200 bg-neutral-50 pl-3 pr-7 text-label font-semibold text-ink hover:bg-neutral-100 transition-colors outline-none"
+                className="mb-2 h-11 w-full cursor-pointer appearance-none rounded-lg border border-neutral-200 bg-neutral-50 px-4 text-body font-medium text-neutral-700 outline-none"
               >
                 {LANGUAGE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.fullLabel}</option>
                 ))}
               </select>
-              <ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
-            </div>
 
-            <Link to="/help" className="btn-ghost text-label">
-              {tp('help')}
-            </Link>
-            <Link to="/manage-booking" className="btn-ghost text-label">
-              {tp('manageBooking')}
-            </Link>
-            {user ? (
-              <div className="ml-2 flex items-center gap-1">
-                <Link to="/dashboard" className="btn-ghost text-label">
-                  {tp('dashboard')}
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="btn-secondary text-label px-4 py-2"
-                >
-                  <LogOut size={16} />
-                  {tp('signOut')}
-                </button>
-              </div>
-            ) : (
-              <Link to="/signin" className="btn-primary ml-2 text-label px-5 py-2">
-              {tp('signIn')}
-              </Link>
-            )}
-          </div>
-
-          <button
-            className="p-2 text-ink lg:hidden"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={tp('toggleMenu')}
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </div>
-
-      {mobileOpen && (
-        <div className="border-t border-ink/8 bg-white lg:hidden">
-          <div className="section-container py-4">
-            <div className="flex flex-col gap-2">
-              {/* Mobile language switcher — clean full-width pill */}
-              <div className="relative">
-                <select
-                  value={lang}
-                  onChange={(event) => setLang(event.target.value as typeof lang)}
-                  aria-label={tp('languageLabel')}
-                  className="w-full h-11 cursor-pointer appearance-none rounded-lg border border-neutral-200 bg-white pl-4 pr-8 text-body font-medium text-ink outline-none"
-                >
-                  {LANGUAGE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.fullLabel}</option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
-              </div>
-
-              <Link to="/help" className="btn-ghost justify-start" onClick={() => setMobileOpen(false)}>
+              <Link
+                to="/help"
+                className="rounded-lg px-4 py-2.5 text-body font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                onClick={() => setMobileOpen(false)}
+              >
                 {tp('help')}
               </Link>
-              <Link to="/manage-booking" className="btn-ghost justify-start" onClick={() => setMobileOpen(false)}>
+              <Link
+                to="/parcels"
+                className="rounded-lg px-4 py-2.5 text-body font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                onClick={() => setMobileOpen(false)}
+              >
+                {tp('trackParcel')}
+              </Link>
+              <Link
+                to="/manage-booking"
+                className="rounded-lg px-4 py-2.5 text-body font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                onClick={() => setMobileOpen(false)}
+              >
                 {tp('manageBooking')}
               </Link>
+
+              <div className="my-2 h-px bg-neutral-100" />
+
               {user ? (
                 <>
-                  <Link to="/dashboard" className="btn-ghost justify-start" onClick={() => setMobileOpen(false)}>
+                  <Link
+                    to="/dashboard"
+                    className="rounded-lg px-4 py-2.5 text-body font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                    onClick={() => setMobileOpen(false)}
+                  >
                     {tp('dashboard')}
                   </Link>
-                  <button onClick={handleSignOut} className="btn-secondary justify-start">
-                    <LogOut size={18} />
+                  <button
+                    onClick={handleSignOut}
+                    className="mt-1 w-full rounded-lg border border-neutral-200 py-2.5 text-body font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
+                  >
                     {tp('signOut')}
                   </button>
                 </>
               ) : (
-                <Link to="/signin" className="btn-primary" onClick={() => setMobileOpen(false)}>
+                <Link
+                  to="/signin"
+                  className="mt-1 block w-full rounded-lg bg-ink py-2.5 text-center text-body font-semibold text-white transition-colors hover:bg-brand-700"
+                  onClick={() => setMobileOpen(false)}
+                >
                   {tp('signIn')}
                 </Link>
               )}
             </div>
           </div>
-        </div>
+        </nav>
       )}
     </header>
   );

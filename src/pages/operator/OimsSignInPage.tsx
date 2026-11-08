@@ -1,63 +1,68 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from '@tanstack/react-router';
 import { Link, useNavigate } from '@/router';
-import { Ship, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Ship, Mail, Lock, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useI18n } from '@/context/I18nContext';
 
+const CONSOLE_PATH = '/operator/bus';
+
 /**
  * OIMS — Operator Management System
- * Dedicated sign-in page for Ferry Operator console access.
+ * Sign-in for the operator console (bus and ferry modes share it).
  * Intentionally isolated from the public Travelar auth flow.
  */
 export function OimsSignInPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const { signInWithEmail, loading: authLoading, user } = useAuth();
   const { tp } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const leaving = useRef(false);
 
-  // Already signed in → go straight to the console
-  if (!authLoading && user) {
-    navigate('/operator/bus', { replace: true });
-    return null;
-  }
+  // Fetch the console chunk while the form is still on screen, so a successful
+  // sign-in paints the console instead of the route loader.
+  useEffect(() => {
+    void router.preloadRoute({ to: CONSOLE_PATH });
+  }, [router]);
+
+  // An existing session goes straight to the console. Navigation belongs in an
+  // effect: calling navigate during render re-renders the page and navigates again.
+  useEffect(() => {
+    if (!authLoading && user && !leaving.current) {
+      leaving.current = true;
+      navigate(CONSOLE_PATH, { replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setError('');
     if (!email || !password) {
       setError(tp('pleaseEnterEmailAndPassword'));
       return;
     }
-    setLoading(true);
+    setSubmitting(true);
     const { error: authError } = await signInWithEmail(email, password);
-    setLoading(false);
     if (authError) {
+      setSubmitting(false);
       setError(authError);
       return;
     }
-    navigate('/operator/bus');
+    // Stay in the submitting state until this page unmounts: flipping the label
+    // back for a frame before navigation is what reads as a flicker.
+    leaving.current = true;
+    navigate(CONSOLE_PATH, { replace: true });
   };
-
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-ink">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen bg-ink">
       {/* Branding panel — hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 flex-col justify-between p-12 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-br from-ink via-brand-900/90 to-brand-800" />
-        <div className="absolute -bottom-40 -right-40 h-[520px] w-[520px] rounded-full bg-brand-600/15 blur-3xl" />
-        <div className="absolute top-0 left-1/2 h-[300px] w-[300px] rounded-full bg-accent/8 blur-3xl" />
-
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-ink p-12">
         <div className="relative z-10">
           {/* Logo row */}
           <div className="flex items-center gap-3">
@@ -84,36 +89,19 @@ export function OimsSignInPage() {
               Control routes, segment fares, schedules, fleet and passenger manifests from one secure console.
             </p>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: 'Voyage Schedules', desc: 'Manage all ferry routes' },
-              { label: 'Vessel Management', desc: 'Track your entire fleet' },
-              { label: 'Passenger Manifest', desc: 'Resident & non-resident' },
-              { label: 'Port Analytics', desc: 'Revenue and occupancy data' },
-            ].map((feat) => (
-              <div
-                key={feat.label}
-                className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
-              >
-                <p className="text-sm font-semibold text-white">{feat.label}</p>
-                <p className="mt-0.5 text-xs text-white/50">{feat.desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="relative z-10">
           <p className="text-xs text-white/30">
             Powered by{' '}
             <span className="font-semibold text-white/50">Travelar Platform</span>
-            {' '}· Marine Operations Portal v2.0
+            {' '}· Operator Operations Portal v2.0
           </p>
         </div>
       </div>
 
       {/* Auth panel */}
-      <div className="flex w-full flex-col items-center justify-center bg-white px-6 py-12 lg:w-1/2 xl:w-2/5">
+      <div className="flex w-full flex-col items-center justify-center bg-white px-6 py-12 lg:w-1/2">
         <div className="w-full max-w-[400px]">
           {/* Mobile branding */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
@@ -122,12 +110,12 @@ export function OimsSignInPage() {
             </div>
             <div>
               <p className="text-base font-bold text-ink">OIMS</p>
-              <p className="text-[11px] text-neutral-500">Ocean & Inland Marine System</p>
+              <p className="text-[11px] text-neutral-500">Operator Management System</p>
             </div>
           </div>
 
           {/* Heading */}
-          <div className="mb-8">
+          <div className="mb-8 text-center">
             <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-ink/8">
               <ShieldCheck size={24} className="text-ink" />
             </div>
@@ -139,7 +127,7 @@ export function OimsSignInPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="oims_email" className="input-label">
                 Operator Email
@@ -150,8 +138,10 @@ export function OimsSignInPage() {
                   id="oims_email"
                   type="email"
                   autoComplete="email"
-                  className="input-field pl-10"
-                  placeholder="operator@ferrycompany.com"
+                  required
+                  disabled={submitting}
+                  className="input-field pl-10 disabled:opacity-60"
+                  placeholder="operator@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -168,7 +158,9 @@ export function OimsSignInPage() {
                   id="oims_password"
                   type="password"
                   autoComplete="current-password"
-                  className="input-field pl-10"
+                  required
+                  disabled={submitting}
+                  className="input-field pl-10 disabled:opacity-60"
                   placeholder={tp('enterPassword')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -176,19 +168,24 @@ export function OimsSignInPage() {
               </div>
             </div>
 
-            {error && (
-              <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700">
-                {error}
-              </div>
-            )}
+            <div aria-live="polite">
+              {error && (
+                <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700">
+                  {error}
+                </div>
+              )}
+            </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="btn-primary w-full"
             >
-              {loading ? 'Signing in…' : 'Sign In to Console'}
-              {!loading && <ArrowRight size={18} />}
+              {submitting ? (
+                <><Loader2 size={18} className="animate-spin" /> Signing in…</>
+              ) : (
+                <>Sign In to Console <ArrowRight size={18} /></>
+              )}
             </button>
           </form>
 

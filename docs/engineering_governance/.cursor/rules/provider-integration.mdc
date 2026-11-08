@@ -1,0 +1,20 @@
+---
+description: Travelar supplier, GDS, payment and payout integration safeguards
+alwaysApply: false
+---
+
+For any task involving an external provider, read `.agents/skills/provider-integration-research-and-implementation/SKILL.md` plus the corresponding documents in `docs/research/provider-integration/`.
+
+Use current official provider references. Capture API version/status/date, required entitlement, account/market scope, state meanings, time limits and rate limits. Never assume an API listed publicly is enabled for Travelar. Keep provider request/response details behind adapters and Travelar UI provider-neutral. Distinguish offer search, offer validation, booking, ticket issuance, payment receipt, merchant settlement and supplier payout. After timeout on a mutating operation, query/retrieve/reconcile before retry. ClickPesa has no public sandbox, so automated testing must use mocks unless a human explicitly approves a bounded live test. No production enablement without contract, legal/finance, security, operations and human-approval gates.
+
+
+For operator-side route and recurrence management, seat-map/inventory semantics, data-driven card/forms, staff roles, HIMS payout controls or partner API documentation, also read Documents 76–83 and the `data-driven-platform-operations` skill.
+
+
+## Stage 26 scenario/schema audit requirements
+- Read `docs/research/provider-integration/84-scenario-driven-coverage-audit.md` through Doc 88 before provider implementation.
+- Do not claim complete provider schemas: maintain one current request/response schema map per provider product/API family/version and per operation.
+- Amadeus Self-Service was decommissioned on 17 July 2026 per current portal notice; use Enterprise access as the new integration path unless Amadeus confirms otherwise in writing.
+- Sabre Mosaic/current APIs and legacy versioned APIs must be treated as separate profiles; check the current catalog for version/deprecation/beta status.
+- Travelport TripServices Flights v11 must not be mixed with Universal API legacy schemas. Record GDS/NDC/ticketless differences and returned time limits per capability profile.
+- Turn Doc 86 scenarios into executable tests or explicit blocked evidence before enabling an operation.

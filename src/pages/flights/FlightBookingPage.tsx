@@ -1,134 +1,174 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from '@/router';
-import { ArrowLeft, Plane } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useLocation } from '@tanstack/react-router';
+import { Link, useNavigate } from '@/router';
+import { ArrowLeft } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { FLIGHT_RESULTS } from '@/data/mockData';
+import { FlightFareFacts } from '@/components/flights/FlightFareFacts';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
-import { LoadingState, ErrorState, SearchSummaryBar } from '@/components/shared/States';
-import type { FlightResult, PassengerInfo } from '@/types';
+import { ErrorState, LoadingState, QueryFeedback, SearchSummaryBar } from '@/components/shared/States';
+import { partyMismatched } from '@/domain/passengers';
+import { flightNumbers, iataFromPlace, marketingLabel, splitRoundTrip } from '@/domain/flight-results';
+import { formatDate } from '@/utils/format';
+import type { PassengerInfo } from '@/types';
+import { offerIdFromSearch } from '@/pages/stays/stay-offer-id';
+import { useFlightOffer } from '@/pages/flights/useFlightOffer';
 
 export function FlightBookingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { bookingState, setPassengers, setSearchParams } = useApp();
   const { tp } = useI18n();
-  const [loading, setLoading] = useState(true);
-  const [flight, setFlight] = useState<FlightResult | null>(null);
-  const [passengers, setPassengersState] = useState<PassengerInfo[]>([]);
+  const params = bookingState.searchParams;
+  const offerId = offerIdFromSearch(location.search) || params.extras?.flightOfferId || '';
+  const { status, offer } = useFlightOffer(offerId);
+  const journey = offer
+    ? splitRoundTrip(offer.itinerary, iataFromPlace(params.destination))
+    : { outbound: [], inbound: [] };
+  const adults = params.adults;
+  const children = params.children;
+  const infants = params.infants;
+  const totalPassengers = Math.max(1, adults + children + infants);
+
+  const [passengers, setPassengerRows] = useState<PassengerInfo[]>(() =>
+    Array.from({ length: totalPassengers }, () => createPassenger()),
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const flightId = bookingState.searchParams.extras?.flightId;
-  const totalPax = bookingState.searchParams.adults + bookingState.searchParams.children;
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const found = FLIGHT_RESULTS.find((f) => f.id === flightId);
-      if (found) {
-        setFlight(found);
-        const pax: PassengerInfo[] = [];
-        for (let i = 0; i < totalPax; i++) {
-          pax.push(createPassenger(i < bookingState.searchParams.adults ? 'adult' : 'child'));
-        }
-        setPassengersState(pax);
-        setLoading(false);
-      } else {
-        setLoading(false);
-      }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [flightId]);
+  const sized = useMemo(() => {
+    if (passengers.length === totalPassengers) return passengers;
+    return Array.from({ length: totalPassengers }, (_, index) => passengers[index] ?? createPassenger());
+  }, [passengers, totalPassengers]);
 
   const handleChange = (index: number, updated: PassengerInfo) => {
-    setPassengersState((prev) => {
-      const next = [...prev];
+    setPassengerRows((previous) => {
+      const next = [...(previous.length === totalPassengers ? previous : sized)];
       next[index] = updated;
       return next;
     });
   };
 
   const validate = (): boolean => {
-    const e: Record<string, string> = {};
-    passengers.forEach((p, i) => {
-      if (!p.fullName) e[`name_${i}`] = tp('requiredLabel');
-      if (!p.email) e[`email_${i}`] = tp('requiredLabel');
-      if (!p.phone) e[`phone_${i}`] = tp('requiredLabel');
+    const next: Record<string, string> = {};
+    sized.forEach((passenger, index) => {
+      if (!passenger.fullName.trim()) next[`name_${index}`] = tp('requiredLabel');
+      if (!passenger.email.trim()) next[`email_${index}`] = tp('requiredLabel');
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(passenger.email)) next[`email_${index}`] = tp('validEmailRequired');
+      if (!passenger.phone.trim()) next[`phone_${index}`] = tp('requiredLabel');
+      if (!passenger.gender) next[`gender_${index}`] = tp('requiredLabel');
+      if (!passenger.category) next[`category_${index}`] = tp('requiredLabel');
+      if (!passenger.idType) next[`idtype_${index}`] = tp('requiredLabel');
+      if (!passenger.idNumber?.trim()) next[`idnum_${index}`] = tp('requiredLabel');
+      if (!passenger.idCountryOfIssue) next[`idcountry_${index}`] = tp('requiredLabel');
     });
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    if (Object.keys(next).length === 0 && partyMismatched(sized, adults, children)) {
+      next.party = tp('partyMixMismatch')
+        .replace('{adults}', String(adults))
+        .replace('{children}', String(children));
+    }
+    const infantCount = sized.filter((passenger) => passenger.category === 'infant').length;
+    if (Object.keys(next).length === 0 && infantCount !== infants) {
+      next.party = tp('infantMixMismatch').replace('{count}', String(infants));
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
   const handleContinue = () => {
-    if (!validate()) return;
-    setPassengers(passengers);
-    setSearchParams({ ...bookingState.searchParams, extras: { ...bookingState.searchParams.extras, flightId: flightId || '' } });
-    navigate('/flights/review');
+    if (!offer || !validate()) return;
+    setPassengers(sized);
+    setSearchParams({
+      ...params,
+      extras: {
+        ...params.extras,
+        flightOfferId: offer.id,
+      },
+    });
+    navigate(`/flights/review?offer=${encodeURIComponent(offer.id)}`);
   };
 
-  if (loading) return (
-    <>
-      <SearchSummaryBar><Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link><span className="text-body font-medium text-neutral-900">{tp('flightBookingTitle')}</span></SearchSummaryBar>
-      <LoadingState message={tp('loadingFlightDetails')} />
-    </>
-  );
-
-  if (!flight) return <ErrorState message={tp('flightNotFound')} onRetry={() => navigate('/flights/results')} />;
-
   return (
-    <>
-      <SearchSummaryBar>
-        <Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
-        <span className="text-body font-medium text-neutral-900">{flight.segments[0].airline} · {flight.segments[0].flightNumber}</span>
-      </SearchSummaryBar>
-
-      <div className="section-container py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="card p-6">
-              <h2 className="text-listing font-bold text-neutral-900 mb-1">{tp('passengerInformation')}</h2>
-              <p className="text-meta text-neutral-500 mb-6">{tp('enterTravelDocumentDetails')}</p>
-
+    <QueryFeedback
+      status={status}
+      errorMessage={tp('unableLoadFlights')}
+      loading={(
+        <>
+          <SearchSummaryBar>
+            <Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
+          </SearchSummaryBar>
+          <LoadingState count={2} message={tp('loadingFlightDetails')} />
+        </>
+      )}
+    >
+      {!offer ? (
+        <ErrorState message={tp('flightNotFound')} onRetry={() => navigate('/flights/results')} />
+      ) : (
+        <>
+          <SearchSummaryBar>
+            <Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
+            <span className="text-body font-medium text-neutral-900">{marketingLabel(offer)}</span>
+          </SearchSummaryBar>
+          <div className="section-container py-6">
+            <h1 className="text-page font-bold text-neutral-900">{tp('flightBookingTitle')}</h1>
+            <p className="mt-2 max-w-2xl text-body text-neutral-600">{tp('flightGuestIntro')}</p>
+            <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="space-y-4">
-                {passengers.map((p, i) => (
-                  <div key={p.id} data-error={errors[`name_${i}`] ? 'true' : undefined}>
-                    <PassengerForm passenger={p} index={i} onChange={(u) => handleChange(i, u)} requireId errors={{
-                      name: errors[`name_${i}`],
-                      email: errors[`email_${i}`],
-                      phone: errors[`phone_${i}`],
-                    }} />
+                {errors.party ? <p className="text-body text-error-600">{errors.party}</p> : null}
+                {sized.map((passenger, index) => (
+                  <div key={passenger.id} className="border border-neutral-300 bg-white p-5">
+                    <PassengerForm
+                      passenger={passenger}
+                      index={index}
+                      onChange={(updated) => handleChange(index, updated)}
+                      requireId
+                      includeInfant={infants > 0}
+                      errors={{
+                        name: errors[`name_${index}`],
+                        email: errors[`email_${index}`],
+                        phone: errors[`phone_${index}`],
+                        gender: errors[`gender_${index}`],
+                        category: errors[`category_${index}`],
+                        idType: errors[`idtype_${index}`],
+                        idNumber: errors[`idnum_${index}`],
+                        idCountry: errors[`idcountry_${index}`],
+                      }}
+                    />
                   </div>
                 ))}
               </div>
-
-              <div className="mt-6 pt-6 border-t border-neutral-200 flex justify-end">
-                <button onClick={handleContinue} className="btn-primary">{tp('continueToReview')}</button>
-              </div>
+              <aside className="h-fit border border-neutral-300 bg-white p-5">
+                <h2 className="text-listing font-semibold text-neutral-900">{tp('flightSummary')}</h2>
+                <p className="mt-3 text-body font-medium text-neutral-900">{marketingLabel(offer)}</p>
+                <p className="mt-1 text-meta text-neutral-600">{flightNumbers(offer)}</p>
+                {params.date ? (
+                  <p className="mt-2 text-meta text-neutral-600">
+                    {tp('flightOutbound')}: {formatDate(params.date)}
+                  </p>
+                ) : null}
+                {params.returnDate ? (
+                  <p className="text-meta text-neutral-600">
+                    {tp('flightReturn')}: {formatDate(params.returnDate)}
+                  </p>
+                ) : null}
+                {journey.inbound.length ? (
+                  <p className="mt-2 text-meta text-neutral-600">
+                    {journey.outbound[0]?.origin} → {journey.outbound[journey.outbound.length - 1]?.destination}
+                    {' · '}
+                    {journey.inbound[0]?.origin} → {journey.inbound[journey.inbound.length - 1]?.destination}
+                  </p>
+                ) : null}
+                <div className="mt-4">
+                  <FlightFareFacts offer={offer} compact />
+                </div>
+                <button type="button" className="btn-primary mt-5 w-full" onClick={handleContinue}>
+                  {tp('continueToReview')}
+                </button>
+                <p className="mt-3 text-meta leading-relaxed text-neutral-600">{tp('flightReservationNotOpen')}</p>
+              </aside>
             </div>
           </div>
-
-          <div>
-            <div className="card p-6 sticky top-20">
-              <h3 className="text-listing font-bold text-neutral-900 mb-4">{tp('flightSummary')}</h3>
-              {flight.segments.map((seg, i) => (
-                <div key={i} className="mb-4 pb-4 border-b border-neutral-100 last:border-b-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Plane size={16} className="text-brand-600" />
-                    <span className="text-body font-medium text-neutral-900">{seg.airline}</span>
-                  </div>
-                  <p className="text-body text-neutral-900">{seg.originCity} → {seg.destinationCity}</p>
-                  <p className="text-meta text-neutral-500">{seg.departureTime} - {seg.arrivalTime} · {seg.duration}</p>
-                </div>
-              ))}
-              <div className="border-t border-neutral-200 pt-4">
-                <div className="flex justify-between">
-                  <span className="text-listing font-bold text-neutral-900">{tp('checkoutTotal')}</span>
-                  <span className="text-listing font-bold text-brand-600">TSh {flight.totalPrice.toLocaleString()}</span>
-                </div>
-                <p className="text-meta text-neutral-500 mt-1">{flight.cabinClass} · {flight.baggageInfo}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+        </>
+      )}
+    </QueryFeedback>
   );
 }

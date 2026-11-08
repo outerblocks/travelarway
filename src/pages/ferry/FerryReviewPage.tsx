@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, Link } from '@/router';
 import { ArrowLeft, Pencil, Check } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { getFerrySailing } from '@/data/operations';
-import { LoadingState, ErrorState, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, SearchSummaryBar } from '@/components/shared/States';
 import { formatDate } from '@/utils/format';
 import { formatMoney } from '@/domain/money';
 import { quoteFerrySailing } from '@/domain/pricing';
@@ -14,35 +14,11 @@ export function FerryReviewPage() {
   const navigate = useNavigate();
   const { bookingState } = useApp();
   const { tp } = useI18n();
-  const [loading, setLoading] = useState(true);
-  const [sailing, setSailing] = useState<FerrySailing | null>(null);
-
   const sailingId = bookingState.searchParams.extras?.sailingId;
   const selectedClassId = bookingState.searchParams.extras?.selectedClassId || bookingState.selectedClassId;
   const residency = (bookingState.searchParams.extras?.residency || 'resident') as 'resident' | 'non_resident';
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const found = getFerrySailing(sailingId);
-      if (found) {
-        setSailing(found);
-        setLoading(false);
-      } else {
-        setLoading(false);
-      }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [sailingId]);
-
-  if (loading) return (
-    <>
-      <SearchSummaryBar>
-        <Link to="/ferry/booking" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
-        <span className="text-body font-medium text-neutral-900">{tp('reviewYourBooking')}</span>
-      </SearchSummaryBar>
-      <LoadingState message={tp('preparingBookingReview')} />
-    </>
-  );
+  const sailing = useMemo<FerrySailing | null>(() => getFerrySailing(sailingId) ?? null, [sailingId]);
 
   if (!sailing) return (
     <ErrorState message={tp('unableLoadBookingReview')} onRetry={() => navigate('/ferry/results')} />
@@ -123,7 +99,10 @@ export function FerryReviewPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-body font-medium text-neutral-900">
-                        {p.fullName} <span className="text-meta text-neutral-500 capitalize">· {tp(p.category === 'infant' ? 'infant' : p.category)}</span>
+                        {p.fullName}{' '}
+                        {p.category && (
+                          <span className="text-meta text-neutral-500 capitalize">· {tp(p.category === 'infant' ? 'infant' : p.category)}</span>
+                        )}
                       </p>
                       <p className="text-meta text-neutral-500">
                         {p.email} · {p.phoneCountryCode} {p.phone}

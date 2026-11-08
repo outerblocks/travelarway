@@ -1,14 +1,68 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useNavigate, Link } from '@/router';
-import { ArrowLeft, Check, Bus as BusIcon } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { getBusTrip } from '@/data/operations';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
-import { LoadingState, ErrorState, SearchSummaryBar } from '@/components/shared/States';
+import { partyMismatched } from '@/domain/passengers';
+import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
 import { Select } from '@/components/ui/Select';
+import { SeatMapGrid, type SeatMapSeatView, type SeatMapCellView } from '@/components/bus/SeatMapGrid';
 import { formatCurrency } from '@/utils/format';
-import type { BusTrip, BusSeat, PassengerInfo } from '@/types';
+import type { PassengerInfo } from '@/types';
+
+/** Seat as this page renders it; no dependency on the retired mock trip model. */
+interface SeatView {
+  id: string;
+  label: string;
+  type: 'seat' | 'aisle' | 'driver';
+  status: 'available' | 'occupied';
+}
+
+interface SeatMapResponse {
+  layout: { name: string; rows: number; cols: number };
+  cells: SeatMapCellView[];
+  seats: SeatMapSeatView[];
+}
+
+/** Exactly the fields the layout below reads, mapped from /api/trip-detail. */
+interface TripView {
+  operatorName: string;
+  passengerOrigin: string;
+  passengerDestination: string;
+  departureTime: string;
+  busClass: string;
+  busModel: string;
+  registrationNumber: string;
+  currency: string;
+  segmentFare: number;
+  /** The stops the search actually asked for. The defaults must match them, not the
+   *  service terminus — defaulting to the last stop is what silently re-priced the trip. */
+  originStopId: string;
+  destinationStopId: string;
+  boardingPoints: { id: string; name: string; time: string }[];
+  dropOffPoints: { id: string; name: string; time: string }[];
+  seatMap: { layout: SeatView[][] };
+}
+
+interface TripDetailResponse {
+  tripId: string;
+  status: string;
+  departureTime: string;
+  operatorName: string;
+  routeName: string;
+  vehicleModel: string | null;
+  vehicleRegistration: string | null;
+  seatLayout: { name: string; rowCount: number; lanes: string[] } | null;
+  stops: { id: string; locationName: string; code: string; sequence: number; offsetMinutes: number; terminalName: string | null }[];
+  fares: { fromStopId: string; toStopId: string; fareMinor: number; currency: string }[];
+  takenSeats: { seatNo: string; reason: 'hold' | 'sold' }[];
+}
+
+const addMinutes = (time: string, minutes: number): string => {
+  const [hours, mins] = time.split(':').map(Number);
+  const total = (hours * 60 + mins + minutes) % (24 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+};
 
 export function BusBookingPage() {
   const navigate = useNavigate();
@@ -18,50 +72,171 @@ export function BusBookingPage() {
     setPassengers,
     setBoardingPointId,
     setDropOffPointId,
+    setSearchParams,
   } = useApp();
   const { tp } = useI18n();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [trip, setTrip] = useState<BusTrip | null>(null);
   const [selectedSeats, setSelectedSeatsState] = useState<string[]>([]);
   const [passengers, setPassengersState] = useState<PassengerInfo[]>([]);
   const [boardingPoint, setBoardingPoint] = useState('');
   const [dropOffPoint, setDropOffPoint] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [holdError, setHoldError] = useState('');
+  const [placingHold, setPlacingHold] = useState(false);
 
   const tripId = bookingState.searchParams.extras?.tripId || bookingState.selectedServiceId;
   const totalPassengers = bookingState.searchParams.adults + bookingState.searchParams.children;
 
+  // The trip is fetched from the API. There is no fallback: an unknown trip is reported
+  // as unavailable rather than silently resolving to a fixture with a similar name.
+  const [detail, setDetail] = useState<TripDetailResponse | null>(null);
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error' | 'missing'>('loading');
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => {
-      const found = getBusTrip(tripId);
-      if (found) {
-        setTrip(found);
-        setLoading(false);
-      } else {
-        setError(true);
-        setLoading(false);
-      }
-    }, 800);
-    return () => clearTimeout(timer);
+    if (!tripId) {
+      setLoadState('missing');
+      return;
+    }
+
+    const controller = new AbortController();
+    setLoadState('loading');
+
+    fetch(`/api/trip-detail?id=${encodeURIComponent(tripId)}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error(`trip detail failed: ${response.status}`);
+        return (await response.json()) as { data: TripDetailResponse };
+      })
+      .then((body) => {
+        if (!body) {
+          setLoadState('missing');
+          return;
+        }
+        setDetail(body.data);
+        setLoadState('ready');
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        setLoadState('error');
+      });
+
+    return () => controller.abort();
+  }, [tripId, attempt]);
+
+  const retry = useCallback(() => setAttempt((value) => value + 1), []);
+
+  // The seat map comes from the trip, never from a locally generated pattern: the fleet's
+  // configured layout is the only geometry that exists.
+  const [seatMap, setSeatMap] = useState<SeatMapResponse | null>(null);
+
+  useEffect(() => {
+    if (!tripId) return;
+
+    const controller = new AbortController();
+    fetch(`/api/seat-map?tripId=${encodeURIComponent(tripId)}`, { signal: controller.signal, cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { data?: SeatMapResponse } | null) => setSeatMap(body?.data ?? null))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        setSeatMap(null);
+      });
+
+    return () => controller.abort();
   }, [tripId]);
 
-  useEffect(() => {
-    if (trip) {
-      setBoardingPoint(trip.boardingPoints[0]?.id || '');
-      setDropOffPoint(trip.dropOffPoints[trip.dropOffPoints.length - 1]?.id || '');
-    }
-  }, [trip]);
+  const trip = useMemo<TripView | null>(() => {
+    if (!detail) return null;
 
-  const handleSeatClick = (seat: BusSeat) => {
-    if (seat.type !== 'seat') return;
-    if (seat.status === 'occupied') return;
+    // Resolve the searched segment by display name or code. Never fall back to the route's
+    // first and last stop: that silently re-prices the journey (29,000 searched, 41,000
+    // charged) and is exactly the mismatch this used to produce.
+    const originParam =
+      bookingState.searchParams.extras?.originName || bookingState.searchParams.origin || '';
+    const destinationParam =
+      bookingState.searchParams.extras?.destinationName || bookingState.searchParams.destination || '';
+    const matchesStop = (stop: { locationName: string; code: string }, needle: string) =>
+      stop.locationName.toLowerCase() === needle.toLowerCase() ||
+      stop.code.toUpperCase() === needle.toUpperCase();
+
+    const originStop = detail.stops.find((stop) => matchesStop(stop, originParam));
+    const destinationStop = detail.stops.find((stop) => matchesStop(stop, destinationParam));
+    if (!originStop || !destinationStop || destinationStop.sequence <= originStop.sequence) return null;
+
+    const toPoint = (stop: typeof originStop) => ({
+      id: stop.id,
+      name: stop.terminalName ?? stop.locationName,
+      time: addMinutes(detail.departureTime, stop.offsetMinutes),
+    });
+
+    const fare = detail.fares.find(
+      (candidate) =>
+        candidate.fromStopId === originStop.id && candidate.toStopId === destinationStop.id,
+    );
+    const taken = new Set(detail.takenSeats.map((seat) => seat.seatNo));
+
+    const layout: SeatView[][] = [];
+    if (detail.seatLayout) {
+      for (let rowNumber = 1; rowNumber <= detail.seatLayout.rowCount; rowNumber += 1) {
+        const row: SeatView[] = [];
+        detail.seatLayout.lanes.forEach((lane, laneIndex) => {
+          // A 2+2 coach reads as two pairs; the gap is presentational only.
+          if (laneIndex === 2) row.push({ id: `aisle-${rowNumber}`, label: '', type: 'aisle', status: 'available' });
+          const id = `${rowNumber}${lane}`;
+          row.push({
+            id,
+            label: id,
+            type: 'seat',
+            status: taken.has(id) ? 'occupied' : 'available',
+          });
+        });
+        layout.push(row);
+      }
+    }
+
+    return {
+      operatorName: detail.operatorName,
+      passengerOrigin: originStop.locationName,
+      passengerDestination: destinationStop.locationName,
+      departureTime: addMinutes(detail.departureTime, originStop.offsetMinutes),
+      busClass: detail.seatLayout?.name ?? '',
+      busModel: detail.vehicleModel ?? '',
+      registrationNumber: detail.vehicleRegistration ?? '',
+      currency: fare?.currency ?? detail.fares[0]?.currency ?? 'TZS',
+      segmentFare: fare?.fareMinor ?? 0,
+      originStopId: originStop.id,
+      destinationStopId: destinationStop.id,
+      boardingPoints: detail.stops
+        .filter((stop) => stop.sequence <= destinationStop.sequence)
+        .map(toPoint),
+      dropOffPoints: detail.stops
+        .filter((stop) => stop.sequence >= originStop.sequence)
+        .map(toPoint),
+      seatMap: { layout },
+    };
+  }, [detail, bookingState.searchParams.origin, bookingState.searchParams.destination]);
+
+  // Boarding and drop-off deliberately start empty. Between them they set the price, so
+  // pre-filling them from the search had the customer confirm a pair of stops they never
+  // chose. The fare line reads '—' until both are stated.
+
+  // Price the pair that is actually selected, from the fare table the API already returned.
+  // Changing the drop-off to the terminus must change the price on screen immediately,
+  // not at the review step.
+  const selectedFare = useMemo(() => {
+    if (!detail) return null;
+    const match = detail.fares.find(
+      (candidate) => candidate.fromStopId === boardingPoint && candidate.toStopId === dropOffPoint,
+    );
+    return match?.fareMinor ?? null;
+  }, [detail, boardingPoint, dropOffPoint]);
+
+  const handleSeatClick = (seat: SeatMapSeatView) => {
+    if (seat.status !== 'available') return;
 
     setSelectedSeatsState((prev) => {
-      if (prev.includes(seat.id)) {
-        const next = prev.filter((s) => s !== seat.id);
+      if (prev.includes(seat.label)) {
+        const next = prev.filter((s) => s !== seat.label);
         setPassengersState((prevP) =>
           prevP.slice(0, next.length).map((p, i) => ({ ...p, seatId: next[i] }))
         );
@@ -72,12 +247,11 @@ export function BusBookingPage() {
         return prev;
       }
 
-      const next = [...prev, seat.id];
+      const next = [...prev, seat.label];
       setPassengersState((prevP) => {
         const updated = [...prevP];
         while (updated.length < next.length) {
-          const isChild = updated.length >= bookingState.searchParams.adults;
-          updated.push(createPassenger(isChild ? 'child' : 'adult', seat.id));
+          updated.push({ ...createPassenger(), seatId: seat.label });
         }
         return updated.map((p, i) => ({ ...p, seatId: next[i] }));
       });
@@ -107,37 +281,91 @@ export function BusBookingPage() {
       if (!p.fullName) e[`name_${i}`] = tp('requiredLabel');
       if (!p.email) e[`email_${i}`] = tp('requiredLabel');
       if (!p.phone) e[`phone_${i}`] = tp('requiredLabel');
+      if (!p.gender) e[`gender_${i}`] = tp('requiredLabel');
+      if (!p.category) e[`category_${i}`] = tp('requiredLabel');
     });
+
+    // Only worth saying once every field is filled: with blank fare types the mix cannot
+    // match anything, and complaining about both at once buries the real problem.
+    if (
+      Object.keys(e).length === 0 &&
+      partyMismatched(passengers, bookingState.searchParams.adults, bookingState.searchParams.children)
+    ) {
+      e.party = tp('partyMixMismatch')
+        .replace('{adults}', String(bookingState.searchParams.adults))
+        .replace('{children}', String(bookingState.searchParams.children));
+    }
 
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!validate()) {
       const firstError = document.querySelector('[data-error="true"]');
       if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
-    setSelectedSeats(selectedSeats);
-    setPassengers(passengers);
-    setBoardingPointId(boardingPoint);
-    setDropOffPointId(dropOffPoint);
-    navigate('/bus/review');
+    if (!tripId) return;
+
+    // Reserve the seats in the database before review. Without this, a seat can be sold
+    // between choosing it and paying, and the customer discovers it at the end.
+    setHoldError('');
+    setPlacingHold(true);
+    try {
+      const response = await fetch('/api/holds', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ tripId, seats: selectedSeats }),
+      });
+
+      if (response.status === 409) {
+        setHoldError(tp('seatsTakenError'));
+        setAttempt((value) => value + 1); // refresh availability so the map tells the truth
+        return;
+      }
+      if (!response.ok) {
+        setHoldError(tp('bookingServiceTryAgain'));
+        return;
+      }
+
+      const boardingName = trip?.boardingPoints.find((point) => point.id === boardingPoint)?.name ?? '';
+      const dropOffName = trip?.dropOffPoints.find((point) => point.id === dropOffPoint)?.name ?? '';
+      setSearchParams({
+        ...bookingState.searchParams,
+        extras: {
+          ...bookingState.searchParams.extras,
+          ...(trip
+            ? {
+                operatorName: trip.operatorName,
+                legOrigin: trip.passengerOrigin,
+                legDestination: trip.passengerDestination,
+                legDeparture: trip.departureTime,
+                busModel: trip.busModel,
+                registrationNumber: trip.registrationNumber,
+                busClass: trip.busClass,
+                boardingPointName: boardingName,
+                dropOffPointName: dropOffName,
+              }
+            : {}),
+        },
+      });
+      setSelectedSeats(selectedSeats);
+      setPassengers(passengers);
+      setBoardingPointId(boardingPoint);
+      setDropOffPointId(dropOffPoint);
+      navigate('/bus/review');
+    } catch {
+      setHoldError(tp('bookingServiceTryAgain'));
+    } finally {
+      setPlacingHold(false);
+    }
   };
 
-  if (loading) return (
-    <>
-      <SearchSummaryBar>
-        <Link to="/bus/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
-        <span className="text-body font-medium text-neutral-900">{tp('selectYourSeats')}</span>
-      </SearchSummaryBar>
-      <LoadingState message={tp('loadingSeatMap')} />
-    </>
-  );
+  if (loadState === 'loading') return <LoadingState />;
 
-  if (error || !trip) return (
+  if (loadState === 'missing' || !trip) return (
     <ErrorState
       message={tp('unableLoadTrip')}
       subMessage={tp('selectedTripMissing')}
@@ -145,10 +373,18 @@ export function BusBookingPage() {
     />
   );
 
+  if (loadState === 'error') return (
+    <ErrorState
+      message={tp('unableLoadTrip')}
+      subMessage={tp('bookingServiceTryAgain')}
+      onRetry={retry}
+    />
+  );
+
   return (
     <>
       <SearchSummaryBar>
-        <Link to="/bus/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
+        <Link to="/bus/results" className="btn-ghost text-label">← {tp('backToResults')}</Link>
         <span className="text-body font-medium text-neutral-900">
           {trip.operatorName} · {trip.passengerOrigin} → {trip.passengerDestination}
         </span>
@@ -156,12 +392,12 @@ export function BusBookingPage() {
       </SearchSummaryBar>
 
       <div className="section-container py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-8 items-start">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-12 lg:gap-y-8 items-start">
           {/* Seat Selection - Left */}
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-20">
               <div className="flex items-center gap-3 mb-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-label font-bold text-white">1</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-brand-600 text-label font-bold text-white">1</span>
                 <h2 className="text-listing font-bold text-neutral-900 capitalize">{tp('seats')}</h2>
                 <span className="text-meta text-neutral-500">({selectedSeats.length}/{totalPassengers})</span>
               </div>
@@ -170,7 +406,7 @@ export function BusBookingPage() {
               </p>
 
               {/* Seat legend */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-meta text-neutral-600">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 text-meta text-neutral-600">
                 <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-white border border-neutral-300 rounded-sm" /> {tp('seatFree')}</div>
                 <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-brand-600 rounded-sm" /> {tp('seatYours')}</div>
                 <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-error-100 border border-error-200 rounded-sm" /> {tp('seatTaken')}</div>
@@ -180,81 +416,30 @@ export function BusBookingPage() {
                 <p className="field-error mb-3" data-error="true">{errors.seats}</p>
               )}
 
-              {/* Bus seat map - visual bus body */}
-              <div className="overflow-x-auto">
-                <div className="mx-auto" style={{ minWidth: '260px' }}>
-                  {/* Bus body outline */}
-                  <div className="relative bg-neutral-50 rounded-2xl border-2 border-neutral-200 p-4 pt-5 pb-5">
-                    {/* Front windshield indicator */}
-                    <div className="flex items-center justify-center mb-3">
-                      <div className="w-3/4 h-5 bg-brand-100 rounded-t-xl flex items-center justify-center">
-                        <span className="text-[10px] text-brand-600 font-medium uppercase tracking-wider">{tp('front')}</span>
-                      </div>
-                    </div>
-
-                    {/* Seat rows (all rows including driver row) */}
-                    <div className="flex flex-col items-center gap-2">
-                      {trip.seatMap.layout.map((row, rowIdx) => (
-                        <div key={rowIdx} className="flex gap-2 justify-center items-center">
-                          {row.map((seat, colIdx) => {
-                            if (seat.type === 'aisle') {
-                              return <div key={colIdx} className="w-6" />;
-                            }
-                            if (seat.type === 'driver') {
-                              return (
-                                <div key={colIdx} className="w-10 h-10 rounded-md bg-neutral-200 flex items-center justify-center" title={tp('driver')}>
-                                  <BusIcon size={16} className="text-neutral-400" />
-                                </div>
-                              );
-                            }
-                            const isSelected = selectedSeats.includes(seat.id);
-                            const isOccupied = seat.status === 'occupied';
-                            return (
-                              <button
-                                key={colIdx}
-                                onClick={() => handleSeatClick(seat)}
-                                disabled={isOccupied}
-                                className={`w-10 h-10 rounded-md text-meta font-medium transition-all flex items-center justify-center ${
-                                  isSelected
-                                    ? 'bg-brand-600 text-white border-2 border-brand-600 scale-110 shadow-md shadow-brand-200 z-10'
-                                    : isOccupied
-                                    ? 'bg-error-100 text-error-600 border-2 border-error-200 cursor-not-allowed'
-                                    : 'bg-white border-2 border-neutral-300 text-neutral-700 hover:border-brand-500 hover:bg-brand-50'
-                                }`}
-                                aria-label={`${tp('seatLabel')} ${seat.label} ${isOccupied ? tp('seatOccupied') : isSelected ? tp('seatSelected') : tp('seatAvailable')}`}
-                                aria-pressed={isSelected}
-                              >
-                                {isSelected ? <Check size={15} /> : seat.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Back row indicator */}
-                    <div className="mt-3 flex items-center justify-center">
-                      <div className="w-3/4 h-1.5 bg-neutral-200 rounded-full" />
-                    </div>
-                  </div>
-
-                  {/* Bus info below the map */}
-                  <div className="flex items-center justify-between mt-3 text-meta text-neutral-400 px-2">
-                    <span>{trip.busModel}</span>
-                    <span>{trip.registrationNumber}</span>
-                  </div>
-                </div>
-              </div>
+              {/* Seat map is the fleet's configured layout, fetched from the trip. */}
+              {seatMap && (
+                <SeatMapGrid
+                  layout={seatMap.layout}
+                  cells={seatMap.cells}
+                  seats={seatMap.seats}
+                  selectedLabels={selectedSeats}
+                  onToggleSeat={handleSeatClick}
+                />
+              )}
 
               {/* Mini summary */}
               <div className="mt-4 pt-4 border-t border-neutral-200 text-meta">
                 <div className="flex items-center justify-between">
                   <span className="text-neutral-500">{tp('farePerPerson')}</span>
-                  <span className="font-medium text-neutral-900">{formatCurrency(trip.segmentFare, trip.currency, 'TSh')}</span>
+                  <span className="font-medium text-neutral-900">
+                    {selectedFare === null ? '—' : formatCurrency(selectedFare, trip.currency, 'TSh')}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-neutral-500">{tp('checkoutTotal')}</span>
-                  <span className="font-bold text-brand-600">{formatCurrency(trip.segmentFare * totalPassengers, trip.currency, 'TSh')}</span>
+                  <span className="font-bold text-brand-600">
+                    {selectedFare === null ? '—' : formatCurrency(selectedFare * totalPassengers, trip.currency, 'TSh')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -265,7 +450,7 @@ export function BusBookingPage() {
             {/* Boarding & Drop-off */}
             <section className="card">
               <header className="flex items-center gap-3 border-b border-neutral-200 px-5 py-4 sm:px-6">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-label font-bold text-white">2</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-brand-600 text-label font-bold text-white">2</span>
                 <div className="min-w-0">
                   <h2 className="text-listing font-bold text-neutral-900">{tp('boardingAndDropoff')}</h2>
                   <p className="mt-0.5 text-meta text-neutral-500">{tp('chooseBoardingDropoff')}</p>
@@ -307,7 +492,7 @@ export function BusBookingPage() {
             {/* Passenger Information */}
             <section className="card">
               <header className="flex items-center gap-3 border-b border-neutral-200 px-5 py-4 sm:px-6">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-label font-bold text-white">3</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-brand-600 text-label font-bold text-white">3</span>
                 <div className="min-w-0">
                   <h2 className="text-listing font-bold text-neutral-900">{tp('passengerInformation')}</h2>
                   <p className="mt-0.5 text-meta text-neutral-500">
@@ -317,14 +502,19 @@ export function BusBookingPage() {
               </header>
 
               <div className="px-5 py-5 sm:px-6">
+                {errors.party && (
+                  <p role="alert" className="mb-5 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-meta text-error-700">
+                    {errors.party}
+                  </p>
+                )}
                 {selectedSeats.length === 0 ? (
                   <div className="text-center py-12 text-neutral-400">
                     <p className="text-body">{tp('selectSeatsForDetails')}</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-8">
                     {passengers.map((p, i) => (
-                      <div key={p.id} data-error={errors[`name_${i}`] ? 'true' : undefined}>
+                      <div key={p.id} className="passenger-block" data-error={errors[`name_${i}`] ? 'true' : undefined}>
                         <PassengerForm
                           passenger={p}
                           index={i}
@@ -334,6 +524,8 @@ export function BusBookingPage() {
                             name: errors[`name_${i}`],
                             email: errors[`email_${i}`],
                             phone: errors[`phone_${i}`],
+                            gender: errors[`gender_${i}`],
+                            category: errors[`category_${i}`],
                           }}
                         />
                       </div>
@@ -347,17 +539,24 @@ export function BusBookingPage() {
                 <div className="flex w-full items-center justify-between gap-5 sm:w-auto sm:justify-end">
                   <div className="text-left sm:text-right">
                     <p className="text-meta text-neutral-500">{tp('checkoutTotal')}</p>
-                    <p className="text-listing font-bold text-brand-600">{formatCurrency(trip.segmentFare * totalPassengers, trip.currency, 'TSh')}</p>
+                    <p className="text-listing font-bold text-brand-600">
+                      {selectedFare === null ? '—' : formatCurrency(selectedFare * totalPassengers, trip.currency, 'TSh')}
+                    </p>
                   </div>
                   <button
-                    onClick={handleContinue}
-                    disabled={selectedSeats.length !== totalPassengers}
+                    onClick={() => void handleContinue()}
+                    disabled={selectedSeats.length !== totalPassengers || placingHold}
                     className="btn-primary px-7"
                   >
-                    {tp('reviewYourBooking')}
+                    {placingHold ? tp('checkoutStateProcessing') : tp('reviewYourBooking')}
                   </button>
                 </div>
               </footer>
+              {holdError && (
+                <p className="px-5 pb-4 text-meta font-medium text-error-700 sm:px-6" role="alert">
+                  {holdError}
+                </p>
+              )}
             </section>
           </div>
         </div>

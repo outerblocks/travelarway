@@ -1,0 +1,5936 @@
+{
+  "swagger": "2.0",
+  "x-otm-resource": {
+    "namespace": "http://www.travelport.com/model/finance/v11",
+    "localName": "PaymentCardAuthorizationResource"
+  },
+  "info": {
+    "title": "PaymentCardAuthorizationResource",
+    "x-otm-library": {
+      "ResourceName": "PaymentCardAuthorizationResource",
+      "LibraryName": "PaymentCardAuthorizationResource",
+      "LibraryVersion": "11.0.0",
+      "LibraryStatus": "FINAL",
+      "SourceFile": "/PaymentCardAuthorizationResource_11_0_0.otm",
+      "CompilerVersion": "4.0.beta28",
+      "CompileDate": "2022-02-25T18:20:53.630+0530"
+    },
+    "version": "11.0.0"
+  },
+  "host": "127.0.0.1",
+  "basePath": "/v11",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/paymentcardauthorizations/{authType}": {
+      "post": {
+        "summary": "PaymentCardAuthorizationResource - Create",
+        "operationId": "Create",
+        "consumes": [
+          "application/json",
+          "application/xml"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "authType",
+            "in": "path",
+            "description": "Type of PaymentCardAuthorizationRequest - authorization, address verification, reversal",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "AUTH",
+              "REVS",
+              "VALD",
+              "AAVS"
+            ]
+          },
+          {
+            "name": "PaymentCardAuthorizationRequest",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PaymentCardAuthorizationRequest"
+            },
+            "x-xml-schema": {
+              "$ref": "PaymentCardAuthorizationResource_11_0_0_Trim.xsd#/PaymentCardAuthorizationRequest"
+            }
+          },
+          {
+            "$ref": "#/parameters/E2ETrackingId"
+          },
+          {
+            "$ref": "#/parameters/TraceId"
+          },
+          {
+            "$ref": "#/parameters/XAUTH_TRAVELPORT_ACCESSGROUP"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "x-xml-schema": {
+              "$ref": "CommonF_11_0_0_Trim.xsd#/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "x-xml-schema": {
+              "$ref": "CommonF_11_0_0_Trim.xsd#/ErrorResponse"
+            }
+          },
+          "402": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "x-xml-schema": {
+              "$ref": "CommonF_11_0_0_Trim.xsd#/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "x-xml-schema": {
+              "$ref": "CommonF_11_0_0_Trim.xsd#/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "x-xml-schema": {
+              "$ref": "CommonF_11_0_0_Trim.xsd#/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "x-xml-schema": {
+              "$ref": "CommonF_11_0_0_Trim.xsd#/ErrorResponse"
+            }
+          },
+          "201": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/PaymentCardAuthorizationResponse"
+            },
+            "x-xml-schema": {
+              "$ref": "PaymentCardAuthorizationResource_11_0_0_Trim.xsd#/PaymentCardAuthorizationResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "CityOrAirportEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "CityOrAirportEnum"
+      },
+      "description": "Clarification of how the airport or city code is used",
+      "type": "string",
+      "enum": [
+        "Airport Only",
+        "City or Airport",
+        "City Only",
+        "Use Default"
+      ]
+    },
+    "CurrencySourceEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "CurrencySourceEnum"
+      },
+      "description": "The system requesting or returning the currency code specified in the attribute",
+      "type": "string",
+      "enum": [
+        "Supplier",
+        "Charged",
+        "Requested"
+      ]
+    },
+    "GenderEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "GenderEnum"
+      },
+      "description": "Gender Type Male, Female etc",
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Unknown",
+        "Undisclosed"
+      ]
+    },
+    "LoggingLevelEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "LoggingLevelEnum"
+      },
+      "description": "The type of various Logging levels",
+      "type": "string",
+      "enum": [
+        "TRACE",
+        "DEBUG",
+        "INFO",
+        "WARN",
+        "ERROR",
+        "FATAL"
+      ]
+    },
+    "NameTypeEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "NameTypeEnum"
+      },
+      "description": "OTA Code list: Name Type\\tNAM",
+      "type": "string",
+      "enum": [
+        "Former",
+        "Nickname",
+        "Alternate",
+        "Maiden"
+      ]
+    },
+    "NextStepMethodEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "NextStepMethodEnum"
+      },
+      "description": "Describes the set of potential methods that can be taken after an operation.",
+      "x-otm-annotations": {
+        "documentation": {
+          "deprecations": [
+            "to be deleted"
+          ]
+        }
+      },
+      "type": "string",
+      "enum": [
+        "GET",
+        "DELETE",
+        "PUT",
+        "POST"
+      ]
+    },
+    "OptInStatusEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "OptInStatusEnum"
+      },
+      "description": "Used to indicate marketing preferences, OptIn, OptOut",
+      "type": "string",
+      "enum": [
+        "OptedIn",
+        "OptedOut",
+        "Unknown"
+      ]
+    },
+    "ResultStatusEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "ResultStatusEnum"
+      },
+      "description": "The status of an error or warning",
+      "type": "string",
+      "enum": [
+        "Not processed",
+        "Incomplete",
+        "Complete",
+        "Unknown"
+      ]
+    },
+    "YesNoInheritEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "YesNoInheritEnum"
+      },
+      "description": "Used to indicate marketing preferences, Yes, No, Inherit",
+      "type": "string",
+      "enum": [
+        "Yes",
+        "No",
+        "Inherit"
+      ]
+    },
+    "PaymentCardAuthorizationResponse": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "BaseResponse"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "PaymentCardAuthorization": {
+          "description": "Assigned Type: fin-1100:PaymentCardAuthorization",
+          "$ref": "#/definitions/PaymentCardAuthorizationID"
+        },
+        "transactionId": {
+          "description": "Unique transaction, correlation or tracking id for a single request and reply i.e. for a single transaction. Should be a 128 bit GUID format. Also know as E2ETrackingId.",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c-0100",
+                "value": "6570ed7b-89fe-4334-9c78-af282a977ba6"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "traceId": {
+          "description": "Optional ID for internal child transactions created for processing a single request (single transaction). Should be a 128 bit GUID format. Also known as ChildTrackingId.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}string"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c-0100",
+                "value": "c009a53c-48f6-4084-b7b6-3043fa9fec67"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "Result": {
+          "description": "Assigned Type: c-1100:Result",
+          "$ref": "#/definitions/Result"
+        },
+        "Identifier": {
+          "description": "Assigned Type: c-1100:Identifier",
+          "$ref": "#/definitions/Identifier"
+        },
+        "NextSteps": {
+          "description": "Assigned Type: c-1100:NextSteps",
+          "$ref": "#/definitions/NextSteps"
+        },
+        "ReferenceList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReferenceList"
+          },
+          "maxItems": 5
+        },
+        "CurrencyRateConversion": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CurrencyRateConversion"
+          },
+          "maxItems": 5
+        },
+        "SupplementalInformation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SupplementalInformation"
+          }
+        },
+        "DiagnosticResponse": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 20
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "PaymentCardAuthorizationRequest": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "BaseRequest"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "PaymentCardAuthorizationQueryRequest": {
+          "description": "Assigned Type: fin-1100:PaymentCardAuthorization_Query_Request",
+          "$ref": "#/definitions/PaymentCardAuthorizationQueryRequest"
+        },
+        "transactionId": {
+          "description": "Unique transaction, correlation or tracking id for a single request and reply i.e. for a single transaction. Should be a 128 bit GUID format. Also know as E2ETrackingId.",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c-0100",
+                "value": "6570ed7b-89fe-4334-9c78-af282a977ba6"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "traceId": {
+          "description": "Optional ID for internal child transactions created for processing a single request (single transaction). Should be a 128 bit GUID format. Also known as ChildTrackingId.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}string"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c-0100",
+                "value": "6570ed7b-89fe-4334-9c78-af282a977ba6"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "authorizedBy": {
+          "description": "Used in showing who authorized the request. Use is optional.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}string"
+              ]
+            }
+          },
+          "type": "string"
+        },
+        "overrideLogging": {
+          "description": "Use to override the default logging level",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/www.travelport.com\\/otm\\/builtins\\/tp\\/msgcommon\\/v1_0_0}LoggingLevel"
+              ]
+            }
+          },
+          "$ref": "#/definitions/LoggingLevelEnum"
+        },
+        "EffectivePcc": {
+          "description": "Assigned Type: c-1100:EffectivePcc",
+          "$ref": "#/definitions/EffectivePcc"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "PaymentCardAuthorizationQueryRequest"
+      ],
+      "discriminator": "@type"
+    },
+    "ErrorResponse": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "BaseResponse"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "transactionId": {
+          "description": "Unique transaction, correlation or tracking id for a single request and reply i.e. for a single transaction. Should be a 128 bit GUID format. Also know as E2ETrackingId.",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c-0100",
+                "value": "6570ed7b-89fe-4334-9c78-af282a977ba6"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "traceId": {
+          "description": "Optional ID for internal child transactions created for processing a single request (single transaction). Should be a 128 bit GUID format. Also known as ChildTrackingId.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}string"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c-0100",
+                "value": "c009a53c-48f6-4084-b7b6-3043fa9fec67"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "Result": {
+          "description": "Assigned Type: c-1100:Result",
+          "$ref": "#/definitions/Result"
+        },
+        "Identifier": {
+          "description": "Assigned Type: c-1100:Identifier",
+          "$ref": "#/definitions/Identifier"
+        },
+        "NextSteps": {
+          "description": "Assigned Type: c-1100:NextSteps",
+          "$ref": "#/definitions/NextSteps"
+        },
+        "ReferenceList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReferenceList"
+          },
+          "maxItems": 5
+        },
+        "CurrencyRateConversion": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CurrencyRateConversion"
+          },
+          "maxItems": 5
+        },
+        "SupplementalInformation": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SupplementalInformation"
+          }
+        },
+        "DiagnosticResponse": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 20
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "PaymentCardAuthorizationID": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "PaymentCardAuthorization"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "internally referenced xsd id",
+          "type": "string"
+        },
+        "Identifier": {
+          "description": "Assigned Type: c-1100:Identifier",
+          "$ref": "#/definitions/Identifier"
+        },
+        "PaymentCardAuthorizationRef": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "PaymentCardAuthorizationIdentifier": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "PaymentCardAuthorization"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "internally referenced xsd id",
+          "type": "string"
+        },
+        "Identifier": {
+          "description": "Assigned Type: c-1100:Identifier",
+          "$ref": "#/definitions/Identifier"
+        },
+        "PaymentCardAuthorizationRef": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "PaymentCardAuthorization": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "PaymentCardAuthorization"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentCardAuthorizationID"
+        },
+        {
+          "properties": {
+            "completionCode": {
+              "description": "Assigned Type: c-1100:StringTiny",
+              "type": "string",
+              "maxLength": 32
+            },
+            "approvalCode": {
+              "description": "Assigned Type: c-1100:StringTiny",
+              "type": "string",
+              "maxLength": 32
+            },
+            "avsResult": {
+              "description": "Assigned Type: c-1100:StringCharacterOne",
+              "type": "string",
+              "maxLength": 1
+            },
+            "securityResult": {
+              "description": "Assigned Type: c-1100:StringCharacterOne",
+              "type": "string",
+              "maxLength": 1
+            },
+            "completionCodeDescription": {
+              "description": "Assigned Type: c-1100:String",
+              "type": "string",
+              "maxLength": 512
+            },
+            "avsResultDescription": {
+              "description": "Assigned Type: c-1100:String",
+              "type": "string",
+              "maxLength": 512
+            },
+            "securityResultDescription": {
+              "description": "Assigned Type: c-1100:String",
+              "type": "string",
+              "maxLength": 512
+            },
+            "PrimaryAccountNumber": {
+              "description": "The unencrypted credit card number",
+              "type": "string",
+              "maxLength": 19,
+              "minLength": 13,
+              "pattern": "([0-9]+)?"
+            },
+            "ExtensionPoint": {
+              "$ref": "#/definitions/ExtensionPoint"
+            }
+          }
+        }
+      ]
+    },
+    "PaymentCardAuthorizationSummary": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "PaymentCardAuthorization"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentCardAuthorizationID"
+        },
+        {
+          "properties": {
+            "completionCode": {
+              "description": "Assigned Type: c-1100:StringTiny",
+              "type": "string",
+              "maxLength": 32
+            },
+            "approvalCode": {
+              "description": "Assigned Type: c-1100:StringTiny",
+              "type": "string",
+              "maxLength": 32
+            },
+            "avsResult": {
+              "description": "Assigned Type: c-1100:StringCharacterOne",
+              "type": "string",
+              "maxLength": 1
+            },
+            "securityResult": {
+              "description": "Assigned Type: c-1100:StringCharacterOne",
+              "type": "string",
+              "maxLength": 1
+            },
+            "completionCodeDescription": {
+              "description": "Assigned Type: c-1100:String",
+              "type": "string",
+              "maxLength": 512
+            },
+            "avsResultDescription": {
+              "description": "Assigned Type: c-1100:String",
+              "type": "string",
+              "maxLength": 512
+            },
+            "securityResultDescription": {
+              "description": "Assigned Type: c-1100:String",
+              "type": "string",
+              "maxLength": 512
+            },
+            "PrimaryAccountNumber": {
+              "description": "The unencrypted credit card number",
+              "type": "string",
+              "maxLength": 19,
+              "minLength": 13,
+              "pattern": "([0-9]+)?"
+            },
+            "ExtensionPoint": {
+              "$ref": "#/definitions/ExtensionPoint"
+            }
+          }
+        }
+      ]
+    },
+    "PaymentCardAuthorizationQueryRequest": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "PaymentCardAuthorization"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "authType": {
+          "description": "Type of PaymentCardAuthorizationRequest - authorization, address verification, reversal",
+          "$ref": "#/definitions/AuthorizationTypeEnum"
+        },
+        "PaymentCardRequest": {
+          "description": "Assigned Type: fin-1100:PaymentCardRequest",
+          "$ref": "#/definitions/PaymentCardRequest"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "AdditionalAmountTypeEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "AdditionalAmountTypeEnum"
+      },
+      "description": "Used in Columbia and other places as a way to add extra taxes",
+      "type": "string",
+      "enum": [
+        "FA",
+        "FV",
+        "FO",
+        "SA",
+        "SV",
+        "ST"
+      ]
+    },
+    "AuthorizationTypeEnum": {
+      "x-otm-entity": {
+        "EntityType": "EnumerationClosed",
+        "EntityName": "AuthorizationTypeEnum"
+      },
+      "description": "This object  contains type of Authorization",
+      "type": "string",
+      "enum": [
+        "AUTH",
+        "REVS",
+        "VALD",
+        "AAVS"
+      ]
+    },
+    "AdditionalAmount": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "AdditionalAmount"
+      },
+      "description": "An amount with a qualifier for what it is for",
+      "properties": {
+        "value": {
+          "type": "number",
+          "format": "float"
+        },
+        "additionalAmountType": {
+          "description": "Used in Columbia and other places as a way to add extra taxes",
+          "$ref": "#/definitions/AdditionalAmountTypeEnum"
+        },
+        "code": {
+          "description": "Assigned Type: c-1100:CurrencyCodeISO",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}AlphaLength3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": ""
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "USD"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[a-zA-Z]{3}"
+        },
+        "minorUnit": {
+          "description": "Assigned Type: c-1100:CurrencyMinorUnit",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Changed type from {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}nonNegativeInteger.",
+                "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}string"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": ""
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "2"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "exclusiveMinimum": false,
+          "pattern": "([0-4])"
+        },
+        "currencySource": {
+          "description": "The origin of the requested currency code",
+          "$ref": "#/definitions/CurrencySourceEnum"
+        },
+        "approximateInd": {
+          "description": "True if the currency amount has been converted from the original amount",
+          "type": "boolean"
+        }
+      }
+    },
+    "CardHolder": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "CardHolder"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "CardHolderName": {
+          "description": "Name imprinted or embossed on the payment card",
+          "type": "string",
+          "maxLength": 512
+        },
+        "IP4Address": {
+          "description": "An IP 4 formatted string",
+          "type": "string",
+          "maxLength": 15
+        },
+        "Person": {
+          "description": "Assigned Type: c-1100:Person",
+          "$ref": "#/definitions/PersonID"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "IP4Address"
+      ],
+      "discriminator": "@type"
+    },
+    "PaymentCardRequest": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "PaymentCardRequest"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "paymentCardShortNumber": {
+          "description": "Assigned Type: fin-1100:PaymentCardShortNumber",
+          "type": "string",
+          "maxLength": 4,
+          "pattern": "([0-9]+)?"
+        },
+        "airlineMerchantCode": {
+          "description": "Assigned Type: c-1100:AirlineCode",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "fin",
+                "value": "AA"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "([a-zA-Z0-9]{2,3})"
+        },
+        "extendedPaymentInstallments": {
+          "description": "Assigned Type: fin-1100:ExtendedPaymentInstallments",
+          "type": "string",
+          "maxLength": 2,
+          "pattern": "([0-9]+)?"
+        },
+        "expireDate": {
+          "description": "Assigned Type: c-1100:DateMMYY",
+          "type": "string",
+          "pattern": "(0[1-9]|1[0-2])[0-9][0-9]"
+        },
+        "eCI": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "type": "string",
+          "maxLength": 32
+        },
+        "cAVV": {
+          "description": "Assigned Type: c-1100:StringLittle",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "fin",
+                "value": "AAABAFaQRwAAAAAAEZBHAAAAAAA"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 64
+        },
+        "xID": {
+          "description": "Assigned Type: c-1100:StringShort",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "fin",
+                "value": "MDAwMDAwMDAwMDEyMzQ2Njc4OTA\u003d"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "agentSignOn": {
+          "description": "Assigned Type: c-1100:StringShort",
+          "type": "string",
+          "maxLength": 128
+        },
+        "localDateTime": {
+          "description": "Assigned Type: ota2:LocalDateTime",
+          "type": "string",
+          "pattern": "(\\d{4}-\\d{2}-\\d{2})T(([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)((:?)[0-5]\\d)?([\\.,]\\d+(?!:))?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?"
+        },
+        "approvalCode": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "type": "string",
+          "maxLength": 32
+        },
+        "paymentCardSecurityCode": {
+          "description": "Assigned Type: fin-1100:PaymentCardSecurityCode",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "fin",
+                "value": "134"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 11,
+          "minLength": 2,
+          "pattern": "([0-9a-zA-Z]+)?"
+        },
+        "paymentCardCode": {
+          "description": "Assigned Type: c-1100:PaymentCardCode",
+          "type": "string",
+          "maxLength": 2,
+          "pattern": "([A-Z0-9]+)?"
+        },
+        "uCAFIndicator": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "type": "string",
+          "maxLength": 32
+        },
+        "Identifier": {
+          "description": "Assigned Type: c-1100:Identifier",
+          "$ref": "#/definitions/Identifier"
+        },
+        "PrimaryAccountNumber": {
+          "description": "The unencrypted credit card number",
+          "type": "string",
+          "maxLength": 19,
+          "minLength": 13,
+          "pattern": "([0-9]+)?"
+        },
+        "CurrencyAmount": {
+          "description": "Assigned Type: c-1100:CurrencyAmount",
+          "$ref": "#/definitions/CurrencyAmount"
+        },
+        "PromotionCode": {
+          "description": "Assigned Type: fin-1100:PromotionCodeGroup",
+          "$ref": "#/definitions/PromotionCodeGroup"
+        },
+        "CardHolder": {
+          "description": "Assigned Type: fin-1100:CardHolder",
+          "$ref": "#/definitions/CardHolder"
+        },
+        "AgencyPCCDetail": {
+          "description": "Assigned Type: c-1100:AgencyPCC_Detail",
+          "$ref": "#/definitions/AgencyPCCDetail"
+        },
+        "AdditionalAmount": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AdditionalAmount"
+          },
+          "maxItems": 6
+        },
+        "TravelInfoAir": {
+          "description": "Assigned Type: fin-1100:TravelInfo_Air",
+          "$ref": "#/definitions/TravelInfoAir"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "airlineMerchantCode",
+        "expireDate",
+        "PrimaryAccountNumber",
+        "CurrencyAmount",
+        "PromotionCode",
+        "AgencyPCCDetail"
+      ],
+      "discriminator": "@type"
+    },
+    "PromotionCodeGroup": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "PromotionCodeGroup"
+      },
+      "description": "Used to provide a promotion code of the loyalty redemption.",
+      "properties": {
+        "promotionCode": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "type": "string",
+          "maxLength": 32
+        },
+        "promotionVendorCode": {
+          "description": "Assigned Type: fin-1100:VendorCodes",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 32
+          }
+        }
+      }
+    },
+    "TravelInfo": {
+      "x-otm-entity": {
+        "EntityType": "ChoiceObject",
+        "EntityName": "TravelInfo"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "departureDate": {
+          "description": "The date of departure for an intinerary",
+          "type": "string",
+          "format": "date"
+        },
+        "numberOfTravelers": {
+          "description": "Assigned Type: c-1100:NonnegativeInteger",
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "exclusiveMinimum": false
+        },
+        "LocatorCode": {
+          "description": "Assigned Type: c-1100:Locator",
+          "$ref": "#/definitions/Locator"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "TravelInfoAir": {
+      "x-otm-entity": {
+        "EntityType": "ChoiceObject",
+        "EntityName": "TravelInfo"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/TravelInfo"
+        },
+        {
+          "properties": {
+            "fareBasisCode": {
+              "description": "Assigned Type: c-1100:StringShort",
+              "type": "string",
+              "maxLength": 128
+            },
+            "AirlineCodes": {
+              "description": "Defined code for Airline",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "([a-zA-Z0-9]{2,3})"
+              }
+            },
+            "AirportCodes": {
+              "description": "Defined code for airport",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 3,
+                "minLength": 3,
+                "pattern": "([a-zA-Z]{3})"
+              }
+            },
+            "FirstFlightNumber": {
+              "description": "Flight number of the first flight on the itinerary",
+              "type": "string",
+              "pattern": "[0-9]{1,4}[A-Z]?|OPEN|ARNK"
+            },
+            "FirstFlightDepartureTime": {
+              "description": "Departure time of the first flight",
+              "type": "string"
+            },
+            "FirstSegmentClass": {
+              "description": "Class of service of the first segment on the itinerary",
+              "type": "string",
+              "maxLength": 2,
+              "minLength": 1,
+              "pattern": "([a-zA-Z0-9]{1,2})"
+            },
+            "ExtensionPoint_Choice": {
+              "$ref": "#/definitions/ExtensionPoint_Choice"
+            }
+          }
+        }
+      ]
+    },
+    "EffectivePcc": {
+      "x-otm-entity": {
+        "EntityType": "ChoiceObject",
+        "EntityName": "EffectivePcc"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "EffectivePccOverride": {
+      "x-otm-entity": {
+        "EntityType": "ChoiceObject",
+        "EntityName": "EffectivePcc"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/EffectivePcc"
+        },
+        {
+          "properties": {
+            "pseudoCityCode": {
+              "description": "Assigned Type: c-1100:PseudoCityCode",
+              "type": "string",
+              "maxLength": 10,
+              "minLength": 2,
+              "pattern": "([a-zA-Z0-9]{2,10})"
+            },
+            "providerCode": {
+              "description": "Assigned Type: c-1100:SupplierCode",
+              "type": "string",
+              "maxLength": 5,
+              "minLength": 2,
+              "pattern": "([a-zA-Z0-9]{2,5})"
+            },
+            "ExtensionPoint_Choice": {
+              "$ref": "#/definitions/ExtensionPoint_Choice"
+            }
+          },
+          "required": [
+            "providerCode"
+          ]
+        }
+      ]
+    },
+    "EffectivePccTicketAgency": {
+      "x-otm-entity": {
+        "EntityType": "ChoiceObject",
+        "EntityName": "EffectivePcc"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/EffectivePcc"
+        },
+        {
+          "properties": {
+            "pseudoCityCode": {
+              "description": "Assigned Type: c-1100:PseudoCityCode",
+              "type": "string",
+              "maxLength": 10,
+              "minLength": 2,
+              "pattern": "([a-zA-Z0-9]{2,10})"
+            },
+            "providerCode": {
+              "description": "Assigned Type: c-1100:SupplierCode",
+              "type": "string",
+              "maxLength": 5,
+              "minLength": 2,
+              "pattern": "([a-zA-Z0-9]{2,5})"
+            },
+            "ExtensionPoint_Choice": {
+              "$ref": "#/definitions/ExtensionPoint_Choice"
+            }
+          },
+          "required": [
+            "providerCode"
+          ]
+        }
+      ]
+    },
+    "ReferenceList": {
+      "x-otm-entity": {
+        "EntityType": "ChoiceObject",
+        "EntityName": "ReferenceList"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Uniquely identifies for the Reference List",
+          "type": "string"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "Path": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "Path"
+      },
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "objectRefs": {
+          "description": "IDREFS of objects to be supplemented",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "SupplementalInformation": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "SupplementalInformation"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "Path": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Path"
+          },
+          "maxItems": 10,
+          "minItems": 1
+        },
+        "NameValuePair": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 10,
+          "minItems": 1
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "Path",
+        "NameValuePair"
+      ],
+      "discriminator": "@type"
+    },
+    "Address": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Address"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Internally referenced id",
+          "type": "string"
+        },
+        "BldgRoom": {
+          "description": "Assigned Type: c-1100:AddressBldgRoom",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}BldgRoom"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "BldgRoom"
+              }
+            ]
+          },
+          "$ref": "#/definitions/AddressBldgRoom"
+        },
+        "Number": {
+          "description": "Assigned Type: c-1100:AddressStreetNumber",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StreetNmbr"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StreetNmbr"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "10625"
+              }
+            ]
+          },
+          "$ref": "#/definitions/AddressStreetNumber"
+        },
+        "Street": {
+          "description": "May contain the street number when the Street number element is missing.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to255"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AddressLine"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Travers Street"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "AddressLine": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "maxItems": 3
+        },
+        "City": {
+          "description": "City (e.g., Dublin), town, or postal station (i.e., a postal service territory, often used in a military address).",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to64"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CityName"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Claremont"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "County": {
+          "description": "County or Region Name (e.g., Fairfax).",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "County"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Los Angeles"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "StateProv": {
+          "description": "Assigned Type: c-1100:StateProv",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StateProvType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StateProv"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "CA"
+              }
+            ]
+          },
+          "$ref": "#/definitions/StateProv"
+        },
+        "Country": {
+          "description": "Assigned Type: c-1100:Country",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}CountryNameType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryName"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "US"
+              }
+            ]
+          },
+          "$ref": "#/definitions/Country"
+        },
+        "PostalCode": {
+          "description": "Post Office Code number.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to16"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PostalCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "91711-3323"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_AddressRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "City"
+      ],
+      "discriminator": "@type"
+    },
+    "AddressSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Address"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Internally referenced id",
+          "type": "string"
+        },
+        "BldgRoom": {
+          "description": "Assigned Type: c-1100:AddressBldgRoom",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}BldgRoom"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "BldgRoom"
+              }
+            ]
+          },
+          "$ref": "#/definitions/AddressBldgRoom"
+        },
+        "Number": {
+          "description": "Assigned Type: c-1100:AddressStreetNumber",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StreetNmbr"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StreetNmbr"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "10625"
+              }
+            ]
+          },
+          "$ref": "#/definitions/AddressStreetNumber"
+        },
+        "Street": {
+          "description": "May contain the street number when the Street number element is missing.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to255"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AddressLine"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Travers Street"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "AddressLine": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "maxItems": 3
+        },
+        "City": {
+          "description": "City (e.g., Dublin), town, or postal station (i.e., a postal service territory, often used in a military address).",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to64"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CityName"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Claremont"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "County": {
+          "description": "County or Region Name (e.g., Fairfax).",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "County"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Los Angeles"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "StateProv": {
+          "description": "Assigned Type: c-1100:StateProv",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StateProvType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StateProv"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "CA"
+              }
+            ]
+          },
+          "$ref": "#/definitions/StateProv"
+        },
+        "Country": {
+          "description": "Assigned Type: c-1100:Country",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}CountryNameType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryName"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "US"
+              }
+            ]
+          },
+          "$ref": "#/definitions/Country"
+        },
+        "PostalCode": {
+          "description": "Post Office Code number.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to16"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PostalCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "91711-3323"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_AddressRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "City"
+      ],
+      "discriminator": "@type"
+    },
+    "OrganizationAddress": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Address"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Internally referenced id",
+          "type": "string"
+        },
+        "BldgRoom": {
+          "description": "Assigned Type: c-1100:AddressBldgRoom",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}BldgRoom"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "BldgRoom"
+              }
+            ]
+          },
+          "$ref": "#/definitions/AddressBldgRoom"
+        },
+        "Number": {
+          "description": "Assigned Type: c-1100:AddressStreetNumber",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StreetNmbr"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StreetNmbr"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "10625"
+              }
+            ]
+          },
+          "$ref": "#/definitions/AddressStreetNumber"
+        },
+        "Street": {
+          "description": "May contain the street number when the Street number element is missing.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to255"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AddressLine"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Travers Street"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "AddressLine": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "maxItems": 3
+        },
+        "City": {
+          "description": "City (e.g., Dublin), town, or postal station (i.e., a postal service territory, often used in a military address).",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to64"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CityName"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Claremont"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "County": {
+          "description": "County or Region Name (e.g., Fairfax).",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "County"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Los Angeles"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "StateProv": {
+          "description": "Assigned Type: c-1100:StateProv",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StateProvType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StateProv"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "CA"
+              }
+            ]
+          },
+          "$ref": "#/definitions/StateProv"
+        },
+        "Country": {
+          "description": "Assigned Type: c-1100:Country",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}CountryNameType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryName"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "US"
+              }
+            ]
+          },
+          "$ref": "#/definitions/Country"
+        },
+        "PostalCode": {
+          "description": "Post Office Code number.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to16"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PostalCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "91711-3323"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_AddressRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "City"
+      ],
+      "discriminator": "@type"
+    },
+    "OrganizationAddressSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Address"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Internally referenced id",
+          "type": "string"
+        },
+        "BldgRoom": {
+          "description": "Assigned Type: c-1100:AddressBldgRoom",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}BldgRoom"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "BldgRoom"
+              }
+            ]
+          },
+          "$ref": "#/definitions/AddressBldgRoom"
+        },
+        "Number": {
+          "description": "Assigned Type: c-1100:AddressStreetNumber",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StreetNmbr"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StreetNmbr"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "10625"
+              }
+            ]
+          },
+          "$ref": "#/definitions/AddressStreetNumber"
+        },
+        "Street": {
+          "description": "May contain the street number when the Street number element is missing.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to255"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AddressLine"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Travers Street"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "AddressLine": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "maxItems": 3
+        },
+        "City": {
+          "description": "City (e.g., Dublin), town, or postal station (i.e., a postal service territory, often used in a military address).",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to64"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CityName"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Claremont"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "County": {
+          "description": "County or Region Name (e.g., Fairfax).",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "County"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "Los Angeles"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "StateProv": {
+          "description": "Assigned Type: c-1100:StateProv",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StateProvType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StateProv"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "CA"
+              }
+            ]
+          },
+          "$ref": "#/definitions/StateProv"
+        },
+        "Country": {
+          "description": "Assigned Type: c-1100:Country",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}CountryNameType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryName"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "US"
+              }
+            ]
+          },
+          "$ref": "#/definitions/Country"
+        },
+        "PostalCode": {
+          "description": "Post Office Code number.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to16"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PostalCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "91711-3323"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_AddressRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "City"
+      ],
+      "discriminator": "@type"
+    },
+    "AddressDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Address"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/Address"
+        },
+        {
+          "properties": {
+            "addressType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "Type"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "CLT"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "use": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "AUT"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "Comment": {
+              "description": "Assigned Type: c-1100:Comment",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to128"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "Remark"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "This address should be used for all official correspondences."
+                  }
+                ]
+              },
+              "$ref": "#/definitions/Comment"
+            },
+            "Privacy": {
+              "description": "Assigned Type: c-1100:Privacy",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "AttributeGroup: PrivacyGroup"
+                  ]
+                }
+              },
+              "$ref": "#/definitions/Privacy"
+            },
+            "Priority": {
+              "description": "The priority ranking within the group",
+              "type": "integer",
+              "format": "int32",
+              "maximum": 300,
+              "exclusiveMaximum": false,
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "validInd": {
+              "description": "If true, this is a valid and complete mailing address that has been verified through an address verification service or previously mailed materials have not been returned.",
+              "type": "boolean"
+            },
+            "provisionedInd": {
+              "description": "If true, this address came into the system through provisioning",
+              "type": "boolean"
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          }
+        }
+      ]
+    },
+    "OrganizationAddressDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Address"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/OrganizationAddress"
+        },
+        {
+          "properties": {
+            "addressType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "Type"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "CLT"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "use": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "AUT"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "Comment": {
+              "description": "Assigned Type: c-1100:Comment",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to128"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "Remark"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "This address should be used for all official correspondences."
+                  }
+                ]
+              },
+              "$ref": "#/definitions/Comment"
+            },
+            "Privacy": {
+              "description": "Assigned Type: c-1100:Privacy",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "AttributeGroup: PrivacyGroup"
+                  ]
+                }
+              },
+              "$ref": "#/definitions/Privacy"
+            },
+            "Priority": {
+              "description": "The priority ranking within the group",
+              "type": "integer",
+              "format": "int32",
+              "maximum": 300,
+              "exclusiveMaximum": false,
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "validInd": {
+              "description": "If true, this is a valid and complete mailing address that has been verified through an address verification service or previously mailed materials have not been returned.",
+              "type": "boolean"
+            },
+            "provisionedInd": {
+              "description": "If true, this address came into the system through provisioning",
+              "type": "boolean"
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          }
+        }
+      ]
+    },
+    "Enum_AddressRole": {
+      "properties": {
+        "value": {
+          "$ref": "#/definitions/Enum_AddressRole_Open"
+        },
+        "extension": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        }
+      }
+    },
+    "Enum_AddressRole_Base": {
+      "type": "string",
+      "enum": [
+        "Home",
+        "Business",
+        "Mailing",
+        "Delivery",
+        "Destination",
+        "Other",
+        "Billing"
+      ]
+    },
+    "Enum_AddressRole_Open": {
+      "type": "string",
+      "enum": [
+        "Home",
+        "Business",
+        "Mailing",
+        "Delivery",
+        "Destination",
+        "Other",
+        "Billing",
+        "Other_"
+      ]
+    },
+    "AddressBldgRoom": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "AddressBldgRoom"
+      },
+      "description": "Address with building and room number",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "buldingInd": {
+          "description": "When true, the information is a building name. When false, it is an apartment or room #",
+          "type": "boolean"
+        }
+      }
+    },
+    "AddressStreetNumber": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "AddressStreetNumber"
+      },
+      "description": "The street number alone is the numerical number that precedes the street name in the address",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Extension: StreetNmbrType"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "streetNmbrSuffix": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to8"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StreetNmbrSuffix"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "B"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "streetDirection": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to8"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "StreetDirection"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "NNW"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "ruralRouteNmbr": {
+          "description": "Assigned Type: c-1100:RuralRouteNumber",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to5"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "RuralRouteNmbr"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "88"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,5}"
+        },
+        "po_Box": {
+          "description": "Assigned Type: c-1100:StringShort",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "98567499"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        }
+      }
+    },
+    "AgencyPCC": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "AgencyPCC"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "The identifier for document level idenitification.",
+          "type": "string"
+        },
+        "pseudoCityCode": {
+          "description": "Assigned Type: c-1100:PseudoCityCode",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "ATL"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 10,
+          "minLength": 2,
+          "pattern": "([a-zA-Z0-9]{2,10})"
+        },
+        "agencyCode": {
+          "description": "Assigned Type: c-1100:AgencyCodeIATA",
+          "type": "string",
+          "pattern": "([0-9]{8})"
+        },
+        "country": {
+          "description": "Assigned Type: c-1100:CountryCodeISO",
+          "type": "string",
+          "pattern": "[a-zA-Z]{2}"
+        },
+        "codeAffinity": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "1G"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "tierLevel": {
+          "description": "Assigned Type: c-1100:NonnegativeInteger",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "1"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "exclusiveMinimum": false
+        },
+        "bsp": {
+          "description": "Assigned Type: c-1100:BSP",
+          "type": "string",
+          "maxLength": 32
+        },
+        "whps": {
+          "description": "Assigned Type: c-1100:WHPS",
+          "type": "string",
+          "maxLength": 32
+        },
+        "Identifier": {
+          "description": "Assigned Type: c-1100:Identifier",
+          "$ref": "#/definitions/Identifier"
+        },
+        "City": {
+          "description": "Assigned Type: c-1100:AirportOrCity",
+          "$ref": "#/definitions/AirportOrCity"
+        },
+        "Currency": {
+          "description": "Assigned Type: c-1100:Currency",
+          "$ref": "#/definitions/Currency"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "pseudoCityCode",
+        "agencyCode",
+        "country",
+        "codeAffinity",
+        "City",
+        "Currency"
+      ],
+      "discriminator": "@type"
+    },
+    "AgencyPCCSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "AgencyPCC"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "description": "The identifier for document level idenitification.",
+          "type": "string"
+        },
+        "pseudoCityCode": {
+          "description": "Assigned Type: c-1100:PseudoCityCode",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "ATL"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 10,
+          "minLength": 2,
+          "pattern": "([a-zA-Z0-9]{2,10})"
+        },
+        "agencyCode": {
+          "description": "Assigned Type: c-1100:AgencyCodeIATA",
+          "type": "string",
+          "pattern": "([0-9]{8})"
+        },
+        "country": {
+          "description": "Assigned Type: c-1100:CountryCodeISO",
+          "type": "string",
+          "pattern": "[a-zA-Z]{2}"
+        },
+        "codeAffinity": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "1G"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "tierLevel": {
+          "description": "Assigned Type: c-1100:NonnegativeInteger",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "1"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "exclusiveMinimum": false
+        },
+        "bsp": {
+          "description": "Assigned Type: c-1100:BSP",
+          "type": "string",
+          "maxLength": 32
+        },
+        "whps": {
+          "description": "Assigned Type: c-1100:WHPS",
+          "type": "string",
+          "maxLength": 32
+        },
+        "Identifier": {
+          "description": "Assigned Type: c-1100:Identifier",
+          "$ref": "#/definitions/Identifier"
+        },
+        "City": {
+          "description": "Assigned Type: c-1100:AirportOrCity",
+          "$ref": "#/definitions/AirportOrCity"
+        },
+        "Currency": {
+          "description": "Assigned Type: c-1100:Currency",
+          "$ref": "#/definitions/Currency"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "pseudoCityCode",
+        "agencyCode",
+        "country",
+        "codeAffinity",
+        "City",
+        "Currency"
+      ],
+      "discriminator": "@type"
+    },
+    "AgencyPCCDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "AgencyPCC"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/AgencyPCC"
+        },
+        {
+          "properties": {
+            "Name": {
+              "description": "The name of the Agency",
+              "type": "string",
+              "maxLength": 128
+            },
+            "StateProv": {
+              "description": "The state or province of the Agency",
+              "type": "string",
+              "maxLength": 8,
+              "minLength": 2
+            },
+            "PostalCode": {
+              "description": "Postal\\/Zip code of the Agency",
+              "type": "string",
+              "maxLength": 32
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          }
+        }
+      ]
+    },
+    "AirportOrCity": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "AirportOrCity"
+      },
+      "description": "Airport or city code of the customer embarkation.",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Example value: PA1 \u003d TUS"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 3,
+          "minLength": 3,
+          "pattern": "([a-zA-Z]{3})"
+        },
+        "cityOrAirport": {
+          "description": "Treat as specific airport or expand to multi-airport city.",
+          "$ref": "#/definitions/CityOrAirportEnum"
+        }
+      }
+    },
+    "Country": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "Country"
+      },
+      "description": "ISO 3166 code for a country with optional name",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}ISO3166"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "string",
+          "pattern": "[a-zA-Z]{2}"
+        },
+        "id": {
+          "description": "Use this id to internally identify this country in NextSteps",
+          "type": "string"
+        },
+        "name": {
+          "description": "Assigned Type: c-1100:StringShort",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength0to64"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "United States"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "codeContext": {
+          "description": "Assigned Type: c-1100:CodeContext",
+          "type": "string",
+          "maxLength": 32
+        }
+      }
+    },
+    "Currency": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "Currency"
+      },
+      "description": "The default currency that will apply to all prices, amounts, fares, etc. in a message.  It is placed at the top of any message using this object.",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}Money"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "number",
+          "format": "float"
+        },
+        "code": {
+          "description": "Assigned Type: c-1100:CurrencyCodeISO",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}AlphaLength3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": ""
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "USD"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[a-zA-Z]{3}"
+        }
+      },
+      "required": [
+        "code"
+      ]
+    },
+    "CurrencyAmount": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "CurrencyAmount"
+      },
+      "description": "A monetary amount, up to 4 decimal places. Decimal place needs to be included.",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}Money"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "number",
+          "format": "float"
+        },
+        "code": {
+          "description": "Assigned Type: c-1100:CurrencyCodeISO",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}AlphaLength3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": ""
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "USD"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[a-zA-Z]{3}"
+        },
+        "minorUnit": {
+          "description": "Assigned Type: c-1100:CurrencyMinorUnit",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Changed type from {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}nonNegativeInteger.",
+                "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}string"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": ""
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "2"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "exclusiveMinimum": false,
+          "pattern": "([0-4])"
+        },
+        "currencySource": {
+          "description": "The origin of the requested currency code",
+          "$ref": "#/definitions/CurrencySourceEnum"
+        },
+        "approximateInd": {
+          "description": "True if the currency amount has been converted from the original amount",
+          "type": "boolean"
+        }
+      }
+    },
+    "Email": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "Email"
+      },
+      "description": "Electronic email addresses, in IETF specified format.",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to128"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "id": {
+          "description": "Electronic email addresses, in IETF specified format.",
+          "type": "string"
+        },
+        "emailType": {
+          "description": "Assigned Type: c-1100:OTACode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "EmailType"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+        },
+        "comment": {
+          "description": "Assigned Type: c-1100:StringText",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to128"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "Remark"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 4096
+        },
+        "preferredFormat": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "LocalAnonymousType: EmailType_TextFormat"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "TextFormat"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "text/html"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "shareMarketing": {
+          "description": "Permission for sharing data for marketing purposes.",
+          "$ref": "#/definitions/YesNoInheritEnum"
+        },
+        "shareSync": {
+          "description": "Permission for sharing data for synchronization of information held by other travel service providers.",
+          "$ref": "#/definitions/YesNoInheritEnum"
+        },
+        "optOutInd": {
+          "description": "When yes, a customer has explicitly opted out of marketing communication. This is used in combination with the ShareAllMarketInd and only one of these attributes should have a value of yes.",
+          "$ref": "#/definitions/YesNoInheritEnum"
+        },
+        "optInStatus": {
+          "description": "When Yes, then the user has opted In",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "OptedIn"
+              }
+            ]
+          },
+          "$ref": "#/definitions/OptInStatusEnum"
+        },
+        "optInDate": {
+          "description": "The datetime of receiving the opt in notice",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "2014-11-14T06:02:03"
+              }
+            ]
+          },
+          "type": "string",
+          "format": "date-time"
+        },
+        "optOutDate": {
+          "description": "The datetime the opt out notice was received",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "2016-01-14T09:57:59"
+              }
+            ]
+          },
+          "type": "string",
+          "format": "date-time"
+        },
+        "validInd": {
+          "description": "If true, this is a valid email address that has been system verified via a successful email transmission.",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}boolean"
+              ]
+            }
+          },
+          "type": "boolean"
+        },
+        "provisionedInd": {
+          "description": "If true then the email address came from the provisioning process",
+          "type": "boolean"
+        }
+      }
+    },
+    "ErrorWarning": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "StatusCode": {
+          "description": "Http standard response code",
+          "x-otm-annotations": {
+            "documentation": {
+              "references": [
+                "http:\\/\\/www.ietf.org\\/assignments\\/http-status-codes\\/http-status-codes.xml"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "503"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32"
+        },
+        "Message": {
+          "description": "The Travelport standardized error or warning message",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "EasyJet flight 123 could not be booked. It is not available for the date requested."
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 4096
+        },
+        "NameValuePair": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 100
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "ErrorWarningSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "StatusCode": {
+          "description": "Http standard response code",
+          "x-otm-annotations": {
+            "documentation": {
+              "references": [
+                "http:\\/\\/www.ietf.org\\/assignments\\/http-status-codes\\/http-status-codes.xml"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "503"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32"
+        },
+        "Message": {
+          "description": "The Travelport standardized error or warning message",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "EasyJet flight 123 could not be booked. It is not available for the date requested."
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 4096
+        },
+        "NameValuePair": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 100
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "Error": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "StatusCode": {
+          "description": "Http standard response code",
+          "x-otm-annotations": {
+            "documentation": {
+              "references": [
+                "http:\\/\\/www.ietf.org\\/assignments\\/http-status-codes\\/http-status-codes.xml"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "503"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32"
+        },
+        "Message": {
+          "description": "The Travelport standardized error or warning message",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "EasyJet flight 123 could not be booked. It is not available for the date requested."
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 4096
+        },
+        "NameValuePair": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 100
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "ErrorSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "StatusCode": {
+          "description": "Http standard response code",
+          "x-otm-annotations": {
+            "documentation": {
+              "references": [
+                "http:\\/\\/www.ietf.org\\/assignments\\/http-status-codes\\/http-status-codes.xml"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "503"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32"
+        },
+        "Message": {
+          "description": "The Travelport standardized error or warning message",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "EasyJet flight 123 could not be booked. It is not available for the date requested."
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 4096
+        },
+        "NameValuePair": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 100
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "Warning": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "StatusCode": {
+          "description": "Http standard response code",
+          "x-otm-annotations": {
+            "documentation": {
+              "references": [
+                "http:\\/\\/www.ietf.org\\/assignments\\/http-status-codes\\/http-status-codes.xml"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "503"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32"
+        },
+        "Message": {
+          "description": "The Travelport standardized error or warning message",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "EasyJet flight 123 could not be booked. It is not available for the date requested."
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 4096
+        },
+        "NameValuePair": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 100
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "WarningSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "StatusCode": {
+          "description": "Http standard response code",
+          "x-otm-annotations": {
+            "documentation": {
+              "references": [
+                "http:\\/\\/www.ietf.org\\/assignments\\/http-status-codes\\/http-status-codes.xml"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "503"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32"
+        },
+        "Message": {
+          "description": "The Travelport standardized error or warning message",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "EasyJet flight 123 could not be booked. It is not available for the date requested."
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 4096
+        },
+        "NameValuePair": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NameValuePair"
+          },
+          "maxItems": 100
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "ErrorWarningDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/ErrorWarning"
+        },
+        {
+          "properties": {
+            "SourceID": {
+              "description": "The identifier of the source system sending the error or warning",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1G"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 128
+            },
+            "SourceCode": {
+              "description": "The error or warning code returned by the source airline or host system",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1100003"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 32
+            },
+            "SourceDescription": {
+              "description": "The error or warning message as it is returned by the source airline or host system",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "Flight {0} is not available"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 4096
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          },
+          "required": [
+            "SourceID"
+          ]
+        }
+      ]
+    },
+    "ErrorDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/Error"
+        },
+        {
+          "properties": {
+            "SourceID": {
+              "description": "The identifier of the source system sending the error or warning",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1G"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 128
+            },
+            "SourceCode": {
+              "description": "The error or warning code returned by the source airline or host system",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1100003"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 32
+            },
+            "SourceDescription": {
+              "description": "The error or warning message as it is returned by the source airline or host system",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "Flight {0} is not available"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 4096
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          },
+          "required": [
+            "SourceID"
+          ]
+        }
+      ]
+    },
+    "WarningDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "ErrorWarning"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/Warning"
+        },
+        {
+          "properties": {
+            "SourceID": {
+              "description": "The identifier of the source system sending the error or warning",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1G"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 128
+            },
+            "SourceCode": {
+              "description": "The error or warning code returned by the source airline or host system",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1100003"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 32
+            },
+            "SourceDescription": {
+              "description": "The error or warning message as it is returned by the source airline or host system",
+              "x-otm-annotations": {
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "Flight {0} is not available"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 4096
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          },
+          "required": [
+            "SourceID"
+          ]
+        }
+      ]
+    },
+    "Identifier": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "Identifier"
+      },
+      "description": "Identifier provides the ability to create a globally unique identifier. For the identifier to be globally unique it must have a system provided identifier and the system must be identified using a global naming authority. System identification uses the domain naming system (DNS) to assure they are globally unique and should be an URL. The system provided ID will typically be a primary or surrogate key in a database.",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Example value: common \u003d 2CFF2305-8D9A-41A1-A471-93B1F0E09068",
+            "Example value: common \u003d 2CFF2305-8D9A-41A1-A471-93B1F0E09068",
+            "Example value: common \u003d 2CFF2305-8D9A-41A1-A471-93B1F0E09068"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "authority": {
+          "description": "Assigned Type: c-1100:StringShort",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Example value: common \u003d Travelport"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "Travelport"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        }
+      }
+    },
+    "Locator": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "Locator"
+      },
+      "description": "Contains the locator (PNR or external locator) or cancellation number for the reservation, order, or offer",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 16,
+          "pattern": "([A-Z0-9]+)?"
+        },
+        "locatorType": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "Locator"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "source": {
+          "description": "Assigned Type: c-1100:StringShort",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "1P"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "sourceContext": {
+          "description": "Assigned Type: c-1100:StringShort",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "Travelport"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 128
+        },
+        "otaType": {
+          "description": "Assigned Type: c-1100:OTACode",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "14.UIT"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+        },
+        "creationDate": {
+          "description": "Assigned Type: ota2:UTCDate",
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "NameValuePair": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "NameValuePair"
+      },
+      "description": "Used for data stored in Name\\/Value pairs",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "id": {
+          "description": "Optional internally referenced id",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "x0"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "name": {
+          "description": "Assigned Type: c-1100:String",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "Name"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 512
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "NextStep": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "NextStep"
+      },
+      "description": "A URL that describes a step that can be applied to the resource containing the next step structure.",
+      "x-otm-annotations": {
+        "documentation": {
+          "deprecations": [
+            "to be removed"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Identifier for the Next Step",
+          "type": "string"
+        },
+        "action": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "Cancel"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "method": {
+          "description": "possible action that can be performed on the returned results",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "DELETE"
+              }
+            ]
+          },
+          "$ref": "#/definitions/NextStepMethodEnum"
+        },
+        "description": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "remove offer from the order"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "action",
+        "method"
+      ]
+    },
+    "NextSteps": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "NextSteps"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "baseURI": {
+          "description": "The base portion of the uri in order to shorten the uri\u0027s in the individual steps",
+          "type": "string"
+        },
+        "id": {
+          "description": "Optional internally referenced id",
+          "type": "string"
+        },
+        "NextStep": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NextStep"
+          },
+          "maxItems": 20,
+          "minItems": 1
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "baseURI",
+        "NextStep"
+      ],
+      "discriminator": "@type"
+    },
+    "PersonID": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "Person"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "PersonIdentifier": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "Person"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "Person": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "Person"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/PersonID"
+        },
+        {
+          "properties": {
+            "birthDate": {
+              "description": "Date of Birth",
+              "type": "string",
+              "format": "date"
+            },
+            "gender": {
+              "description": "Gender",
+              "$ref": "#/definitions/GenderEnum"
+            },
+            "PersonName": {
+              "description": "Assigned Type: c-1100:PersonName",
+              "$ref": "#/definitions/PersonName"
+            },
+            "Address": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Address"
+              },
+              "maxItems": 10
+            },
+            "Telephone": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Telephone"
+              },
+              "maxItems": 10
+            },
+            "Email": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Email"
+              },
+              "maxItems": 10
+            },
+            "ExtensionPoint": {
+              "$ref": "#/definitions/ExtensionPoint"
+            }
+          },
+          "required": [
+            "PersonName"
+          ]
+        }
+      ]
+    },
+    "PersonSummary": {
+      "x-otm-entity": {
+        "EntityType": "BusinessObject",
+        "EntityName": "Person"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/PersonID"
+        },
+        {
+          "properties": {
+            "birthDate": {
+              "description": "Date of Birth",
+              "type": "string",
+              "format": "date"
+            },
+            "gender": {
+              "description": "Gender",
+              "$ref": "#/definitions/GenderEnum"
+            },
+            "PersonName": {
+              "description": "Assigned Type: c-1100:PersonName",
+              "$ref": "#/definitions/PersonName"
+            },
+            "Address": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Address"
+              },
+              "maxItems": 10
+            },
+            "Telephone": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Telephone"
+              },
+              "maxItems": 10
+            },
+            "Email": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Email"
+              },
+              "maxItems": 10
+            },
+            "ExtensionPoint": {
+              "$ref": "#/definitions/ExtensionPoint"
+            }
+          },
+          "required": [
+            "PersonName"
+          ]
+        }
+      ]
+    },
+    "PersonName": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "PersonName"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "Prefix": {
+          "description": "Salutation of honorific (e.g. Mr., Mrs., Ms., Miss, Dr.)",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to16"
+              ]
+            }
+          },
+          "type": "string",
+          "maxLength": 10
+        },
+        "Given": {
+          "description": "Given name, first name or names.",
+          "type": "string",
+          "maxLength": 30
+        },
+        "Middle": {
+          "description": "The middle name of the person name.",
+          "type": "string",
+          "maxLength": 30
+        },
+        "Surname": {
+          "description": "Family name, last name.",
+          "type": "string",
+          "maxLength": 30,
+          "minLength": 1
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "Surname"
+      ],
+      "discriminator": "@type"
+    },
+    "PersonNameSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "PersonName"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "Prefix": {
+          "description": "Salutation of honorific (e.g. Mr., Mrs., Ms., Miss, Dr.)",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to16"
+              ]
+            }
+          },
+          "type": "string",
+          "maxLength": 10
+        },
+        "Given": {
+          "description": "Given name, first name or names.",
+          "type": "string",
+          "maxLength": 30
+        },
+        "Middle": {
+          "description": "The middle name of the person name.",
+          "type": "string",
+          "maxLength": 30
+        },
+        "Surname": {
+          "description": "Family name, last name.",
+          "type": "string",
+          "maxLength": 30,
+          "minLength": 1
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "Surname"
+      ],
+      "discriminator": "@type"
+    },
+    "PersonNameDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "PersonName"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/PersonName"
+        },
+        {
+          "properties": {
+            "personNameType": {
+              "description": "Type of name of the individual, such as former, nickname, alternate or alias name. Refer to OpenTravel Code List Name Type (NAM).",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                }
+              },
+              "$ref": "#/definitions/NameTypeEnum"
+            },
+            "language": {
+              "description": "The language the name is represented in, e.g. an Eastern name versus a Western name.",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}language"
+                  ]
+                }
+              },
+              "type": "string"
+            },
+            "SurnamePrefix": {
+              "description": "The surname prefix, e.g \\\"van der\\\", \\\"von\\\", \\\"de\\\".",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to16"
+                  ]
+                }
+              },
+              "type": "string",
+              "maxLength": 32
+            },
+            "Suffix": {
+              "description": "Hold various name suffixes and letters (e.g. Jr., Sr., III, Ret., Esq.)",
+              "type": "string",
+              "maxLength": 10
+            },
+            "Title": {
+              "description": "Degree or honors (e.g., Ph.D., M.D.)",
+              "type": "string",
+              "maxLength": 32
+            },
+            "Privacy": {
+              "description": "Assigned Type: c-1100:Privacy",
+              "$ref": "#/definitions/Privacy"
+            },
+            "defaultInd": {
+              "description": "If true, this is the default or primary name within a collection of names.",
+              "type": "boolean"
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          }
+        }
+      ]
+    },
+    "Privacy": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "Privacy"
+      },
+      "description": "Confidential details for marketing purpose",
+      "properties": {
+        "id": {
+          "description": "Optional internally referenced id",
+          "type": "string"
+        },
+        "shareMarketing": {
+          "description": "Permission for sharing data for marketing purposes.",
+          "$ref": "#/definitions/YesNoInheritEnum"
+        },
+        "shareSync": {
+          "description": "Permission for sharing data for synchronization of information held by other travel service providers.",
+          "$ref": "#/definitions/YesNoInheritEnum"
+        },
+        "optOutInd": {
+          "description": "When yes, a customer has explicitly opted out of marketing communication. This is used in combination with the ShareAllMarketInd and only one of these attributes should have a value of yes.",
+          "$ref": "#/definitions/YesNoInheritEnum"
+        },
+        "optInStatus": {
+          "description": "When Yes, then the user has opted In",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "OptedIn"
+              }
+            ]
+          },
+          "$ref": "#/definitions/OptInStatusEnum"
+        },
+        "optInDate": {
+          "description": "The datetime of receiving the opt in notice",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "2014-11-14T06:02:03"
+              }
+            ]
+          },
+          "type": "string",
+          "format": "date-time"
+        },
+        "optOutDate": {
+          "description": "The datetime the opt out notice was received",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "2016-01-14T09:57:59"
+              }
+            ]
+          },
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Result": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Result"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "status": {
+          "description": "Indication of the processing status of the response message",
+          "$ref": "#/definitions/ResultStatusEnum"
+        },
+        "Error": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Error"
+          },
+          "maxItems": 50
+        },
+        "Warning": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Warning"
+          },
+          "maxItems": 100
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type"
+      ],
+      "discriminator": "@type"
+    },
+    "StateProv": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "StateProv"
+      },
+      "description": "The standard code or abbreviation for the state, province, or region with optional name",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StateProvCodeType"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 8,
+          "minLength": 2
+        },
+        "name": {
+          "description": "Assigned Type: c-1100:String",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength0to64"
+              ]
+            },
+            "examples": [
+              {
+                "context": "c",
+                "value": "Texas"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 512
+        }
+      }
+    },
+    "Telephone": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "countryAccessCode": {
+          "description": "Assigned Type: c-1100:TelephoneCountryAccessCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryAccessCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "1"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,3}"
+        },
+        "areaCityCode": {
+          "description": "Assigned Type: c-1100:TelephoneAreaCityCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to8"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AreaCityCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "909"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,8}"
+        },
+        "phoneNumber": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PhoneNumber"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "5551212"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "extension": {
+          "description": "Assigned Type: c-1100:TelephoneExtension",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to5"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "Extension"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "123"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{0,5}"
+        },
+        "id": {
+          "description": "UOptional internally referenced id",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}RPH_Type"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "RPH"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "cityCode": {
+          "description": "Assigned Type: c-1100:StringUpperCaseAlphaNumericMax10",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "DEN"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "([A-Z0-9]+)?"
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_TelephoneRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "phoneNumber"
+      ],
+      "discriminator": "@type"
+    },
+    "TelephoneSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "countryAccessCode": {
+          "description": "Assigned Type: c-1100:TelephoneCountryAccessCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryAccessCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "1"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,3}"
+        },
+        "areaCityCode": {
+          "description": "Assigned Type: c-1100:TelephoneAreaCityCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to8"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AreaCityCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "909"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,8}"
+        },
+        "phoneNumber": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PhoneNumber"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "5551212"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "extension": {
+          "description": "Assigned Type: c-1100:TelephoneExtension",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to5"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "Extension"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "123"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{0,5}"
+        },
+        "id": {
+          "description": "UOptional internally referenced id",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}RPH_Type"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "RPH"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "cityCode": {
+          "description": "Assigned Type: c-1100:StringUpperCaseAlphaNumericMax10",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "DEN"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "([A-Z0-9]+)?"
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_TelephoneRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "phoneNumber"
+      ],
+      "discriminator": "@type"
+    },
+    "OrganizationTelephone": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "countryAccessCode": {
+          "description": "Assigned Type: c-1100:TelephoneCountryAccessCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryAccessCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "1"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,3}"
+        },
+        "areaCityCode": {
+          "description": "Assigned Type: c-1100:TelephoneAreaCityCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to8"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AreaCityCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "909"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,8}"
+        },
+        "phoneNumber": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PhoneNumber"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "5551212"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "extension": {
+          "description": "Assigned Type: c-1100:TelephoneExtension",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to5"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "Extension"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "123"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{0,5}"
+        },
+        "id": {
+          "description": "UOptional internally referenced id",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}RPH_Type"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "RPH"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "cityCode": {
+          "description": "Assigned Type: c-1100:StringUpperCaseAlphaNumericMax10",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "DEN"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "([A-Z0-9]+)?"
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_TelephoneRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "phoneNumber"
+      ],
+      "discriminator": "@type"
+    },
+    "OrganizationTelephoneSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "countryAccessCode": {
+          "description": "Assigned Type: c-1100:TelephoneCountryAccessCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryAccessCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "1"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,3}"
+        },
+        "areaCityCode": {
+          "description": "Assigned Type: c-1100:TelephoneAreaCityCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to8"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AreaCityCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "909"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,8}"
+        },
+        "phoneNumber": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PhoneNumber"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "5551212"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "extension": {
+          "description": "Assigned Type: c-1100:TelephoneExtension",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to5"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "Extension"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "123"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{0,5}"
+        },
+        "id": {
+          "description": "UOptional internally referenced id",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}RPH_Type"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "RPH"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "cityCode": {
+          "description": "Assigned Type: c-1100:StringUpperCaseAlphaNumericMax10",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "DEN"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "([A-Z0-9]+)?"
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_TelephoneRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "phoneNumber"
+      ],
+      "discriminator": "@type"
+    },
+    "PrimaryContactTelephone": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "countryAccessCode": {
+          "description": "Assigned Type: c-1100:TelephoneCountryAccessCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryAccessCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "1"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,3}"
+        },
+        "areaCityCode": {
+          "description": "Assigned Type: c-1100:TelephoneAreaCityCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to8"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AreaCityCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "909"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,8}"
+        },
+        "phoneNumber": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PhoneNumber"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "5551212"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "extension": {
+          "description": "Assigned Type: c-1100:TelephoneExtension",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to5"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "Extension"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "123"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{0,5}"
+        },
+        "id": {
+          "description": "UOptional internally referenced id",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}RPH_Type"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "RPH"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "cityCode": {
+          "description": "Assigned Type: c-1100:StringUpperCaseAlphaNumericMax10",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "DEN"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "([A-Z0-9]+)?"
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_TelephoneRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "phoneNumber"
+      ],
+      "discriminator": "@type"
+    },
+    "PrimaryContactTelephoneSummary": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "countryAccessCode": {
+          "description": "Assigned Type: c-1100:TelephoneCountryAccessCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "CountryAccessCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "1"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,3}"
+        },
+        "areaCityCode": {
+          "description": "Assigned Type: c-1100:TelephoneAreaCityCode",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to8"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "AreaCityCode"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "909"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{1,8}"
+        },
+        "phoneNumber": {
+          "description": "Assigned Type: c-1100:StringTiny",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to32"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "PhoneNumber"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "5551212"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "extension": {
+          "description": "Assigned Type: c-1100:TelephoneExtension",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}NumericStringLength1to5"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "Extension"
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "123"
+              }
+            ]
+          },
+          "type": "string",
+          "pattern": "[0-9]{0,5}"
+        },
+        "id": {
+          "description": "UOptional internally referenced id",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}RPH_Type"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": "RPH"
+              }
+            ]
+          },
+          "type": "string"
+        },
+        "cityCode": {
+          "description": "Assigned Type: c-1100:StringUpperCaseAlphaNumericMax10",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "DEN"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "([A-Z0-9]+)?"
+        },
+        "role": {
+          "$ref": "#/definitions/Enum_TelephoneRole_Base"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "phoneNumber"
+      ],
+      "discriminator": "@type"
+    },
+    "TelephoneDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/Telephone"
+        },
+        {
+          "properties": {
+            "phoneLocationType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneLocationType"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "6"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "phoneTechType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneTechType"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "phoneUseType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneUseType"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "pin": {
+              "description": "Assigned Type: c-1100:StringTiny",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to8"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PIN"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 32
+            },
+            "priority": {
+              "description": "Assigned Type: c-1100:Priority",
+              "type": "integer",
+              "format": "int32",
+              "maximum": 300,
+              "exclusiveMaximum": false,
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "Privacy": {
+              "description": "Assigned Type: c-1100:Privacy",
+              "$ref": "#/definitions/Privacy"
+            },
+            "Enum_TelephoneRole": {
+              "description": "Assigned Type: c-1100:Enum_TelephoneRole",
+              "$ref": "#/definitions/Enum_TelephoneRole"
+            },
+            "Comment": {
+              "description": "Assigned Type: c-1100:Comment",
+              "$ref": "#/definitions/Comment"
+            },
+            "defaultInd": {
+              "description": "When true, indicates a default value should be used.",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}boolean"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "DefaultInd"
+                  }
+                ]
+              },
+              "type": "boolean"
+            },
+            "provisionedInd": {
+              "description": "true indicates this phone number was created through provisioned",
+              "type": "boolean"
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          }
+        }
+      ]
+    },
+    "OrganizationTelephoneDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/OrganizationTelephone"
+        },
+        {
+          "properties": {
+            "phoneLocationType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneLocationType"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "6"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "phoneTechType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneTechType"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "phoneUseType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneUseType"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "pin": {
+              "description": "Assigned Type: c-1100:StringTiny",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to8"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PIN"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 32
+            },
+            "priority": {
+              "description": "Assigned Type: c-1100:Priority",
+              "type": "integer",
+              "format": "int32",
+              "maximum": 300,
+              "exclusiveMaximum": false,
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "Privacy": {
+              "description": "Assigned Type: c-1100:Privacy",
+              "$ref": "#/definitions/Privacy"
+            },
+            "Enum_TelephoneRole": {
+              "description": "Assigned Type: c-1100:Enum_TelephoneRole",
+              "$ref": "#/definitions/Enum_TelephoneRole"
+            },
+            "Comment": {
+              "description": "Assigned Type: c-1100:Comment",
+              "$ref": "#/definitions/Comment"
+            },
+            "defaultInd": {
+              "description": "When true, indicates a default value should be used.",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}boolean"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "DefaultInd"
+                  }
+                ]
+              },
+              "type": "boolean"
+            },
+            "provisionedInd": {
+              "description": "true indicates this phone number was created through provisioned",
+              "type": "boolean"
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          }
+        }
+      ]
+    },
+    "PrimaryContactTelephoneDetail": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "Telephone"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/PrimaryContactTelephone"
+        },
+        {
+          "properties": {
+            "phoneLocationType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneLocationType"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "6"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "phoneTechType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneTechType"
+                  }
+                ],
+                "examples": [
+                  {
+                    "context": "c",
+                    "value": "1"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "phoneUseType": {
+              "description": "Assigned Type: c-1100:OTACode",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}OTA_CodeType"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PhoneUseType"
+                  }
+                ]
+              },
+              "type": "string",
+              "pattern": "[0-9A-Z]{1,3}(\\.[A-Z]{3}(\\.X){0,1}){0,1}"
+            },
+            "pin": {
+              "description": "Assigned Type: c-1100:StringTiny",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}StringLength1to8"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "PIN"
+                  }
+                ]
+              },
+              "type": "string",
+              "maxLength": 32
+            },
+            "priority": {
+              "description": "Assigned Type: c-1100:Priority",
+              "type": "integer",
+              "format": "int32",
+              "maximum": 300,
+              "exclusiveMaximum": false,
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "Privacy": {
+              "description": "Assigned Type: c-1100:Privacy",
+              "$ref": "#/definitions/Privacy"
+            },
+            "Enum_TelephoneRole": {
+              "description": "Assigned Type: c-1100:Enum_TelephoneRole",
+              "$ref": "#/definitions/Enum_TelephoneRole"
+            },
+            "Comment": {
+              "description": "Assigned Type: c-1100:Comment",
+              "$ref": "#/definitions/Comment"
+            },
+            "defaultInd": {
+              "description": "When true, indicates a default value should be used.",
+              "x-otm-annotations": {
+                "documentation": {
+                  "implementers": [
+                    "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}boolean"
+                  ]
+                },
+                "equivalents": [
+                  {
+                    "context": "c",
+                    "value": "DefaultInd"
+                  }
+                ]
+              },
+              "type": "boolean"
+            },
+            "provisionedInd": {
+              "description": "true indicates this phone number was created through provisioned",
+              "type": "boolean"
+            },
+            "ExtensionPoint_Detail": {
+              "$ref": "#/definitions/ExtensionPoint_Detail"
+            }
+          }
+        }
+      ]
+    },
+    "Enum_TelephoneRole": {
+      "properties": {
+        "value": {
+          "$ref": "#/definitions/Enum_TelephoneRole_Open"
+        },
+        "extension": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        }
+      }
+    },
+    "Enum_TelephoneRole_Base": {
+      "type": "string",
+      "enum": [
+        "Mobile",
+        "Home",
+        "Work",
+        "Office",
+        "Fax",
+        "Other"
+      ]
+    },
+    "Enum_TelephoneRole_Open": {
+      "type": "string",
+      "enum": [
+        "Mobile",
+        "Home",
+        "Work",
+        "Office",
+        "Fax",
+        "Other",
+        "Other_"
+      ]
+    },
+    "Comment": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "Comment"
+      },
+      "description": "Textual information.",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "id": {
+          "description": "Local indentifier within a given message for this object.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Assigned Type: c-1100:StringShort",
+          "type": "string",
+          "maxLength": 128
+        },
+        "language": {
+          "description": "Identifies the language of the comment.",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "EN"
+              }
+            ]
+          },
+          "type": "string"
+        }
+      }
+    },
+    "CurrencyRateConversion": {
+      "x-otm-entity": {
+        "EntityType": "CoreObject",
+        "EntityName": "CurrencyRateConversion"
+      },
+      "properties": {
+        "@type": {
+          "type": "string"
+        },
+        "SourceCurrency": {
+          "description": "Assigned Type: c-1100:CurrencyCode",
+          "$ref": "#/definitions/CurrencyCode"
+        },
+        "TargetCurrency": {
+          "description": "Assigned Type: c-1100:CurrencyCode",
+          "$ref": "#/definitions/CurrencyCode"
+        },
+        "ConversionRate": {
+          "description": "Assigned Type: c-1100:ConversionRate",
+          "$ref": "#/definitions/ConversionRate"
+        },
+        "ExtensionPoint": {
+          "$ref": "#/definitions/ExtensionPoint"
+        }
+      },
+      "required": [
+        "@type",
+        "SourceCurrency",
+        "TargetCurrency",
+        "ConversionRate"
+      ],
+      "discriminator": "@type"
+    },
+    "CurrencyCode": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "CurrencyCode"
+      },
+      "description": "The currency code to which any conversion rates will apply",
+      "x-otm-annotations": {
+        "documentation": {
+          "implementers": [
+            "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}Money"
+          ]
+        }
+      },
+      "properties": {
+        "value": {
+          "type": "string",
+          "pattern": "[a-zA-Z]{3}"
+        },
+        "codeAuthority": {
+          "description": "Assigned Type: c-1100:CodeContext",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Assigned XSD Type: {http:\\/\\/chameleon.anonymous\\/ns}AlphaLength3"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": ""
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "ISO"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "decimalPlace": {
+          "description": "Assigned Type: c-1100:CurrencyMinorUnit",
+          "x-otm-annotations": {
+            "documentation": {
+              "implementers": [
+                "Changed type from {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}nonNegativeInteger.",
+                "Assigned XSD Type: {http:\\/\\/www.w3.org\\/2001\\/XMLSchema}string"
+              ]
+            },
+            "equivalents": [
+              {
+                "context": "c",
+                "value": ""
+              }
+            ],
+            "examples": [
+              {
+                "context": "c",
+                "value": "2"
+              }
+            ]
+          },
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "exclusiveMinimum": false,
+          "pattern": "([0-4])"
+        },
+        "decimalAuthority": {
+          "description": "Assigned Type: c-1100:CodeContext",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "ISO"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "codeAuthority",
+        "decimalPlace"
+      ]
+    },
+    "ConversionRate": {
+      "x-otm-entity": {
+        "EntityType": "ValueWithAttributes",
+        "EntityName": "ConversionRate"
+      },
+      "description": "A conversion metric from standard to another with the contextual authority such as IATA, OAG, ISO, etc.",
+      "properties": {
+        "value": {
+          "type": "number",
+          "format": "float"
+        },
+        "rateAuthority": {
+          "description": "Assigned Type: c-1100:CodeContext",
+          "x-otm-annotations": {
+            "examples": [
+              {
+                "context": "c",
+                "value": "ISO"
+              }
+            ]
+          },
+          "type": "string",
+          "maxLength": 32
+        },
+        "rateAsOf": {
+          "description": "Assigned Type: c-1100:DateTime",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ExtensionPoint": {},
+    "ExtensionPoint_Detail": {},
+    "ExtensionPoint_Custom": {},
+    "ExtensionPoint_Query": {},
+    "ExtensionPoint_Update": {},
+    "ExtensionPoint_Choice": {}
+  },
+  "parameters": {
+    "E2ETrackingId": {
+      "name": "E2ETrackingId",
+      "in": "header",
+      "description": "Identifier used to correlate API invocations with operations across all affected Travelport systems.",
+      "required": false,
+      "type": "string"
+    },
+    "TraceId": {
+      "name": "TraceId",
+      "in": "header",
+      "description": "Identifier used to correlate API invocations across long-running or multi-call business flows.",
+      "required": false,
+      "type": "string"
+    },
+    "XAUTH_TRAVELPORT_ACCESSGROUP": {
+      "name": "XAUTH_TRAVELPORT_ACCESSGROUP",
+      "in": "header",
+      "description": "Identifies the Travelport access group with which the caller is associated",
+      "required": false,
+      "type": "string"
+    }
+  },
+  "securityDefinitions": {
+    "BasicAuthSceme": {
+      "type": "basic"
+    }
+  },
+  "security": [
+    {
+      "BasicAuthSceme": []
+    }
+  ]
+}

@@ -1,0 +1,2067 @@
+{
+  "info": {
+    "_postman_id": "fb3f3180-fd43-4b19-9961-e40cc779ff7b",
+    "name": "Hotel JSON API - v11 flows",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "29800230"
+  },
+  "item": [
+    {
+      "name": "Hotel Search",
+      "item": [
+        {
+          "name": "Hotel Search by GeoLocation /properties/search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PropertiesQuerySearch\": {\r\n        \"CheckInDate\": \"{{checkIndate}}\",\r\n        \"CheckOutDate\": \"{{checkOutdate}}\",\r\n        \"RoomStayCandidate\": [\r\n            {\r\n                \"@type\": \"RoomStayCandidate\",\r\n                \"GuestCounts\": {\r\n                    \"@type\": \"GuestCounts\",\r\n                    \"GuestCount\": [\r\n                        {\r\n                            \"@type\": \"GuestCount\",\r\n                            \"age\": 54,\r\n                            \"count\": 2,\r\n                            \"ageQualifyingCode\": \"10\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"SearchBy\": {\r\n            \"@type\": \"SearchByGeoLocation\",\r\n            \"SearchRadius\": {\r\n                \"value\": 38.5,\r\n                \"unitOfDistance\": \"Kilometers\"\r\n            },\r\n            \"Latitude\": 48.8589507,\r\n            \"Longitude\": 2.2770198\r\n        }\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/properties/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "properties",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Search by Address /properties/search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PropertiesQuerySearch\": {\r\n        \"CheckInDate\": \"{{checkIndate}}\",\r\n        \"CheckOutDate\": \"{{checkOutdate}}\",\r\n        \"RoomStayCandidate\": [\r\n            {\r\n                \"@type\": \"RoomStayCandidate\",\r\n                \"GuestCounts\": {\r\n                    \"@type\": \"GuestCounts\",\r\n                    \"GuestCount\": [\r\n                        {\r\n                            \"@type\": \"GuestCount\",\r\n                            \"count\": 1\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"SearchBy\": {\r\n            \"@type\": \"SearchByAddress\",\r\n            \"SearchRadius\": {\r\n                \"value\": 20,\r\n                \"unitOfDistance\": \"Miles\"\r\n            },\r\n            \"SearchAddress\": {\r\n                \"@type\": \"SearchAddress\",\r\n                \"City\": \"Denver\",\r\n                \"StateProv\": {\r\n                    \"value\": \"CO\",\r\n                    \"name\": \"Colorado\"\r\n                },\r\n                \"Country\": \"US\"\r\n            }\r\n        }\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/properties/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "properties",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Search by Airport /properties/search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PropertiesQuerySearch\": {\r\n        \"CheckInDate\": \"{{checkIndate}}\",\r\n        \"CheckOutDate\": \"{{checkOutdate}}\",\r\n        \"RoomStayCandidate\": [\r\n            {\r\n                \"@type\": \"RoomStayCandidate\",\r\n                \"GuestCounts\": {\r\n                    \"@type\": \"GuestCounts\",\r\n                    \"GuestCount\": [\r\n                        {\r\n                            \"@type\": \"GuestCount\",\r\n                            \"count\": 1,\r\n                            \"ageQualifyingCode\": \"10\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"SearchBy\": {\r\n            \"@type\": \"SearchByAirport\",\r\n            \"SearchRadius\": {\r\n                \"value\": 25,\r\n                \"unitOfDistance\": \"Miles\"\r\n            },\r\n            \"SearchAirport\": \"MCO\"\r\n        }\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/properties/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "properties",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Search by City /properties/search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PropertiesQuerySearch\": {\r\n        \"CheckInDate\": \"{{checkIndate}}\",\r\n        \"CheckOutDate\": \"{{checkOutdate}}\",\r\n        \"RoomStayCandidate\": [\r\n            {\r\n                \"@type\": \"RoomStayCandidate\",\r\n                \"GuestCounts\": {\r\n                    \"@type\": \"GuestCounts\",\r\n                    \"GuestCount\": [\r\n                        {\r\n                            \"@type\": \"GuestCount\",\r\n                            \"count\": 1,\r\n                            \"ageQualifyingCode\": \"10\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"SearchBy\": {\r\n            \"@type\": \"SearchByCity\",\r\n            \"SearchRadius\": {\r\n                \"value\": 25,\r\n                \"unitOfDistance\": \"Miles\"\r\n            },\r\n            \"SearchCity\": \"DEN\"\r\n        }\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/properties/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "properties",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Search by Airport with Filters and RACs /properties/search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PropertiesQuerySearch\": {\r\n        \"CheckInDate\": \"{{checkIndate}}\",\r\n        \"CheckOutDate\": \"{{checkOutdate}}\",\r\n        \"ImageSize\": \"Large\",\r\n        \"returnAllImagesInd\": true,\r\n        \"returnOnlyAvailablePropertiesInd\": false,\r\n        \"RequestedCurrency\": \"EUR\",\r\n        \"HotelName\": \"paris\",\r\n        \"ChainCodes\": [\r\n            \"6C\",\r\n            \"EH\",\r\n            \"BW\",\r\n            \"CP\",\r\n            \"YX\",\r\n            \"SM\"\r\n        ],\r\n        \"AggregatorList\": [\r\n            \"TVPT\"\r\n        ],\r\n        \"RoomStayCandidate\": [\r\n            {\r\n                \"@type\": \"RoomStayCandidate\",\r\n                \"GuestCounts\": {\r\n                    \"@type\": \"GuestCounts\",\r\n                    \"GuestCount\": [\r\n                        {\r\n                            \"@type\": \"GuestCount\",\r\n                            \"count\": 1,\r\n                            \"ageQualifyingCode\": \"10\"\r\n                        },\r\n                        {\r\n                            \"@type\": \"GuestCount\",\r\n                            \"count\": 1,\r\n                            \"age\": 3,\r\n                            \"ageQualifyingCode\": \"8\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"RateCandidates\": {\r\n            \"@type\": \"RateCandidates\",\r\n            \"RateCandidate\": [\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCode\": \"LOREAL\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCode\": \"PFI\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCode\": \"DUR\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCode\": \"H81\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCategory\": \"Tour\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCategory\": \"All\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"CustomerLoyalty\": {\r\n                        \"supplier\": \"EM\",\r\n                        \"value\": \"741439038\"\r\n                    }\r\n                }\r\n            ]\r\n        },\r\n        \"SearchBy\": {\r\n            \"@type\": \"SearchByAirport\",\r\n            \"SearchRadius\": {\r\n                \"unitOfDistance\": \"Kilometers\",\r\n                \"value\": 40\r\n            },\r\n            \"SearchAirport\": \"PAR\"\r\n        }\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/properties/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "properties",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Search by Id /properties",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PropertiesQuerySpecificPropertyList\": {\r\n        \"checkinDate\": \"{{checkIndate}}\",\r\n        \"checkoutDate\": \"{{checkOutdate}}\",\r\n        \"RoomStayCandidates\": {\r\n            \"RoomStayCandidate\": [\r\n                {\r\n                    \"@type\": \"RoomStayCandidate\",\r\n                    \"GuestCounts\": {\r\n                        \"@type\": \"GuestCounts\",\r\n                        \"GuestCount\": [\r\n                            {\r\n                                \"@type\": \"GuestCount\",\r\n                                \"count\": 1,\r\n                                \"age\": 26,\r\n                                \"ageQualifyingCode\": \"10\"\r\n                            }\r\n                        ]\r\n                    }\r\n                }\r\n            ]\r\n        },\r\n        \"PropertyKey\": [\r\n            {\r\n                \"propertyCode\": \"B2095\",\r\n                \"chainCode\": \"WI\",\r\n                \"@type\": \"PropertyKey\"\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/properties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "properties"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Search by Id with Filters and RACs /properties",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"PropertiesQuerySpecificPropertyList\": {\r\n        \"checkinDate\": \"{{checkIndate}}\",\r\n        \"checkoutDate\": \"{{checkOutdate}}\",\r\n        \"imageSize\": \"Large\",\r\n        \"returnAllImagesInd\": true,\r\n        \"requestedCurrency\": \"EUR\",\r\n        \"AggregatorList\": [\r\n            \"TVPT\"\r\n        ],\r\n        \"RoomStayCandidates\": {\r\n            \"RoomStayCandidate\": [\r\n                {\r\n                    \"@type\": \"RoomStayCandidate\",\r\n                    \"GuestCounts\": {\r\n                        \"@type\": \"GuestCounts\",\r\n                        \"GuestCount\": [\r\n                            {\r\n                                \"@type\": \"GuestCount\",\r\n                                \"count\": 1,\r\n                                \"age\": 26,\r\n                                \"ageQualifyingCode\": \"10\"\r\n                            },\r\n                            {\r\n                                \"@type\": \"GuestCount\",\r\n                                \"count\": 1,\r\n                                \"age\": 3,\r\n                                \"ageQualifyingCode\": \"8\"\r\n                            }\r\n                        ]\r\n                    }\r\n                }\r\n            ]\r\n        },\r\n        \"RateCandidates\": {\r\n            \"@type\": \"RateCandidates\",\r\n            \"RateCandidate\": [\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCode\": \"LOREAL\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCode\": \"PFI\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCode\": \"DUR\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCode\": \"H81\"\r\n                },\r\n                {\r\n                    \"masterRateCode\": \"1FG003\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCategory\": \"Tour\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"rateCategory\": \"All\"\r\n                },\r\n                {\r\n                    \"@type\": \"RateCandidateDetail\",\r\n                    \"CustomerLoyalty\": {\r\n                        \"supplier\": \"EM\",\r\n                        \"value\": \"741439038\"\r\n                    }\r\n                }\r\n            ]\r\n        },\r\n        \"PropertyKey\": [\r\n            {\r\n                \"propertyCode\": \"B2095\",\r\n                \"chainCode\": \"WI\",\r\n                \"@type\": \"PropertyKey\"\r\n            },\r\n            {\r\n                \"propertyCode\": \"02124\",\r\n                \"chainCode\": \"CP\",\r\n                \"@type\": \"PropertyKey\"\r\n            },\r\n            {\r\n                \"propertyCode\": \"17424\",\r\n                \"chainCode\": \"HI\",\r\n                \"@type\": \"PropertyKey\"\r\n            },\r\n            {\r\n                \"propertyCode\": \"G4741\",\r\n                \"chainCode\": \"UP\",\r\n                \"@type\": \"PropertyKey\"\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/properties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "properties"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Search NextPage /properties",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/properties/93fbae18-3c24-480c-bbae-183c24780c88?pageNumber=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "properties",
+                "93fbae18-3c24-480c-bbae-183c24780c88"
+              ],
+              "query": [
+                {
+                  "key": "pageNumber",
+                  "value": "2"
+                },
+                {
+                  "key": "",
+                  "value": null,
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Search Details /propertiesdetail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/search/propertiesdetail?chainCode=WI&propertyCode=B2095&ImageSize=Large",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "search",
+                "propertiesdetail"
+              ],
+              "query": [
+                {
+                  "key": "chainCode",
+                  "value": "WI"
+                },
+                {
+                  "key": "propertyCode",
+                  "value": "B2095"
+                },
+                {
+                  "key": "ImageSize",
+                  "value": "Large"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Hotel Availability",
+      "item": [
+        {
+          "name": "Hotel Availability /catalogofferingshospitality",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"CatalogOfferingsQueryRequest\": {\r\n        \"CatalogOfferingsRequest\": [\r\n            {\r\n                \"@type\": \"CatalogOfferingsRequestHospitality\",\r\n                \"verboseResponseInd\": true,\r\n                \"requestedCurrency\": \"EUR\",\r\n                \"StayDates\": {\r\n                    \"start\": \"{{checkIndate}}\",\r\n                    \"end\": \"{{checkOutdate}}\"\r\n                },\r\n                \"HotelSearchCriterion\": {\r\n                    \"@type\": \"HotelSearchCriterion\",\r\n                    \"numberOfRooms\": 1,\r\n                    \"PropertyRequest\": [\r\n                        {\r\n                            \"@type\": \"PropertyRequest\",\r\n                            \"PropertyKey\": {\r\n                                \"propertyCode\": \"95075\",\r\n                                \"chainCode\": \"HH\",\r\n                                \"@type\": \"PropertyKey\"\r\n                            }\r\n                        },\r\n                        {\r\n                            \"@type\": \"PropertyRequest\",\r\n                            \"PropertyKey\": {\r\n                                \"propertyCode\": \"02892\",\r\n                                \"chainCode\": \"MD\",\r\n                                \"@type\": \"PropertyKey\"\r\n                            }\r\n                        },\r\n                        {\r\n                            \"@type\": \"PropertyRequest\",\r\n                            \"PropertyKey\": {\r\n                                \"propertyCode\": \"12153\",\r\n                                \"chainCode\": \"BR\",\r\n                                \"@type\": \"PropertyKey\"\r\n                            }\r\n                        }\r\n                    ],\r\n                    \"RoomStayCandidates\": {\r\n                        \"@type\": \"RoomStayCandidates\",\r\n                        \"RoomStayCandidate\": [\r\n                            {\r\n                                \"@type\": \"RoomStayCandidate\",\r\n                                \"GuestCounts\": {\r\n                                    \"@type\": \"GuestCounts\",\r\n                                    \"GuestCount\": [\r\n                                        {\r\n                                            \"count\": 2,\r\n                                            \"@type\": \"GuestCount\"\r\n                                        }\r\n                                    ]\r\n                                }\r\n                            }\r\n                        ]\r\n                    }\r\n                }\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/availability/catalogofferingshospitality",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "availability",
+                "catalogofferingshospitality"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Availability with RAC /catalogofferingshospitality",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"CatalogOfferingsQueryRequest\": {\r\n        \"CatalogOfferingsRequest\": [\r\n            {\r\n                \"@type\": \"CatalogOfferingsRequestHospitality\",\r\n                \"verboseResponseInd\": false,\r\n                \"StayDates\": {\r\n                    \"start\": \"{{checkIndate}}\",\r\n                    \"end\": \"{{checkOutdate}}\"\r\n                },\r\n                \"HotelSearchCriterion\": {\r\n                    \"@type\": \"HotelSearchCriterion\",\r\n                    \"numberOfRooms\": 1,\r\n                    \"AggregatorList\": [\r\n                        \"TVPT\"\r\n                    ],\r\n                    \"PropertyRequest\": [\r\n                        {\r\n                            \"@type\": \"PropertyRequest\",\r\n                            \"PropertyKey\": {\r\n                                \"propertyCode\": \"95075\",\r\n                                \"chainCode\": \"HH\",\r\n                                \"@type\": \"PropertyKey\"\r\n                            }\r\n                        }\r\n                    ],\r\n                    \"RoomStayCandidates\": {\r\n                        \"@type\": \"RoomStayCandidates\",\r\n                        \"RoomStayCandidate\": [\r\n                            {\r\n                                \"@type\": \"RoomStayCandidate\",\r\n                                \"GuestCounts\": {\r\n                                    \"@type\": \"GuestCounts\",\r\n                                    \"GuestCount\": [\r\n                                        {\r\n                                            \"count\": 1,\r\n                                            \"@type\": \"GuestCount\"\r\n                                        },\r\n                                        {\r\n                                            \"count\": 1,\r\n                                            \"ageQualifyingCode\": \"8\",\r\n                                            \"age\": \"4\",\r\n                                            \"@type\": \"GuestCount\"\r\n                                        }\r\n                                    ]\r\n                                }\r\n                            }\r\n                        ]\r\n                    },\r\n                    \"RateCandidates\": {\r\n                        \"@type\": \"RateCandidatesDetail\",\r\n                        \"prePayRatesOnlyInd\": false,\r\n                        \"postPayRatesOnlyInd\": false,\r\n                        \"removeSpecialRatesInd\": true,\r\n                        \"RateCandidate\": [\r\n                            {\r\n                                \"@type\": \"RateCandidateDetail\",\r\n                                \"rateCode\": \"H81\",\r\n                                \"chainCode\": \"HH\",\r\n                                \"propertyCode\": \"95075\"\r\n                            },\r\n                            {\r\n                                \"@type\": \"RateCandidateDetail\",\r\n                                \"masterRateCode\": \"1ANA01\",\r\n                                \"chainCode\": \"HH\",\r\n                                \"propertyCode\": \"95075\"\r\n                            },\r\n                            {\r\n                                \"@type\": \"RateCandidateDetail\",\r\n                                \"rateCategory\": \"Weekend\"\r\n                            },\r\n                            {\r\n                                \"@type\": \"RateCandidateDetail\",\r\n                                \"rateCategory\": \"All\"\r\n                            },\r\n                            {\r\n                                \"@type\": \"RateCandidateDetail\",\r\n                                \"CustomerLoyalty\": {\r\n                                    \"supplier\": \"HH\",\r\n                                    \"value\": \"loyaltynumber\"\r\n                                },\r\n                                \"chainCode\": \"HH\",\r\n                                \"propertyCode\": \"95075\"\r\n                            }\r\n                        ]\r\n                    }\r\n                }\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/availability/catalogofferingshospitality",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "availability",
+                "catalogofferingshospitality"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Availability Next Page",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/availability/catalogofferingshospitality/93fbae18-3c24-480c-bbae-183c24780c88?pageNumber=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "availability",
+                "catalogofferingshospitality",
+                "93fbae18-3c24-480c-bbae-183c24780c88"
+              ],
+              "query": [
+                {
+                  "key": "pageNumber",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Hotel Rules",
+      "item": [
+        {
+          "name": "Hotel Rules /buildfromrequest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n   \"OfferQueryHospitalityRequest\" : {\r\n      \"bookingCode\" : \"A0AACN\",\r\n      \"requestedCurrency\" : \"EUR\",\r\n      \"checkinDate\" : \"{{checkIndate}}\",\r\n      \"checkoutDate\" : \"{{checkOutdate}}\",\r\n      \"numberOfGuests\" : 1,\r\n      \"storedAmount\" : \"398.65\",\r\n      \"storedCurrency\" : \"CAD\",\r\n      \"HotelAggregator\" : \"Travelport\",\r\n      \"PropertyKey\" : {\r\n         \"@type\" : \"PropertyKey\",\r\n         \"chainCode\" : \"HH\",\r\n         \"propertyCode\" : \"13703\"\r\n      },\r\n      \"RateCandidate\": {\r\n            \"@type\": \"RateCandidateDetail\",\r\n            \"rateCode\": \"ABC\",\r\n            \"rateID\": \"1234567\"\r\n        }\r\n   }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/rules/offershospitality/buildfromrequest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "rules",
+                "offershospitality",
+                "buildfromrequest"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Hotel Rules /buildfromcatalogoffering",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"OfferQueryBuildFromCatalogOffering\": {\r\n        \"BuildFromCatalogOfferingHospitality\": {\r\n            \"@type\": \"BuildFromCatalogOfferingHospitality\",\r\n            \"CatalogOfferingIdentifier\": {\r\n                \"value\": \"cb8b9cfa-c802-4a13-9dd6-0b3cfe920aba:6335bd82-8815-4233-91b5-79a402310059\"\r\n            }\r\n        }\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/rules/offershospitality/buildfromcatalogoffering",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "rules",
+                "offershospitality",
+                "buildfromcatalogoffering"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Hotel Reservation",
+      "item": [
+        {
+          "name": "Create Reservation by Offer ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "text"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationQueryBuild\": {\r\n        \"@type\": \"ReservationQueryBuild\",\r\n        \"ReservationBuild\": {\r\n            \"@type\": \"ReservationBuildFromCatalogOffering\",\r\n            \"BuildFromCatalogOfferingHospitality\": {\r\n                \"@type\": \"BuildFromCatalogOfferingHospitality\",\r\n                \"CatalogOfferingIdentifier\": {\r\n                    \"value\": \"5fd5e2dd-7aa9-412e-b057-944cfa92d008:a5ab07a6-2186-43f2-948d-90f5500f7f7e\"\r\n                }\r\n            },\r\n            \"Traveler\": [\r\n                {\r\n                    \"@type\": \"Traveler\",\r\n                    \"PersonName\": {\r\n                        \"Given\": \"Bear\",\r\n                        \"Surname\": \"Das\",\r\n                        \"Title\": \"Mr\"\r\n                    },\r\n                    \"Telephone\": [\r\n                        {\r\n                            \"@type\": \"TelephoneDetail\",\r\n                            \"countryAccessCode\": \"91\",\r\n                            \"areaCityCode\": \"011\",\r\n                            \"phoneNumber\": \"9891766469\",\r\n                            \"cityCode\": \"DL\"\r\n                        }\r\n                    ],\r\n                    \"Email\": [\r\n                        {\r\n                            \"value\": \"matt.singh@galileo.co.in\"\r\n                        }\r\n                    ],\r\n                    \"CustomerLoyalty\": [\r\n                        {\r\n                            \"value\": \"1111111\",\r\n                            \"programId\": \"IQ\",\r\n                            \"supplierType\": \"hotel\"\r\n                        },\r\n                        {\r\n                            \"value\": \"222222\",\r\n                            \"programId\": \"IT\",\r\n                            \"supplierType\": \"air\"\r\n                        }\r\n                    ]\r\n                }\r\n            ],\r\n            \"ReservationComment\": [\r\n                {\r\n                    \"@type\": \"ReservationComment\",\r\n                    \"Comment\": [\r\n                        {\r\n                            \"value\": \"Please dont charge CC\"\r\n                        }\r\n                    ]\r\n                }\r\n            ],\r\n            \"FormOfPayment\": [\r\n                {\r\n                    \"@type\": \"FormOfPaymentPaymentCard\",\r\n                    \"PaymentCard\": {\r\n                        \"@type\": \"PaymentCardDetail\",\r\n                        \"expireDate\": \"0825\",\r\n                        \"CardType\": \"Credit\",\r\n                        \"CardCode\": \"VI\",\r\n                        \"CardHolderName\": \"Frank Sinatra\",\r\n                        \"CardNumber\": {\r\n                            \"@type\": \"CardNumber\",\r\n                            \"PlainText\": \"XXXXXXXXXX\"\r\n                        },\r\n                        \"SeriesCode\": {\r\n                            \"@type\": \"SeriesCode\",\r\n                            \"PlainText\": \"XXX\"\r\n                        },\r\n                        \"PersonName\": {\r\n                            \"@type\": \"PersonNameDetail\",\r\n                            \"Given\": \"Bill\",\r\n                            \"Surname\": \"Thisguy\"\r\n                        },\r\n                        \"Address\": {\r\n                            \"@type\": \"AddressDetail\",\r\n                            \"Number\": {\r\n                                \"value\": \"125\"\r\n                            },\r\n                            \"Street\": \"Billing Address Street\",\r\n                            \"AddressLine\": [\r\n                                \"125 Billing Address Street\"\r\n                            ],\r\n                            \"City\": \"Claremont\",\r\n                            \"County\": \"Los Angeles\",\r\n                            \"StateProv\": {\r\n                                \"value\": \"CA\"\r\n                            },\r\n                            \"Country\": {\r\n                                \"value\": \"US\"\r\n                            },\r\n                            \"PostalCode\": \"91711-3323\"\r\n                        },\r\n                        \"Telephone\": [\r\n                            {\r\n                                \"@type\": \"TelephoneDetail\",\r\n                                \"countryAccessCode\": \"1\",\r\n                                \"areaCityCode\": \"909\",\r\n                                \"phoneNumber\": \"1231234\",\r\n                                \"cityCode\": \"DEN\"\r\n                            }\r\n                        ],\r\n                        \"Email\": [\r\n                            {\r\n                                \"value\": \"smith@example.com\"\r\n                            }\r\n                        ]\r\n                    }\r\n                }\r\n            ],\r\n            \"Payment\": [\r\n                {\r\n                    \"@type\": \"Payment\",\r\n                    \"Amount\": {\r\n                        \"code\": \"USD\",\r\n                        \"value\": 844.97\r\n                    },\r\n                    \"guaranteeInd\": false,\r\n                    \"depositInd\": true\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/build",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "build"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Group Reservation by Offer ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationQueryBuild\": {\r\n        \"@type\": \"ReservationQueryBuild\",\r\n        \"ReservationBuild\": {\r\n            \"@type\": \"ReservationBuildFromCatalogOffering\",\r\n            \"BuildFromCatalogOfferingHospitality\": {\r\n                \"@type\": \"BuildFromCatalogOfferingHospitality\",\r\n                \"CatalogOfferingIdentifier\": {\r\n                    \"value\": \"5fd5e2dd-7aa9-412e-b057-944cfa92d008:a5ab07a6-2186-43f2-948d-90f5500f7f7e\"\r\n                },\r\n                \"NumberOfRooms\": 2\r\n            },\r\n            \"Traveler\": [\r\n                {\r\n                    \"@type\": \"Traveler\",\r\n                    \"PersonName\": {\r\n                        \"Given\": \"Bear\",\r\n                        \"Surname\": \"Das\",\r\n                        \"Title\": \"Mr\"\r\n                    },\r\n                    \"Telephone\": [\r\n                        {\r\n                            \"@type\": \"TelephoneDetail\",\r\n                            \"countryAccessCode\": \"91\",\r\n                            \"areaCityCode\": \"011\",\r\n                            \"phoneNumber\": \"9891766469\",\r\n                            \"cityCode\": \"DL\"\r\n                        }\r\n                    ],\r\n                    \"Email\": [\r\n                        {\r\n                            \"value\": \"test@travelport.com\"\r\n                        }\r\n                    ]\r\n                },\r\n                {\r\n                    \"@type\": \"Traveler\",\r\n                    \"PersonName\": {\r\n                        \"Given\": \"Bear\",\r\n                        \"Surname\": \"Two\",\r\n                        \"Title\": \"Mr\"\r\n                    },\r\n                    \"Telephone\": [\r\n                        {\r\n                            \"@type\": \"TelephoneDetail\",\r\n                            \"countryAccessCode\": \"91\",\r\n                            \"areaCityCode\": \"011\",\r\n                            \"phoneNumber\": \"9891766469\",\r\n                            \"cityCode\": \"DL\"\r\n                        }\r\n                    ],\r\n                    \"Email\": [\r\n                        {\r\n                            \"value\": \"test2@travelport.com\"\r\n                        }\r\n                    ]\r\n                }\r\n            ],\r\n            \"ReservationComment\": [\r\n                {\r\n                    \"@type\": \"ReservationComment\",\r\n                    \"Comment\": [\r\n                        {\r\n                            \"value\": \"Please dont charge CC\"\r\n                        }\r\n                    ]\r\n                }\r\n            ],\r\n            \"FormOfPayment\": [\r\n                {\r\n                    \"@type\": \"FormOfPaymentPaymentCard\",\r\n                    \"PaymentCard\": {\r\n                        \"@type\": \"PaymentCardDetail\",\r\n                        \"expireDate\": \"0825\",\r\n                        \"CardType\": \"Credit\",\r\n                        \"CardCode\": \"VI\",\r\n                        \"CardHolderName\": \"Frank Sinatra\",\r\n                        \"CardNumber\": {\r\n                            \"@type\": \"CardNumber\",\r\n                            \"PlainText\": \"XXXXXXXXXXXXXX\"\r\n                        },\r\n                        \"SeriesCode\": {\r\n                            \"@type\": \"SeriesCode\",\r\n                            \"PlainText\": \"XXX\"\r\n                        },\r\n                        \"PersonName\": {\r\n                            \"@type\": \"PersonNameDetail\",\r\n                            \"Given\": \"Bill\",\r\n                            \"Surname\": \"Thisguy\"\r\n                        },\r\n                        \"Address\": {\r\n                            \"@type\": \"AddressDetail\",\r\n                            \"Number\": {\r\n                                \"value\": \"125\"\r\n                            },\r\n                            \"Street\": \"Billing Address Street\",\r\n                            \"AddressLine\": [\r\n                                \"125 Billing Address Street\"\r\n                            ],\r\n                            \"City\": \"Claremont\",\r\n                            \"County\": \"Los Angeles\",\r\n                            \"StateProv\": {\r\n                                \"value\": \"CA\"\r\n                            },\r\n                            \"Country\": {\r\n                                \"value\": \"US\"\r\n                            },\r\n                            \"PostalCode\": \"91711-3323\"\r\n                        },\r\n                        \"Telephone\": [\r\n                            {\r\n                                \"@type\": \"TelephoneDetail\",\r\n                                \"countryAccessCode\": \"1\",\r\n                                \"areaCityCode\": \"909\",\r\n                                \"phoneNumber\": \"1231234\",\r\n                                \"cityCode\": \"DEN\"\r\n                            }\r\n                        ],\r\n                        \"Email\": [\r\n                            {\r\n                                \"value\": \"smith@example.com\"\r\n                            }\r\n                        ]\r\n                    }\r\n                }\r\n            ],\r\n            \"Payment\": [\r\n                {\r\n                    \"@type\": \"Payment\",\r\n                    \"Amount\": {\r\n                        \"code\": \"USD\",\r\n                        \"value\": 844.97\r\n                    },\r\n                    \"guaranteeInd\": false,\r\n                    \"depositInd\": true\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/build",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "build"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Reservation by Full Offer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "text"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Offer\": [\r\n            {\r\n                \"@type\": \"Offer\",\r\n                \"Identifier\": {\r\n\t\t\t\t\t\"authority\": \"TVPT\"\r\n\t\t\t\t},\r\n                \"Product\": [\r\n                    {\r\n                        \"@type\": \"ProductHospitality\",\r\n                        \"bookingCode\": \"APB174\",\r\n                        \"Quantity\": \"1\",\r\n                        \"guests\": 1,\r\n                        \"PropertyKey\": {\r\n                            \"@type\": \"PropertyKey\",\r\n                            \"propertyCode\": \"2772\",\r\n                            \"chainCode\": \"HH\"\r\n                        },\r\n                        \"DateRange\": {\r\n                            \"start\": \"{{checkIndate}}\",\r\n                            \"end\": \"{{checkOutdate}}\"\r\n                        }\r\n                    }\r\n                ],\r\n                \"Price\": {\r\n                    \"@type\": \"PriceDetail\",\r\n                    \"CurrencyCode\": {\r\n                        \"value\": \"EUR\"\r\n                    },\r\n                    \"Base\": 897.25,\r\n                    \"TotalTaxes\": 152.56,\r\n                    \"TotalPrice\": 765\r\n                },\r\n                \"TermsAndConditionsFull\": [\r\n                    {\r\n                        \"ProductRateCodeInfo\": [\r\n                            {\r\n                                \"@type\": \"ProductRateCodeInfo\",\r\n                                \"RateCodeInfo\": {\r\n                                    \"rateID\": \"100221835\",\r\n                                    \"value\": \"LOREAL\"\r\n                                }\r\n                            }\r\n                        ]\r\n                    }\r\n                ]\r\n            }\r\n        ],\r\n         \"Payment\": [\r\n            {\r\n                \"@type\": \"Payment\",\r\n                \"Amount\": {\r\n                    \"code\": \"USD\",\r\n                    \"value\": 844.97\r\n                },\r\n                \"guaranteeInd\": false,\r\n                \"depositInd\": true\r\n            }\r\n        ],\r\n        \"FormOfPayment\": [\r\n            {\r\n                \"@type\": \"FormOfPaymentPaymentCard\",\r\n                \"PaymentCard\": {\r\n                    \"@type\": \"PaymentCardDetail\",\r\n                    \"expireDate\": \"0825\",\r\n                    \"CardType\": \"Credit\",\r\n                    \"CardCode\": \"VI\",\r\n                    \"CardHolderName\": \"Frank Sinatra\",\r\n                    \"CardNumber\": {\r\n                        \"@type\": \"CardNumber\",\r\n                        \"PlainText\": \"XXXXXXXXXXXX\"\r\n                    },\r\n                    \"SeriesCode\": {\r\n                        \"@type\": \"SeriesCode\",\r\n                        \"PlainText\": \"XXX\"\r\n                    },\r\n                    \"PersonName\": {\r\n                        \"@type\": \"PersonNameDetail\",\r\n                        \"Given\": \"Bill\",\r\n                        \"Middle\": \"Example String Value\",\r\n                        \"Surname\": \"Thisguy\"\r\n                    },\r\n                    \"Address\": {\r\n                        \"@type\": \"AddressDetail\",\r\n                        \"Number\": {\r\n                            \"value\": \"125\"\r\n                        },\r\n                        \"Street\": \"Billing Address Street\",\r\n                        \"AddressLine\": [\r\n                            \"125 Billing Address Street\"\r\n                        ],\r\n                        \"City\": \"Claremont\",\r\n                        \"County\": \"Los Angeles\",\r\n                        \"StateProv\": {\r\n                            \"value\": \"CA\",\r\n                            \"name\": \"Texas\"\r\n                        },\r\n                        \"Country\": {\r\n                            \"value\": \"US\",\r\n                            \"id\": \"country_4\",\r\n                            \"name\": \"United States\",\r\n                            \"codeContext\": \"Example String Value\"\r\n                        },\r\n                        \"PostalCode\": \"91711-3323\"\r\n                    },\r\n                    \"Telephone\": [\r\n                        {\r\n                            \"@type\": \"TelephoneDetail\",\r\n                            \"countryAccessCode\": \"1\",\r\n                            \"areaCityCode\": \"909\",\r\n                            \"phoneNumber\": \"1231234\",\r\n                            \"cityCode\": \"DEN\"\r\n                        }\r\n                    ],\r\n                    \"Email\": [\r\n                        {\r\n                            \"value\": \"smith@example.com\"\r\n                        }\r\n                    ],\r\n                    \"CustomerLoyalty\": [\r\n                        {\r\n                            \"value\": \"1111111\",\r\n                            \"programId\": \"IQ\",\r\n                            \"supplierType\": \"hotel\"\r\n                        },\r\n                        {\r\n                            \"value\": \"222222\",\r\n                            \"programId\": \"IT\",\r\n                            \"supplierType\": \"air\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"Traveler\": [\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"@type\": \"PersonName\",\r\n                    \"Given\": \"Gabriel\",\r\n                    \"Surname\": \"Deaconu\",\r\n                    \"Title\": \"Mr\"\r\n                },\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"countryAccessCode\": \"91\",\r\n                        \"areaCityCode\": \"011\",\r\n                        \"phoneNumber\": \"9891766469\",\r\n                        \"cityCode\": \"DL\"\r\n                    }\r\n                ],\r\n                \"Email\": [\r\n                    {\r\n                        \"value\": \"test@travelport.com\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Group Reservation by Full Offer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "text"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Offer\": [\r\n            {\r\n                \"@type\": \"Offer\",\r\n                \"Identifier\": {\r\n\t\t\t\t\t\"authority\": \"TVPT\"\r\n\t\t\t\t},\r\n                \"Product\": [\r\n                    {\r\n                        \"@type\": \"ProductHospitality\",\r\n                        \"bookingCode\": \"APB174\",\r\n                        \"Quantity\": \"3\",\r\n                        \"guests\": 1,\r\n                        \"PropertyKey\": {\r\n                            \"@type\": \"PropertyKey\",\r\n                            \"propertyCode\": \"2772\",\r\n                            \"chainCode\": \"HH\"\r\n                        },\r\n                        \"DateRange\": {\r\n                            \"start\": \"{{checkIndate}}\",\r\n                            \"end\": \"{{checkOutdate}}\"\r\n                        }\r\n                    }\r\n                ],\r\n                \"Price\": {\r\n                    \"@type\": \"PriceDetail\",\r\n                    \"CurrencyCode\": {\r\n                        \"value\": \"EUR\"\r\n                    },\r\n                    \"Base\": 897.25,\r\n                    \"TotalTaxes\": 152.56,\r\n                    \"TotalPrice\": 765\r\n                }\r\n            }\r\n        ],\r\n        \"Payment\": [\r\n            {\r\n                \"@type\": \"Payment\",\r\n                \"Amount\": {\r\n                    \"code\": \"USD\",\r\n                    \"value\": 308.43\r\n                }\r\n            }\r\n        ],\r\n        \"FormOfPayment\": [\r\n            {\r\n                \"@type\": \"FormOfPaymentPaymentCard\",\r\n                \"PaymentCard\": {\r\n                    \"@type\": \"PaymentCardDetail\",\r\n                    \"expireDate\": \"0825\",\r\n                    \"CardType\": \"Credit\",\r\n                    \"CardCode\": \"VI\",\r\n                    \"CardHolderName\": \"Frank Sinatra\",\r\n                    \"CardNumber\": {\r\n                        \"@type\": \"CardNumber\",\r\n                        \"PlainText\": \"XXXXXXXXXXXXXXXX\"\r\n                    },\r\n                    \"SeriesCode\": {\r\n                        \"@type\": \"SeriesCode\",\r\n                        \"PlainText\": \"XXX\"\r\n                    },\r\n                    \"PersonName\": {\r\n                        \"@type\": \"PersonNameDetail\",\r\n                        \"Given\": \"Bill\",\r\n                        \"Middle\": \"Example String Value\",\r\n                        \"Surname\": \"Thisguy\"\r\n                    },\r\n                    \"Address\": {\r\n                        \"@type\": \"AddressDetail\",\r\n                        \"Number\": {\r\n                            \"value\": \"125\"\r\n                        },\r\n                        \"Street\": \"Billing Address Street\",\r\n                        \"AddressLine\": [\r\n                            \"125 Billing Address Street\"\r\n                        ],\r\n                        \"City\": \"Claremont\",\r\n                        \"County\": \"Los Angeles\",\r\n                        \"StateProv\": {\r\n                            \"value\": \"CA\",\r\n                            \"name\": \"Texas\"\r\n                        },\r\n                        \"Country\": {\r\n                            \"value\": \"US\",\r\n                            \"id\": \"country_4\",\r\n                            \"name\": \"United States\",\r\n                            \"codeContext\": \"Example String Value\"\r\n                        },\r\n                        \"PostalCode\": \"91711-3323\"\r\n                    },\r\n                    \"Telephone\": [\r\n                        {\r\n                            \"@type\": \"TelephoneDetail\",\r\n                            \"countryAccessCode\": \"1\",\r\n                            \"areaCityCode\": \"909\",\r\n                            \"phoneNumber\": \"1231234\",\r\n                            \"cityCode\": \"DEN\"\r\n                        }\r\n                    ],\r\n                    \"Email\": [\r\n                        {\r\n                            \"value\": \"smith@example.com\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"Traveler\": [\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"@type\": \"PersonName\",\r\n                    \"Given\": \"Gabriel\",\r\n                    \"Surname\": \"Deaconu\",\r\n                    \"Title\": \"Mr\"\r\n                },\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"countryAccessCode\": \"91\",\r\n                        \"areaCityCode\": \"011\",\r\n                        \"phoneNumber\": \"9891766469\",\r\n                        \"cityCode\": \"DL\"\r\n                    }\r\n                ],\r\n                \"Email\": [\r\n                    {\r\n                        \"value\": \"test@travelport.com\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create MK Passive Segment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "OAUTH_CLIENTID",
+                "value": "travelportAPI-46jMbnfnl5B816RNJPgGl96I",
+                "type": "text"
+              },
+              {
+                "key": "test_mode",
+                "value": "1",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_RESOURCEOWNERINFO",
+                "value": "Locale=,sub=TP26282580,lastName=Travelport Futures Project,UID=TP26282580,firstName=Travelport Futures Project,Language=,Static_Gtids=,Roles=,email=vinodhharidoss@gmail.com,SSOSessionProperties={\"SmAuthResults\":\"AQFzAApUUDI2MjgyNTgwcwAcVDBvdU5EamlKNWljbUpOTVRxOFdOTFhZYk9rPXMCADFOdWttNzJWZGlOaEE0QmdCb0F6Z0c0bVFsT2hJczd3N2dOSGlBSnFGZ25JNTZzTVR5djBYWGh6TzhTUHB1YTZjbThkSHBxUFZXazRBZ09VZ2pJdFREOHBOUjhXNUlkNWtNRjRvMnJrcUcrWlo4VzFoeXd1aC9kbm1vNWphVkhHdkZmeFJ4Z0NMaFBSdUtPakl4dWJKUDlVRmU0OFZqdDJzS0Z4TWdua25jMTJ4RG1sbm9kcnE4aW9xQ04xSWlpME9hZXZmdzUxRVh0SVhPa1k2VjV0RE1aMFhTZWtHRTk5aU5Fa0tEVVg3NkhpVnEya1lzUkUvZDhta2ZzWllSZ2oyT0NHRnhWaEhaaXc0cUlFMW9nbjM0V1VrWDdUVko4VnFJMktNTzBEbkhUTy9kdmh1SVU3eVVYSWRhd0VCZXY0K1A0NVJkaEp6UGlKQW5WNGpGZDhpbXk2T1Z3TnowOFhudVNlV2VVQUtlL2MxWS9TRkpqcXArUzVaVFIxTG1qZXVqZUZFVVEvdm56T3MrQ0NEa3NVeXp1QnRKVzVyeExZYnF1QVBtdXhnWHpLZXBidTRhdjhPenNJazRVbDY4b09FUndjakJuQTF1SzZkSGh6Z2JuNjV1ZThyQklVMWZ5Y3B0dVIrd0RZVndXSS9DcUpTZDhXYXRWaXBPQzFCNTRZCAAAAXte5ZdwAjhAAnCABGEd/4YEYR3/hgRhHf+K\"}",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "35112652-2443-4FF6-B3C0-9325519F2076",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "6C340F1B-7A39-4D84-8FD6-202211D9E665",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_RESOURCEOWNERINFO",
+                "value": "Locale=,sub=TP22227762,lastName=Babos,UID=TP22227762,firstName=Elod,Language=,Static_Gtids=,Roles=,email=elod.babos@arobs.com,SSOSessionProperties={\"SmAuthResults\":\"AQFzAApUUDIyMjI3NzYycwAcdE80eVVJTE9CZGRVVEZoYlVESWd4ODM2cDk4PXMCDHJ1eHNEVDFMRnBleEtraHB0aGJiVktaNDhWeHRFWlRuUWp1NUJJaEdKcVFCUFhmdmV6bDBWeDFCei9YeEFWeGs5SHBIVzBWNmhRNkwrVlQ4d1N1WXJyeHJ6VFNpTkZpelRrTHZlSzNWclpaaEJXeEZ3V1A5U0kvVDZob0xZSlNUYnhFbzBRUkNIeERXY0lYTnJLUWRDT2YyaUJMMktLakJzTVhXb2ZpblhNT0tiSy85bDF5Nmd4cFB2cFNqajBmRTlSOEpwS1pLVVB6YVkwNFFCanBiTHpKTThqa3hOR0xDcDNxVEttTmMxWlREZHl2eHhPcUF4VVp1QmJiWFV6RTAzVDllbjUxWW0vRE1rbHNkQ2FWZFpiaURJa01RdHdEWExDNGFDY1Rtc0prUGkxVGxHb29kNElLMUsvSUI2TUVkemhTc1pQWE1TWWVsZjBzemlMcTFCc0g1OUMyN2hGczdTLzl3enBHNk9wWVhxdlVHSktxd3Y1b3d1dXcrRzlVbEJUYkUwR1dMSmtqV210bWF5MDhsVEtmNVNwZXQzTUZwRzhhQ3RvT2VzNzE5UTJibk9DclZkSDRLNE9OazdscjlmYzZGNEsyQlU2QlRhdTFYZ2JSR1lXVExhVkxmbTBmL1F6UW5DcE1mNFF4Vzd3UXhJdExJcnlSZTVrVjVWSFpPcnZIcGFpRGdFQlk9CAAAAYgxq/jwAjhAAnCABGRmY3YEZGZjdgRkZmN2\"}",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_CLIENTID",
+                "value": "1FKNZ8nzq7F2JUrzUH7tQZz7TKr5fAKwRjvOMO9B",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "1E3833D5-E6D8-4EBE-B93A-DE85A77B16A9",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "TraceId",
+                "value": "test-refact-2",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_TERMINAL_OVERRIDE",
+                "value": "DFC3BB",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_CLIENTID",
+                "value": "travelportAPI-2I2Aq6pcbxR4iK0YP8Pvba6M",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_RESOURCEOWNERINFO",
+                "value": "Locale=,lastName=OLAY,UID=TP77119316,firstName=OLAY,Language=,Static_Gtids=,Roles=JSON Managed,email=michael.r.lacusta@amexgbt.com,SSOSessionProperties={\\\"SmAuthResults\\\":\\\"AQFzAApUUDc3MTE5MzE2cwAcNEFDQzdYTittcGZpTkpuYWhxQXIxMzJCWnRRPXMCDGgwMUl2RVkvRWNabmR3d3FaaHl6OVN4RXlxTEp3UW85SysvV2t4RkkvOFVCTWE4Y0k1U2xnVmJMZ2hXaC8zTjJkQ1hpYjY5T3hzYVNKMTdvVFY1TXYvR0g4VUdmdk5lRTZMcW1VRVBrZzI2U0NNUWErVkZVampDWjFDMzRkUWxxUzhTczdvVlhwcGlsdDRpa0k3blZhaVZvZlRXZlF5U2VXV3B5TUN5bTV6R0dFNEM4V2xIYVYyN1hGa1I1WGZXWUZ4bXJMd2pJSGc1ZkFuL0JGU2hMeHVjUU1EM2p5QStPRjVDVW0wbXcySE1NK2dORXhJRzRhQm1QeWswWmJQcDlxSmlhVWp1Qi83bUNmUnluek5UemNTUC8rYzIzSXhaOXJ4ZnROYlZIZU9VbjNaS3ZQckd6RlNXTk4ybStrSjBTTnBrTFplQzVQTnNMUnViVHFLMUlVaHh0bzI0YjJMaHNrVDF4V2tHbGJxWFdWU2dBaWRuSjZ5eXhZUlkwWTQ1SzllK29XZUNOelBLc1VVNFI5VmJjSkpWWWRiVWdXVnNDekNSKzRYNHdEajF0TVFuREx1d00xUXB1WXB1N1VDbWU2dGY0L1RDeEZjY1E3UXhhNkFrMEhtTnFZSllGM2xySjBTck9rN0JTWXJYRUxnbi9nbHVaRWFpcDA3QTdmaFdEY2VhaWpWc0RPV1E9CAAAAZO2oJbwAjhAAnCABGdZUjYEZ1lSNgRnWVI2\\\"}",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "3A8C79C3-E17E-456B-B20F-A8AC3293FE37",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "A0C7023B-042D-4153-87AC-415D954633C4",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_RESOURCEOWNERINFO",
+                "value": "Locale=,sub=TP56560369,lastName=Travelport Futures Project,firstName=Travelport Futures Project,UID=TP56560369,Language=,Static_Gtids=,accessGroups=cn=936C6E7C-BD7A-4152-B9DF-DBF4BA043CF2,ou=AccessGroups,dc=travelport,dc=com^cn=FDC9E868-D891-48D3-A710-5AAD88F0948F,ou=AccessGroups,dc=travelport,dc=com^cn=82C0E39D-293E-4BE7-A2AB-DE0C1E900CDD,ou=AccessGroups,dc=travelport,dc=com^cn=A0C7023B-042D-4153-87AC-415D954633C4,ou=AccessGroups,dc=travelport,dc=com^cn=608401,ou=Organization,dc=travelport,dc=com,accessList=936C6E7C-BD7A-4152-B9DF-DBF4BA043CF2^FDC9E868-D891-48D3-A710-5AAD88F0948F^82C0E39D-293E-4BE7-A2AB-DE0C1E900CDD^A0C7023B-042D-4153-87AC-415D954633C4^608401,Roles=,email=vinodhharidoss@gmail.com,SSOSessionProperties={\"SmAuthResults\":\"AQFzAApUUDU2NTYwMzY5cwAcRFQzZFFBMTByaWV0T1plb0t1Y1Y3Y0tMeHVvPXMB+DVjb3B0U2I3aXRUS1JGL1A2ckk0NCtDaldnOFZhbVMwZE9CdEZ6NEEwU2MrenJjeE1GZFhXWGQxL1YrbGg3dmZoYk93TElVMHdGbHh1MjUveGd2RXB4elpTamNxYUZCMWpBR1VOZ2UvRzBFTDl3QkJya2EzYTI2WXp1WFlEVUpoTFB0K2p0S0FPdERrNUsxZUZTblFIZHBGN2JtWGxXWGsyZGdwbWlCcEcyTk42OXRJczNrZGthUGludHZXd1VYTExnMXRkVHJHMTk1Unp0K0NkWVRIS0Fab2sxaFdzMjlVSUQrQTIyNlRuOG10MHA0N3JrQ2FqaWhON3lOQVRmSHJJNUZ0RFA3UDlGZjBzc2htY1ZWYU9INk54MkJzUktZU1dLOUQ2UEo3bFpFQmt1aUZVS1JZM2RVZUZkbTE4cFo0bXkxSEMvRk0rNy9PTzJtSDk5NTA5NFF6RmJGaUtTamdoZmxvS3F5anAzdFZ4anVhbmZPNkg3eWRxZStEcmI1NzBBV3Y1eExtRWY0NW1ESjB1eTZCeC9iT0xNcHozbHkvYjhMRFJ5eHZBSHc2UysxZ1R1QmVodDl3aGJEL2lwanUrOEw3U3lYcVJzVHpZLytqSFZjaGVvcU43VGVFNE01ZmpmTS9vd2JFb3JNaGdtbTNtUExCc0E9PQgAAAF7Gb2FQAI4QAJwgARhDEtIBGEMS0gEYQxLSg==\"}",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_CLIENTID",
+                "value": "prod-OGsX65M71RKYZfSvf77Evug61jfkfsYOUEP2AISA",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_RESOURCEOWNERINFO",
+                "value": "Locale=en-US,lastName=Demo1,UID=TP26844367,firstName=Concur,Language=,Static_Gtids=,Roles=,email=ecorrigan@travelport.com,SSOSessionProperties={\\\"SmAuthResults\\\":\\\"AQFzAApUUDI2ODQ0MzY3cwAcdW9OUHI0NzFJaWhqdlFIbWJQVmdMN0RkUXA4PXMCDFdmWi8vdWdXUFRLVXRLZ3Y1L09xZUhRSWR4cytLbThVM1NqTGZGYzhPYnlWUHQ2RnJ2SDhIb2R6UG14bmowT2VrTFdZK29odlVIN1YrTStmNzBSbExOUXpIbFVhbkNYbTBjVFhzYWF6Z2htbUo1VVRSNGJpVWVBaEF4UUxmQ3JXWDFEOFozcWZuRVc5QVF3eGR5VmhJSG5jZE0yQ01mcmhoV0ZnM1MrWnpsUThKSGFQY0pQZHp3M0pkenMwLzdTVXp0L0NrOGxjTU1wbHhRM1JPSW9MY1lZWlNjdnViMFV0VU1oQ1FvVFBPUzZORnRWampQR0t0b01yNUFwR25IWFVka1BNSTVTKzdSekhBQ0xuQ3V3cFFQeHdtbXp0b1REaEpibEtrMXhtdkpueU5ncjhNWkdpQ1RCb3FpSXJXMU1NWFdSR1FKbEZTM2UxZ2VRWDZKcGdwdnpIT0tmMjEybmdDWEJXL3RDQUg3WDNxdWVyTHo0WExUMmhydTE3bE03Q05LQlhXTldFckxYaGpTN2l3aDNKcFNXUnNlcW56OW5BbUxMMnFna094MVg5Szh0cDlNQnhBSkRSUjRZWUE2TCtHREpHNXQ4cDNWMGg3bjN6VlZtc3p3NFRScmU3MjRjOTZySXhVUXg5VUtCQzlhTFFybUlpRmQ5bEpTeklwODhjV3UzK1N4MTFkK1k9CAAAAY2QRM7IAjhAAnCABGXGSQ0EZcZJDQRlxkkN\\\"}",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "BC71BDED-6BAD-4A85-9E38-0FBD8877861E",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "OAUTH_CLIENTID",
+                "value": "pp-QVup4fsLZjfIn2QnIGVn9aoR02Dppb2GXClZM5Xk",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "6B9A67C2-81A4-41AC-9431-39089BA944FF",
+                "type": "text",
+                "disabled": true
+              },
+              {
+                "key": "TraceId",
+                "value": "active_single",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearer}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Offer\": [\r\n            {\r\n                \"@type\": \"Offer\",\r\n                \"Product\": [\r\n                    {\r\n                        \"@type\": \"ProductHospitality\",\r\n                        \"Quantity\": 1, //optional\r\n                        \"passiveBookingReasonCode\": \"G\", //mandatory\r\n                        \"bookingCode\": \"AAA1234567\", //mandatory\r\n                        \"propertyName\": \"Hilton Denver\", //optional\r\n                        \"PropertyAddress\": { //optional\r\n                            \"AddressLine\": [\r\n                                \"1001 A Havana street\"\r\n                            ],\r\n                            \"City\": \"Denver\",\r\n                            \"StateProv\": {\r\n                                \"value\": \"CO\"\r\n                            },\r\n                            \"Country\": {\r\n                                \"value\": \"US\"\r\n                            },\r\n                            \"PostalCode\": \"84188\"\r\n                        },\r\n                        // \"guests\": 4, // optional, GuestCounts is prio\r\n                        \"GuestCounts\": { //optional\r\n                            \"@type\": \"GuestCounts\",\r\n                            \"GuestCount\": [\r\n                                {\r\n                                    \"ageQualifyingCode\": \"10\", //Adult\r\n                                    \"count\": 2,\r\n                                    \"@type\": \"GuestCount\"\r\n                                },\r\n                                {\r\n                                    \"ageQualifyingCode\": \"8\", //Children\r\n                                    \"count\": 2,\r\n                                    \"age\": 4,\r\n                                    \"@type\": \"GuestCount\"\r\n                                }\r\n                            ]\r\n                        },\r\n                        // \"PropertyKey\": { //optional\r\n                        //   //  \"chainCode\": \"DA\",\r\n                        //     \"propertyCode\": \"58010\"\r\n                        // },\r\n                        \"DateRange\": { //mandatory\r\n                            \"start\": \"2026-12-06\",\r\n                            \"end\": \"2026-12-07\"\r\n                        }\r\n                    }\r\n                ],\r\n                \"Price\": {\r\n                    \"@type\": \"PriceDetail\",\r\n                    \"CurrencyCode\": {\r\n                        \"value\": \"USD\",\r\n                        \"decimalPlace\": 2 //mandatory\r\n                    },\r\n                    \"TotalPrice\": 100.55, //mandatory\r\n                    \"Base\": 90.30, //optional\r\n                    \"PriceBreakdown\": [ //optional\r\n                        {\r\n                            \"type\": \"PriceBreakdownHospitality\",\r\n                            \"roomPricingType\": \"Per stay\",\r\n                            \"Commission\": {\r\n                                \"@type\": \"CommissionPercent\",\r\n                                \"application\": \"Commissionable\"\r\n                                //\"application\": \"Non-paying\"\r\n                                // \"Percent\": 10\r\n                            }\r\n                            // \"Commission\": {\r\n                            //     \"@type\": \"CommissionAmount\",\r\n                            //     \"application\": \"Commissionable\",\r\n                            //     \"Amount\": {\r\n                            //         \"value\": 15.00,\r\n                            //         \"code\": \"USD\"\r\n                            //     }\r\n                            // }\r\n                        }\r\n                    ]\r\n                },\r\n                \"TermsAndConditionsFull\": [ //optional\r\n                    {\r\n                        \"type\": \"TermsAndConditionsFullHospitality\",\r\n                        \"ProductRateCodeInfo\": [\r\n                            {\r\n                                \"RateCodeInfo\": {\r\n                                    \"rateID\": \"8888444\" //optional\r\n                                }\r\n                            }\r\n                        ]\r\n                    }\r\n                ]\r\n            }\r\n        ],\r\n        \"Traveler\": [ //mandatory to create PNR\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"@type\": \"PersonName\",\r\n                    \"Given\": \"Ionut\",\r\n                    \"Surname\": \"Rotaru\",\r\n                    \"Title\": \"Mr\"\r\n                },\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"countryAccessCode\": \"91\",\r\n                        \"areaCityCode\": \"011\",\r\n                        \"phoneNumber\": \"9891766469\",\r\n                        \"cityCode\": \"DL\"\r\n                    }\r\n                ],\r\n                \"Email\": [\r\n                    {\r\n                        \"value\": \"myemailexample@travelport.com\"\r\n                    }\r\n                ]\r\n            }\r\n        ],\r\n        \"FormOfPayment\": [ //optional, only cardCode and number are relevant\r\n            {\r\n                \"@type\": \"FormOfPaymentPaymentCard\",\r\n                \"PaymentCard\": {\r\n                    \"@type\": \"PaymentCardDetail\",\r\n                    \"expireDate\": \"0826\",\r\n                    // \"CardType\": \"Credit\",\r\n                    \"CardCode\": \"VI\",\r\n                    //  \"CardHolderName\": \"Frank Sinatra\",\r\n                    \"CardNumber\": {\r\n                        \"@type\": \"CardNumber\",\r\n                        \"PlainText\": \"4111111111111111\"\r\n                    }\r\n                    // \"SeriesCode\": {\r\n                    //     \"@type\": \"SeriesCode\",\r\n                    //     \"PlainText\": \"123\"\r\n                    // },\r\n                    // \"PersonName\": {\r\n                    //     \"@type\": \"PersonNameDetail\",\r\n                    //     \"Given\": \"Sridhar\",\r\n                    //     \"Middle\": \"Example String Value\",\r\n                    //     \"Surname\": \"Vudutha\"\r\n                    // },\r\n                    //     \"Address\": {\r\n                    //         \"@type\": \"AddressDetail\",\r\n                    //         \"Number\": {\r\n                    //             \"value\": \"125\"\r\n                    //         },\r\n                    //         \"Street\": \"Billing Address Street\",\r\n                    //         \"AddressLine\": [\r\n                    //             \"125 Billing Address Street\"\r\n                    //         ],\r\n                    //         \"City\": \"Claremont\",\r\n                    //         \"County\": \"Los Angeles\",\r\n                    //         \"StateProv\": {\r\n                    //             \"value\": \"CA\",\r\n                    //             \"name\": \"Texas\"\r\n                    //         },\r\n                    //         \"Country\": {\r\n                    //             \"value\": \"US\",\r\n                    //             \"name\": \"United States\"\r\n                    //         },\r\n                    //         \"PostalCode\": \"91711-3323\"\r\n                    //     },\r\n                    //     \"Telephone\": [\r\n                    //         {\r\n                    //             \"@type\": \"TelephoneDetail\",\r\n                    //             \"countryAccessCode\": \"1\",\r\n                    //             \"areaCityCode\": \"909\",\r\n                    //             \"phoneNumber\": \"1231234\",\r\n                    //             \"cityCode\": \"DEN\"\r\n                    //         }\r\n                    //     ],\r\n                    //     \"Email\": [\r\n                    //         {\r\n                    //             \"value\": \"smith@example.com\"\r\n                    //         }\r\n                    //     ]\r\n                }\r\n            }\r\n        ],\r\n        \"Payment\": [ //optional\r\n            {\r\n                \"@type\": \"Payment\",\r\n                \"Amount\": {\r\n                    \"code\": \"KRW\",\r\n                    \"value\": 844.97\r\n                },\r\n                \"guaranteeInd\": false,\r\n                \"depositInd\": true\r\n            }\r\n        ],\r\n        \"Receipt\": [\r\n            {\r\n                \"@type\": \"ReceiptConfirmation\",\r\n                \"Confirmation\": {\r\n                    \"@type\": \"ConfirmationHold\",\r\n                    \"Locator\": {\r\n                        \"value\": \"1111AAA\", //mandatory\r\n                        \"locatorType\": \"Confirmation Number\",\r\n                        \"sourceContext\": \"Supplier\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"ReservationComment\": [ //optional\r\n            {\r\n                \"commentSource\": \"Agency\",\r\n                \"shareWith\": \"Traveler\", //add validation\r\n                \"Comment\": [\r\n                    {\r\n                        \"name\": \"Special Instruction\",\r\n                        \"value\": \"This is my spécial instruction\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "https://hotel-reservation-domain-hccd-pp.apps.ocp-b.hc1.nonprod.travelport.io/reservations/passive",
+              "protocol": "https",
+              "host": [
+                "hotel-reservation-domain-hccd-pp",
+                "apps",
+                "ocp-b",
+                "hc1",
+                "nonprod",
+                "travelport",
+                "io"
+              ],
+              "path": [
+                "reservations",
+                "passive"
+              ],
+              "query": [
+                {
+                  "key": "acceptPriceChangeInd",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "acceptGuaranteeChangeInd",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Reservation by Offer ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Offer\": [\r\n            {\r\n                \"@type\": \"Offer\",\r\n                \"id\": \"62b3ced3-92f7-47b3-adb1-03588c5dc5a7:190000fa-366c-4ffd-a4d1-59d17177c774\"\r\n            }\r\n        ],\r\n        \"Payment\": [\r\n            {\r\n                \"@type\": \"Payment\",\r\n                \"Amount\": {\r\n                    \"code\": \"USD\",\r\n                    \"value\": 308.43\r\n                }\r\n            }\r\n        ],\r\n        \"FormOfPayment\": [\r\n            {\r\n                \"@type\": \"FormOfPaymentPaymentCard\",\r\n                \"PaymentCard\": {\r\n                    \"@type\": \"PaymentCardDetail\",\r\n                    \"expireDate\": \"0825\",\r\n                    \"CardType\": \"Credit\",\r\n                    \"CardCode\": \"VI\",\r\n                    \"CardHolderName\": \"Frank Sinatra\",\r\n                    \"CardNumber\": {\r\n                        \"@type\": \"CardNumber\",\r\n                        \"PlainText\": \"XXXXXXXXXXX\"\r\n                    },\r\n                    \"SeriesCode\": {\r\n                        \"@type\": \"SeriesCode\",\r\n                        \"PlainText\": \"XXX\"\r\n                    },\r\n                    \"PersonName\": {\r\n                        \"@type\": \"PersonNameDetail\",\r\n                        \"Given\": \"Bill\",\r\n                        \"Surname\": \"Thisguy\"\r\n                    },\r\n                    \"Address\": {\r\n                        \"@type\": \"AddressDetail\",\r\n                        \"Number\": {\r\n                            \"value\": \"125\"\r\n                        },\r\n                        \"Street\": \"Billing Address Street\",\r\n                        \"AddressLine\": [\r\n                            \"125 Billing Address Street\"\r\n                        ],\r\n                        \"City\": \"Claremont\",\r\n                        \"County\": \"Los Angeles\",\r\n                        \"StateProv\": {\r\n                            \"value\": \"CA\"\r\n                        },\r\n                        \"Country\": {\r\n                            \"value\": \"US\"\r\n                        },\r\n                        \"PostalCode\": \"91711-3323\"\r\n                    },\r\n                    \"Telephone\": [\r\n                        {\r\n                            \"@type\": \"TelephoneDetail\",\r\n                            \"countryAccessCode\": \"1\",\r\n                            \"areaCityCode\": \"909\",\r\n                            \"phoneNumber\": \"1231234\",\r\n                            \"cityCode\": \"DEN\"\r\n                        }\r\n                    ],\r\n                    \"Email\": [\r\n                        {\r\n                            \"value\": \"smith@example.com\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"Traveler\": [\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"@type\": \"PersonName\",\r\n                    \"Given\": \"Jon\",\r\n                    \"Surname\": \"Smith\",\r\n                    \"Title\": \"Mr\"\r\n                },\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"countryAccessCode\": \"91\",\r\n                        \"areaCityCode\": \"011\",\r\n                        \"phoneNumber\": \"9891766469\",\r\n                        \"cityCode\": \"DL\"\r\n                    }\r\n                ],\r\n                \"Email\": [\r\n                    {\r\n                        \"value\": \"smith@example.com\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDX9Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDX9Z"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Group Reservation by Offer ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Offer\": [\r\n            {\r\n                \"@type\": \"Offer\",\r\n                \"id\": \"62b3ced3-92f7-47b3-adb1-03588c5dc5a7:190000fa-366c-4ffd-a4d1-59d17177c774\",\r\n                \"Product\": [\r\n                    {\r\n                        \"@type\": \"ProductHospitality\",\r\n                        \"Quantity\": \"2\"\r\n                    }\r\n                ]\r\n            }\r\n        ],\r\n        \"Payment\": [\r\n            {\r\n                \"@type\": \"Payment\",\r\n                \"Amount\": {\r\n                    \"code\": \"USD\",\r\n                    \"value\": 308.43\r\n                }\r\n            }\r\n        ],\r\n        \"FormOfPayment\": [\r\n            {\r\n                \"@type\": \"FormOfPaymentPaymentCard\",\r\n                \"PaymentCard\": {\r\n                    \"@type\": \"PaymentCardDetail\",\r\n                    \"expireDate\": \"0825\",\r\n                    \"CardType\": \"Credit\",\r\n                    \"CardCode\": \"VI\",\r\n                    \"CardHolderName\": \"Frank Sinatra\",\r\n                    \"CardNumber\": {\r\n                        \"@type\": \"CardNumber\",\r\n                        \"PlainText\": \"XXXXXXXXXXXX\"\r\n                    },\r\n                    \"SeriesCode\": {\r\n                        \"@type\": \"SeriesCode\",\r\n                        \"PlainText\": \"XXX\"\r\n                    },\r\n                    \"PersonName\": {\r\n                        \"@type\": \"PersonNameDetail\",\r\n                        \"Given\": \"Bill\",\r\n                        \"Surname\": \"Thisguy\"\r\n                    },\r\n                    \"Address\": {\r\n                        \"@type\": \"AddressDetail\",\r\n                        \"Number\": {\r\n                            \"value\": \"125\"\r\n                        },\r\n                        \"Street\": \"Billing Address Street\",\r\n                        \"AddressLine\": [\r\n                            \"125 Billing Address Street\"\r\n                        ],\r\n                        \"City\": \"Claremont\",\r\n                        \"County\": \"Los Angeles\",\r\n                        \"StateProv\": {\r\n                            \"value\": \"CA\"\r\n                        },\r\n                        \"Country\": {\r\n                            \"value\": \"US\"\r\n                        },\r\n                        \"PostalCode\": \"91711-3323\"\r\n                    },\r\n                    \"Telephone\": [\r\n                        {\r\n                            \"@type\": \"TelephoneDetail\",\r\n                            \"countryAccessCode\": \"1\",\r\n                            \"areaCityCode\": \"909\",\r\n                            \"phoneNumber\": \"1231234\",\r\n                            \"cityCode\": \"DEN\"\r\n                        }\r\n                    ],\r\n                    \"Email\": [\r\n                        {\r\n                            \"value\": \"smith@example.com\"\r\n                        }\r\n                    ]\r\n                }\r\n            }\r\n        ],\r\n        \"Traveler\": [\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"@type\": \"PersonName\",\r\n                    \"Given\": \"Jon\",\r\n                    \"Surname\": \"Smith\",\r\n                    \"Title\": \"Mr\"\r\n                },\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"countryAccessCode\": \"91\",\r\n                        \"areaCityCode\": \"011\",\r\n                        \"phoneNumber\": \"9891766469\",\r\n                        \"cityCode\": \"DL\"\r\n                    }\r\n                ],\r\n                \"Email\": [\r\n                    {\r\n                        \"value\": \"smith@example.com\"\r\n                    }\r\n                ]\r\n            },\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"@type\": \"PersonName\",\r\n                    \"Given\": \"Jon\",\r\n                    \"Surname\": \"Doe\",\r\n                    \"Title\": \"Mr\"\r\n                },\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"countryAccessCode\": \"91\",\r\n                        \"areaCityCode\": \"011\",\r\n                        \"phoneNumber\": \"9891766469\",\r\n                        \"cityCode\": \"DL\"\r\n                    }\r\n                ],\r\n                \"Email\": [\r\n                    {\r\n                        \"value\": \"smith2@example.com\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDX9Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDX9Z"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add MK Passive Segment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Offer\": [\r\n            {\r\n                \"@type\": \"Offer\",\r\n                \"Product\": [\r\n                    {\r\n                        \"@type\": \"ProductHospitality\",\r\n                        \"Quantity\": 1,\r\n                        \"passiveBookingReasonCode\": \"G\",\r\n                        \"bookingCode\": \"AAA1234567\",\r\n                        \"propertyName\": \"Hilton Denver\",\r\n                        \"PropertyAddress\": {\r\n                            \"AddressLine\": [\r\n                                \"1001 A Havana street\"\r\n                            ],\r\n                            \"City\": \"Denver\",\r\n                            \"StateProv\": {\r\n                                \"value\": \"CO\"\r\n                            },\r\n                            \"Country\": {\r\n                                \"value\": \"US\"\r\n                            },\r\n                            \"PostalCode\": \"84188\"\r\n                        },\r\n                        \"GuestCounts\": {\r\n                            \"@type\": \"GuestCounts\",\r\n                            \"GuestCount\": [\r\n                                {\r\n                                    \"ageQualifyingCode\": \"10\",\r\n                                    \"count\": 2,\r\n                                    \"@type\": \"GuestCount\"\r\n                                },\r\n                                {\r\n                                    \"ageQualifyingCode\": \"8\",\r\n                                    \"count\": 3,\r\n                                    \"age\": 4,\r\n                                    \"@type\": \"GuestCount\"\r\n                                }\r\n                            ]\r\n                        },\r\n                        \"PropertyKey\": {\r\n                            \"chainCode\": \"DA\",\r\n                            \"propertyCode\": \"58010\"\r\n                        },\r\n                        \"DateRange\": {\r\n                            \"start\": \"2026-11-06\",\r\n                            \"end\": \"2026-11-07\"\r\n                        }\r\n                    }\r\n                ],\r\n                \"Price\": {\r\n                    \"@type\": \"PriceDetail\",\r\n                    \"CurrencyCode\": {\r\n                        \"value\": \"USD\",\r\n                        \"decimalPlace\": 2\r\n                    },\r\n                    \"TotalPrice\": 100.55,\r\n                    \"Base\": 90.30,\r\n                    \"PriceBreakdown\": [\r\n                        {\r\n                            \"type\": \"PriceBreakdownHospitality\",\r\n                            \"roomPricingType\": \"Per stay\",\r\n                            \"Commission\": {\r\n                                \"@type\": \"CommissionPercent\",\r\n                                \"application\": \"Commissionable\",\r\n                                \"Percent\": 10\r\n                            }\r\n                        }\r\n                    ]\r\n                },\r\n                \"TermsAndConditionsFull\": [\r\n                    {\r\n                        \"type\": \"TermsAndConditionsFullHospitality\",\r\n                        \"ProductRateCodeInfo\": [\r\n                            {\r\n                                \"RateCodeInfo\": {\r\n                                    \"rateID\": \"8888444\"\r\n                                }\r\n                            }\r\n                        ]\r\n                    }\r\n                ]\r\n            }\r\n        ],\r\n        \"Traveler\": [\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"Given\": \"Bear\",\r\n                    \"Surname\": \"Das\",\r\n                    \"Title\": \"Mr\"\r\n                },\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"countryAccessCode\": \"91\",\r\n                        \"areaCityCode\": \"011\",\r\n                        \"phoneNumber\": \"9891766469\",\r\n                        \"cityCode\": \"DL\"\r\n                    }\r\n                ],\r\n                \"Email\": [\r\n                    {\r\n                        \"value\": \"matt.singh@galileo.co.in\"\r\n                    }\r\n                ]\r\n            }\r\n        ],\r\n        \"FormOfPayment\": [\r\n            {\r\n                \"@type\": \"FormOfPaymentPaymentCard\",\r\n                \"PaymentCard\": {\r\n                    \"@type\": \"PaymentCardDetail\",\r\n                    \"expireDate\": \"0829\",\r\n                    \"CardCode\": \"VI\",\r\n                    \"CardNumber\": {\r\n                        \"@type\": \"CardNumber\",\r\n                        \"PlainText\": \"XXXXXXXXXX\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"Payment\": [\r\n            {\r\n                \"@type\": \"Payment\",\r\n                \"Amount\": {\r\n                    \"code\": \"KRW\",\r\n                    \"value\": 844.97\r\n                },\r\n                \"guaranteeInd\": false,\r\n                \"depositInd\": true\r\n            }\r\n        ],\r\n        \"Receipt\": [\r\n            {\r\n                \"@type\": \"ReceiptConfirmation\",\r\n                \"Confirmation\": {\r\n                    \"@type\": \"ConfirmationHold\",\r\n                    \"Locator\": {\r\n                        \"value\": \"2222BBB\",\r\n                        \"locatorType\": \"Confirmation Number\",\r\n                        \"sourceContext\": \"Supplier\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"ReservationComment\": [\r\n            {\r\n                \"commentSource\": \"Agency\",\r\n                \"shareWith\": \"Traveler\",\r\n                \"Comment\": [\r\n                    {\r\n                        \"name\": \"Special Instruction\",\r\n                        \"value\": \"This is my special instruction\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/HMXYC6/passive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "HMXYC6",
+                "passive"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add AK Dummy Segment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Offer\": [\r\n            {\r\n                \"@type\": \"Offer\",\r\n                \"Product\": [\r\n                    {\r\n                        \"@type\": \"ProductHospitality\",\r\n                        \"DateRange\": {\r\n                            \"start\": \"2026-12-11\",\r\n                            \"end\": \"2026-12-22\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/HMXYC6/passive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "HMXYC6",
+                "passive"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Reservation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDXBS/canceloffer?supplierLocator=HY0066262804",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDXBS",
+                "canceloffer"
+              ],
+              "query": [
+                {
+                  "key": "supplierLocator",
+                  "value": "HY0066262804"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Retrieve Reservations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDXBS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDXBS"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Modify Reservation Payment Card",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Receipt\": [\r\n            {\r\n                \"@type\": \"ReceiptConfirmation\",\r\n                \"Confirmation\": {\r\n                    \"@type\": \"ConfirmationHold\",\r\n                    \"ConfirmationStatus\": \"Confirmed\",\r\n                    \"Locator\": {\r\n                        \"locatorType\": \"Confirmation Number\",\r\n                        \"source\": \"HY\",\r\n                        \"sourceContext\": \"Supplier\",\r\n                        \"value\": \"HY0008752038\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"FormOfPayment\": [\r\n            {\r\n                \"@type\": \"FormOfPaymentPaymentCard\",\r\n                \"PaymentCard\": {\r\n                    \"@type\": \"PaymentCardDetail\",\r\n                    \"expireDate\": \"0824\",\r\n                    \"CardType\": \"Credit\",\r\n                    \"CardCode\": \"VI\",\r\n                    \"CardNumber\": {\r\n                        \"@type\": \"CardNumber\",\r\n                        \"PlainText\": \"XXXXXXXXXXXXXX\"\r\n                    }\r\n                }\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDXC3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDXC3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Modify Reservation Check In/Out",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Receipt\": [\r\n            {\r\n                \"@type\": \"ReceiptConfirmation\",\r\n                \"Confirmation\": {\r\n                    \"@type\": \"ConfirmationHold\",\r\n                    \"ConfirmationStatus\": \"Confirmed\",\r\n                    \"Locator\": {\r\n                        \"locatorType\": \"Confirmation Number\",\r\n                        \"source\": \"HY\",\r\n                        \"sourceContext\": \"Supplier\",\r\n                        \"value\": \"HY0008752038\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"Offer\": [\r\n            {\r\n                \"Product\": [\r\n                    {\r\n                        \"DateRange\": {\r\n                            \"start\": \"2026-04-23\",\r\n                            \"end\": \"2026-04-24\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDXC3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDXC3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Modify Reservation Comment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Receipt\": [\r\n            {\r\n                \"@type\": \"ReceiptConfirmation\",\r\n                \"Confirmation\": {\r\n                    \"@type\": \"ConfirmationHold\",\r\n                    \"ConfirmationStatus\": \"Confirmed\",\r\n                    \"Locator\": {\r\n                        \"locatorType\": \"Confirmation Number\",\r\n                        \"source\": \"HY\",\r\n                        \"sourceContext\": \"Supplier\",\r\n                        \"value\": \"HY0008752038\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n       \"ReservationComment\": [\r\n            {\r\n                \"Comment\": [\r\n                    {\r\n                        \"value\": \"lower floor room please\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDXC3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDXC3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Modify Reservation Traveler Phone",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Receipt\": [\r\n            {\r\n                \"@type\": \"ReceiptConfirmation\",\r\n                \"Confirmation\": {\r\n                    \"@type\": \"ConfirmationHold\",\r\n                    \"ConfirmationStatus\": \"Confirmed\",\r\n                    \"Locator\": {\r\n                        \"locatorType\": \"Confirmation Number\",\r\n                        \"source\": \"HY\",\r\n                        \"sourceContext\": \"Supplier\",\r\n                        \"value\": \"HY0008752038\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"Traveler\": [\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"areaCityCode\": \"111\",\r\n                        \"phoneNumber\": \"999999999\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDXC3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDXC3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Modify Reservation Traveler Name",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "default"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "default"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "default"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Receipt\": [\r\n            {\r\n                \"@type\": \"ReceiptConfirmation\",\r\n                \"Confirmation\": {\r\n                    \"@type\": \"ConfirmationHold\",\r\n                    \"ConfirmationStatus\": \"Confirmed\",\r\n                    \"Locator\": {\r\n                        \"locatorType\": \"Confirmation Number\",\r\n                        \"source\": \"HY\",\r\n                        \"sourceContext\": \"Supplier\",\r\n                        \"value\": \"HY0008752038\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"Traveler\": [\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"@type\": \"PersonName\",\r\n                    \"Given\": \"john\",\r\n                    \"Surname\": \"doe\"\r\n                }\r\n            }\r\n        ]\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/2CDXC3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "2CDXC3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Modify MK Passive Segment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "XAUTH_TRAVELPORT_ACCESSGROUP",
+                "value": "{{accessgroup}}",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "TVP-Trace-Id",
+                "value": "use a newly generated TraceId for each request",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"ReservationDetail\": {\r\n        \"Offer\": [\r\n            {\r\n                \"@type\": \"Offer\",\r\n                \"Product\": [\r\n                    {\r\n                        \"@type\": \"ProductHospitality\",\r\n                        \"Quantity\": 4,\r\n                        \"bookingCode\": \"CCC333\",\r\n                        \"propertyName\": \"Biscuit Htel\",\r\n                        \"PropertyAddress\": {\r\n                            \"AddressLine\": [\r\n                                \"3003 C Secondary street\"\r\n                            ],\r\n                            \"City\": \"New York\",\r\n                            \"StateProv\": {\r\n                                \"value\": \"NY\"\r\n                            },\r\n                            \"Country\": {\r\n                                \"value\": \"US\"\r\n                            },\r\n                            \"PostalCode\": \"84188\"\r\n                        },\r\n                        \"GuestCounts\": {\r\n                            \"@type\": \"GuestCounts\",\r\n                            \"GuestCount\": [\r\n                                {\r\n                                    \"ageQualifyingCode\": \"10\",\r\n                                    \"count\": 4,\r\n                                    \"@type\": \"GuestCount\"\r\n                                },\r\n                                {\r\n                                    \"ageQualifyingCode\": \"8\",\r\n                                    \"count\": 5,\r\n                                    \"age\": 2,\r\n                                    \"@type\": \"GuestCount\"\r\n                                }\r\n                            ]\r\n                        },\r\n                        \"PropertyKey\": {\r\n                            \"chainCode\": \"DA\",\r\n                            \"propertyCode\": \"58010\"\r\n                        },\r\n                        \"DateRange\": {\r\n                            \"start\": \"2026-09-21\",\r\n                            \"end\": \"2026-09-23\"\r\n                        }\r\n                    }\r\n                ],\r\n                \"Price\": {\r\n                    \"@type\": \"PriceDetail\",\r\n                    \"CurrencyCode\": {\r\n                        \"value\": \"USD\",\r\n                        \"decimalPlace\": 2\r\n                    },\r\n                    \"TotalPrice\": 300.22,\r\n                    \"PriceBreakdown\": [\r\n                        {\r\n                            \"type\": \"PriceBreakdownHospitality\",\r\n                            \"roomPricingType\": \"Per stay\",\r\n                            \"Commission\": {\r\n                                \"@type\": \"CommissionAmount\",\r\n                                \"application\": \"Commissionable\",\r\n                                \"Amount\": {\r\n                                    \"value\": 30.00,\r\n                                    \"code\": \"USD\"\r\n                                }\r\n                            }\r\n                        }\r\n                    ]\r\n                },\r\n                \"TermsAndConditionsFull\": [\r\n                    {\r\n                        \"type\": \"TermsAndConditionsFullHospitality\",\r\n                        \"ProductRateCodeInfo\": [\r\n                            {\r\n                                \"RateCodeInfo\": {\r\n                                    \"rateID\": \"7777222\"\r\n                                }\r\n                            }\r\n                        ]\r\n                    }\r\n                ]\r\n            }\r\n        ],\r\n        \"Traveler\": [\r\n            {\r\n                \"@type\": \"Traveler\",\r\n                \"PersonName\": {\r\n                    \"@type\": \"PersonName\",\r\n                    \"Given\": \"Sam\",\r\n                    \"Surname\": \"Smith\",\r\n                    \"Title\": \"Mr\"\r\n                },\r\n                \"Telephone\": [\r\n                    {\r\n                        \"@type\": \"TelephoneDetail\",\r\n                        \"countryAccessCode\": \"91\",\r\n                        \"areaCityCode\": \"011\",\r\n                        \"phoneNumber\": \"9891766469\",\r\n                        \"cityCode\": \"DL\"\r\n                    }\r\n                ],\r\n                \"Email\": [\r\n                    {\r\n                        \"value\": \"myemailexample@travelport.com\"\r\n                    }\r\n                ]\r\n            }\r\n        ],\r\n        \"FormOfPayment\": [\r\n            {\r\n                \"@type\": \"FormOfPaymentPaymentCard\",\r\n                \"PaymentCard\": {\r\n                    \"@type\": \"PaymentCardDetail\",\r\n                    \"expireDate\": \"0129\",\r\n                    \"CardCode\": \"VI\",\r\n                    \"CardNumber\": {\r\n                        \"@type\": \"CardNumber\",\r\n                        \"PlainText\": \"XXXXXXXXXX\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"Payment\": [\r\n            {\r\n                \"@type\": \"Payment\",\r\n                \"Amount\": {\r\n                    \"code\": \"KRW\",\r\n                    \"value\": 844.97\r\n                },\r\n                \"guaranteeInd\": false,\r\n                \"depositInd\": true\r\n            }\r\n        ],\r\n        \"Receipt\": [\r\n            {\r\n                \"@type\": \"ReceiptConfirmation\",\r\n                \"Confirmation\": {\r\n                    \"@type\": \"ConfirmationHold\",\r\n                    \"confirmationStatus\": {\r\n                        \"@type\": \"OfferStatusHospitality\",\r\n                        \"Status\": \"Confirmed\"\r\n                    },\r\n                    \"Locator\": {\r\n                        \"value\": \"1111AAA\",\r\n                        \"locatorType\": \"Confirmation Number\",\r\n                        \"source\": \"HH\",\r\n                        \"sourceContext\": \"Supplier\"\r\n                    },\r\n                    \"OfferStatus\": {\r\n                        \"@type\": \"OfferStatusHospitality\",\r\n                        \"Status\": \"Confirmed\"\r\n                    }\r\n                }\r\n            }\r\n        ],\r\n        \"ReservationComment\": [\r\n            {\r\n                \"commentSource\": \"Agency\",\r\n                \"shareWith\": \"Traveler\",\r\n                \"Comment\": [\r\n                    {\r\n                        \"name\": \"Special Instruction\",\r\n                        \"value\": \"changed special instr\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/11/hotel/book/reservations/HMXYC6/passiveupdate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "11",
+                "hotel",
+                "book",
+                "reservations",
+                "HMXYC6",
+                "passiveupdate"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bearer auth",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonResponse = JSON.parse(responseBody);\r",
+              "\r",
+              "pm.test(\"Check Existence of Bearer token\", function () {\r",
+              "    var token = jsonResponse.access_token;\r",
+              "\r",
+              "    pm.expect(token).to.exist;    \r",
+              "});\r",
+              "\r",
+              "var token = jsonResponse.access_token;\r",
+              "\r",
+              "pm.collectionVariables.set(\"bearerToken\", token);\r",
+              "\r",
+              "// Function to add days to the current date and format it\r",
+              "function addDaysAndGetFormattedDate(daysToAdd) {\r",
+              "    const today = new Date();\r",
+              "    today.setDate(today.getDate() + daysToAdd);\r",
+              "\r",
+              "    const year = today.getFullYear();\r",
+              "    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed\r",
+              "    const day = String(today.getDate()).padStart(2, '0');\r",
+              "\r",
+              "    return `${year}-${month}-${day}`;\r",
+              "}\r",
+              "\r",
+              "// Example usage: calculate a date 30 days in the future\r",
+              "const arrival_date = addDaysAndGetFormattedDate(30);\r",
+              "const departure_date = addDaysAndGetFormattedDate(31);\r",
+              "\r",
+              "// Set the calculated date as a variable in Postman\r",
+              "pm.collectionVariables.set(\"checkIndate\", arrival_date);\r",
+              "pm.collectionVariables.set(\"checkOutdate\", departure_date);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "content-type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "password",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}",
+              "type": "text"
+            },
+            {
+              "key": "username",
+              "value": "{{username}}",
+              "type": "text",
+              "uuid": "884c8d03-da5e-433b-877f-43a577906512"
+            },
+            {
+              "key": "password",
+              "value": "{{password}}",
+              "type": "text",
+              "uuid": "1bdfd86c-0619-4c87-b27f-84d72e79d3e2"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{authUrl}}",
+          "host": [
+            "{{authUrl}}"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "// Function to add days to the current date and format it\r",
+          "function addDaysAndGetFormattedDate(daysToAdd) {\r",
+          "    const today = new Date();\r",
+          "    today.setDate(today.getDate() + daysToAdd);\r",
+          "\r",
+          "    const year = today.getFullYear();\r",
+          "    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed\r",
+          "    const day = String(today.getDate()).padStart(2, '0');\r",
+          "\r",
+          "    return `${year}-${month}-${day}`;\r",
+          "}\r",
+          "\r",
+          "// Example usage: calculate a date 30 days in the future\r",
+          "const arrival_date = addDaysAndGetFormattedDate(30);\r",
+          "const departure_date = addDaysAndGetFormattedDate(31);\r",
+          "\r",
+          "// Set the calculated date as a variable in Postman\r",
+          "pm.collectionVariables.set(\"checkIndate\", arrival_date);\r",
+          "pm.collectionVariables.set(\"checkOutdate\", departure_date);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "authUrl",
+      "value": "https://auth.pp.travelport.net/oauth/token"
+    },
+    {
+      "key": "client_id",
+      "value": "Your_Client_Id"
+    },
+    {
+      "key": "client_secret",
+      "value": "Your_Client_Secret"
+    },
+    {
+      "key": "baseUrl",
+      "value": "https://api.pp.travelport.net"
+    },
+    {
+      "key": "bearerToken",
+      "value": "This will be generated automatically by the Bearer auth call"
+    },
+    {
+      "key": "accessgroup",
+      "value": "Your_AccessGroup"
+    },
+    {
+      "key": "checkIndate",
+      "value": "This will be populated by the first call"
+    },
+    {
+      "key": "checkOutdate",
+      "value": "This will be populated by the first call"
+    },
+    {
+      "key": "username",
+      "value": "Your_Client_Username"
+    },
+    {
+      "key": "password",
+      "value": "Your_Client_Password"
+    }
+  ]
+}

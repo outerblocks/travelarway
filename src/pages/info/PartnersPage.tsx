@@ -1,4 +1,3 @@
-import { Handshake, Bus, Ship, Building2, Compass, ArrowRight } from 'lucide-react';
 import { Link } from '@/router';
 import { useI18n, type Language } from '@/context/I18nContext';
 
@@ -106,16 +105,12 @@ const PARTNER_COPY: Record<Language, {
 export function PartnersPage() {
   const { lang } = useI18n();
   const copy = PARTNER_COPY[lang];
-  const cardIcons = [Bus, Building2, Compass, Ship];
 
   return (
     <div className="bg-background">
     <div className="section-container py-14">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-12 max-w-2xl">
-          <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-ink">
-            <Handshake size={24} className="text-accent" />
-          </div>
+        <div className="mb-12 mx-auto max-w-2xl text-center">
           <h1 className="mb-3 font-display text-page font-bold text-ink">{copy.title}</h1>
           <p className="text-body text-neutral-600">
             {copy.intro}
@@ -124,11 +119,10 @@ export function PartnersPage() {
 
         <div className="mb-12 grid grid-cols-1 gap-5 md:grid-cols-2">
           {copy.cards.map((card, index) => {
-            const Icon = cardIcons[index];
             return (
               <div key={card.title} className="card p-6">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-background">
-                  <Icon size={22} className="text-ink" />
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-sm bg-brand-50 text-listing font-bold text-brand-600">
+                  {index + 1}
                 </div>
                 <h3 className="mb-2 font-display text-listing font-bold text-ink">{card.title}</h3>
                 <p className="mb-4 text-body text-neutral-500">{card.description}</p>
@@ -137,7 +131,7 @@ export function PartnersPage() {
                 </ul>
                 {index === 3 && (
                   <Link to="/api-enquiries" className="mt-4 inline-flex items-center gap-1 text-body font-medium text-ink hover:text-brand-700">
-                    {copy.apiLink} <ArrowRight size={16} />
+                    {copy.apiLink} <span>→</span>
                   </Link>
                 )}
               </div>
@@ -148,7 +142,7 @@ export function PartnersPage() {
         <div className="rounded-2xl bg-ink p-8 text-white">
           <h2 className="mb-3 font-display text-section font-bold">{copy.ctaTitle}</h2>
           <p className="mb-6 max-w-xl text-body text-white/75">{copy.ctaDescription}</p>
-          <Link to="/contact" className="btn-gold">{copy.ctaButton}</Link>
+          <Link to="/contact" className="btn-light">{copy.ctaButton}</Link>
         </div>
       </div>
     </div>

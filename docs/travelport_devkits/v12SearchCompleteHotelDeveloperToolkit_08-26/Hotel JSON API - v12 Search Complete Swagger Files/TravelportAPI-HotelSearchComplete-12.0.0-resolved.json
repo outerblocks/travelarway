@@ -1,0 +1,3279 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Hotel Search Complete API",
+    "description": "Hotel Search complete",
+    "contact": {
+      "name": "MyTravelport",
+      "url": "https://my.travelport.com/"
+    },
+    "version": "12.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.pp.travelport.com/12/hotel"
+    },
+    {
+      "url": "https://api.travelport.com/12/hotel"
+    }
+  ],
+  "security": [
+    {
+      "OAuth2": []
+    }
+  ],
+  "paths": {
+    "/search/searchcomplete": {
+      "post": {
+        "tags": [
+          "Hotel Search Complete"
+        ],
+        "summary": "Search for Hotels",
+        "description": "Advanced search capabilities.",
+        "operationId": "searchComplete",
+        "parameters": [
+          {
+            "name": "TVP-Trace-Id",
+            "in": "header",
+            "description": "Unique transaction or tracking id for a single request and response.",
+            "required": false,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "maxLength": 89,
+              "minLength": 10,
+              "pattern": "(^[a-zA-Z-0-9_]*[-]?[+]?$)",
+              "type": "string"
+            }
+          },
+          {
+            "name": "TVP-Enable-Error-Details",
+            "in": "header",
+            "description": "If set to true, additional details are shown to help identify the root cause of the error.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "in": "header",
+            "description": "Identifies the Travelport access group with which the caller is associated.",
+            "required": false,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "maxLength": 36,
+              "minLength": 36,
+              "pattern": "([a-zA-Z-0-9-_]*)",
+              "type": "string"
+            }
+          },
+          {
+            "name": "TVP-Cache-Control",
+            "in": "header",
+            "description": "Used to control use of cache.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TVPCacheControl"
+            }
+          },
+          {
+            "name": "TVP-Correlation-Id",
+            "in": "header",
+            "description": "Identifier used to correlate hotel API advert flow invocations across a multi-call business flow.",
+            "required": false,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "382c74c3-721d-4f34-80e5-57657b6cbc27"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HotelSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-TVP-Cache-Status": {
+                "schema": {
+                  "$ref": "#/components/schemas/TVP-Cache-Status"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/search/searchcomplete/{identifier}": {
+      "get": {
+        "tags": [
+          "Hotel Search Complete"
+        ],
+        "summary": "Return additional pages",
+        "operationId": "searchCompletePage",
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "description": "The Identifier of the Pagination from which a page is to be returned.",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "The page number to be returned.",
+            "required": true,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "pattern": "(^\\d{1,2}$)",
+              "type": "string"
+            }
+          },
+          {
+            "name": "TVP-Trace-Id",
+            "in": "header",
+            "description": "Unique transaction or tracking id for a single request and response.",
+            "required": false,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "maxLength": 89,
+              "minLength": 10,
+              "pattern": "(^[a-zA-Z-0-9_]*[-]?[+]?$)",
+              "type": "string"
+            }
+          },
+          {
+            "name": "TVP-Enable-Error-Details",
+            "in": "header",
+            "description": "If set to true, additional details are shown to help identify the root cause of the error.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "XAUTH_TRAVELPORT_ACCESSGROUP",
+            "in": "header",
+            "description": "Identifies the Travelport access group with which the caller is associated.",
+            "required": false,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "maxLength": 36,
+              "minLength": 36,
+              "pattern": "([a-zA-Z-0-9-_]*)",
+              "type": "string"
+            }
+          },
+          {
+            "name": "TVP-Cache-Control",
+            "in": "header",
+            "description": "Used to control use of cache.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TVPCacheControl"
+            }
+          },
+          {
+            "name": "TVP-Correlation-Id",
+            "in": "header",
+            "description": "Identifier used to correlate hotel API advert flow invocations across a multi-call business flow.",
+            "required": false,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "382c74c3-721d-4f34-80e5-57657b6cbc27"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "X-TVP-Cache-Status": {
+                "schema": {
+                  "$ref": "#/components/schemas/TVP-Cache-Status"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TVPCacheControl": {
+        "type": "string",
+        "description": "Specifies the caching strategy to be used for the response.",
+        "x-enumDescriptions": {
+          "NO-CACHE": "Travelport cache will be bypassed and live availability results returned.",
+          "PERCENT-50": "Cache will be used if at least 50 percent of the properties / rates are found. Response will be PARTIAL if less than 100 percent found. Response will be HIT if 100 percent found. When less than 50 percent of the properties / rates are not found a live search of all page 1 properties will take place with re-caching of rates. User accepts higher response time as consequence of this header choice.Response will be MISS",
+          "PERCENT-75": "Cache will be used if at least 75 percent of the properties / rates are found. Response will be PARTIAL if less than 100 percent found. Response will be HIT if 100 percent found. When less than 75 percent of the properties / rates are not found a live search of all page 1 properties will take place with re-caching of rates. User accepts higher response time as consequence of this header choice. Response will be MISS"
+        },
+        "enum": [
+          "NO-CACHE",
+          "PERCENT-50",
+          "PERCENT-75"
+        ]
+      },
+      "HotelSearchRequest": {
+        "required": [
+          "propertyFilter",
+          "stayDetails"
+        ],
+        "type": "object",
+        "properties": {
+          "excludeResponseFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExcludeResponseFields"
+            }
+          },
+          "requestedCurrency": {
+            "pattern": "[a-zA-Z]{3}",
+            "type": "string",
+            "description": "You can use requested currency to request conversion rate information. The response will return the currencyRateConversion object which will contain conversion rate of the requested currency.",
+            "example": "EUR"
+          },
+          "stayDetails": {
+            "$ref": "#/components/schemas/StayDetails"
+          },
+          "propertyFilter": {
+            "$ref": "#/components/schemas/PropertyFilter"
+          },
+          "roomFilter": {
+            "$ref": "#/components/schemas/RoomFilter"
+          },
+          "rateFilter": {
+            "$ref": "#/components/schemas/RateFilter"
+          },
+          "returnCompleteNightlyRateBreakdown": {
+            "type": "boolean",
+            "description": "If true, The base, total taxes and total fees will be returned in the nightlyRatesBreakdown."
+          }
+        },
+        "description": "Request object for Hotel Search."
+      },
+      "ExcludeResponseFields": {
+        "type": "string",
+        "description": "Exclude the construction of the specified fields in the response.",
+        "enum": [
+          "roomTypes",
+          "roomRates"
+        ]
+      },
+      "StayDetails": {
+        "required": [
+          "checkInDateLocal",
+          "checkOutDateLocal",
+          "guests"
+        ],
+        "type": "object",
+        "properties": {
+          "checkInDateLocal": {
+            "type": "string",
+            "description": "The local date the guest will check in - ISO 8601 - Basic Date.",
+            "format": "date"
+          },
+          "checkOutDateLocal": {
+            "type": "string",
+            "description": "The local date the guest will check out- ISO 8601 - Basic Date.",
+            "format": "date"
+          },
+          "rooms": {
+            "maximum": 9,
+            "minimum": 1,
+            "type": "integer",
+            "description": "Number of guests per room.",
+            "example": 1
+          },
+          "guests": {
+            "$ref": "#/components/schemas/Guests"
+          },
+          "extraAccommodations": {
+            "maxItems": 10,
+            "type": "array",
+            "description": "Assigned for future use. Expected delivery Q3/4 2026.",
+            "items": {
+              "$ref": "#/components/schemas/ExtraAccommodation"
+            }
+          }
+        },
+        "description": "The most important requirements about the stay."
+      },
+      "Guests": {
+        "required": [
+          "adults"
+        ],
+        "type": "object",
+        "properties": {
+          "adults": {
+            "maximum": 9,
+            "minimum": 1,
+            "type": "integer",
+            "description": "The number of adults staying in the property.",
+            "example": 1
+          },
+          "children": {
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Child"
+            }
+          }
+        },
+        "description": "The number of adults and children staying in the property."
+      },
+      "Child": {
+        "required": [
+          "age"
+        ],
+        "type": "object",
+        "properties": {
+          "age": {
+            "maximum": 17,
+            "minimum": 0,
+            "type": "integer",
+            "description": "The age of the child staying in the property.",
+            "example": 2
+          }
+        },
+        "description": "Child object."
+      },
+      "ExtraAccommodation": {
+        "required": [
+          "accommodationType",
+          "quantity"
+        ],
+        "properties": {
+          "quantity": {
+            "type": "integer",
+            "description": "The quantity of the extra accomodation.",
+            "format": "int32"
+          },
+          "accommodationType": {
+            "$ref": "#/components/schemas/ExtraAccomodationENUM"
+          }
+        },
+        "description": "Extra accomodation object. Assigned for future use. Expected delivery Q3/4 2026."
+      },
+      "ExtraAccomodationENUM": {
+        "type": "string",
+        "description": "The type of extra accommodation. Assigned for future use. Expected delivery Q3/4 2026.",
+        "x-enumDescriptions": {
+          "Crib": "A small bed with high sides designed for infants or very young children.",
+          "ExtraAdult": "An additional adult guest beyond the standard room occupancy, requiring extra bedding or accommodations.",
+          "ExtraChild": "An additional child guest beyond the standard room occupancy, requiring extra bedding or accommodations.",
+          "RollawayAdult": "A portable bed provided for an additional adult guest, typically on wheels and foldable for storage.",
+          "RollawayChild": "A portable bed provided for an additional child guest, typically smaller in size and suitable for children."
+        },
+        "enum": [
+          "Crib",
+          "ExtraAdult",
+          "ExtraChild",
+          "RollawayAdult",
+          "RollawayChild"
+        ]
+      },
+      "PropertyFilter": {
+        "type": "object",
+        "properties": {
+          "maxWaitTime": {
+            "type": "integer",
+            "description": "The maximum wait time for the property to respond in milliseconds."
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "aggregators": {
+            "type": "array",
+            "description": "List of aggregators to be returned in the response. TVPT is mandatory and will always be returned in the result set.",
+            "items": {
+              "$ref": "#/components/schemas/Aggregator"
+            }
+          },
+          "propertyKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyKey"
+            }
+          },
+          "chainCodes": {
+            "maxItems": 6,
+            "type": "array",
+            "description": "Brand codes or chain codes to filter properties is location search.",
+            "example": "HL",
+            "items": {
+              "maxLength": 2,
+              "minLength": 2,
+              "type": "string"
+            }
+          },
+          "propertyType": {
+            "maxItems": 6,
+            "type": "array",
+            "description": "List of property types.",
+            "example": 20,
+            "items": {
+              "$ref": "#/components/schemas/PropertyType"
+            }
+          },
+          "amenityCategories": {
+            "type": "array",
+            "description": "Assigned for future use. Expected delivery Q3/4 2026.",
+            "items": {
+              "$ref": "#/components/schemas/AmenityCategory"
+            }
+          },
+          "customerLoyaltyCards": {
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerLoyaltyCards"
+            }
+          },
+          "hotelNameContains": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "A part of the hotel name to search for.",
+            "example": "Resort"
+          },
+          "negotiatedRates": {
+            "deprecated": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NegotiatedRates"
+              }
+            ]
+          },
+          "privateRateType": {
+            "$ref": "#/components/schemas/PrivateRateType"
+          },
+          "returnOnlyAvailableProperties": {
+            "type": "boolean",
+            "description": "If true, only properties with availability will be returned in the response."
+          },
+          "imageSize": {
+            "maxLength": 15,
+            "type": "string",
+            "description": "The size of the images to be returned.",
+            "example": "Large"
+          },
+          "returnAllImageURLs": {
+            "type": "boolean",
+            "description": "If true, all image URLs will be returned in the response."
+          },
+          "returnRateSummaryInfo": {
+            "type": "boolean",
+            "description": "If true, rate summary will be returned in the payload response."
+          },
+          "recommendedPropertyAmenitiesInd": {
+            "type": "boolean",
+            "description": "If true, a limited set of property amenities will be returned in the response. if false, or omitted a full set of property amenities will be returned in the response."
+          },
+          "removeSpecialRates": {
+            "type": "boolean",
+            "description": "If true, special rate category rates will be removed from the response."
+          },
+          "applyLenientPropertyListRules": {
+            "type": "boolean",
+            "description": "If true, properties are returned by distance from location, some properties in the list will not support any of the negotiated rates in the request."
+          },
+          "categories": {
+            "maxItems": 8,
+            "type": "array",
+            "description": "List of rate categories requested.",
+            "items": {
+              "$ref": "#/components/schemas/RateCategory"
+            }
+          }
+        },
+        "description": "Filter the properties you would like returned. You may filter by location or by specific property ids."
+      },
+      "Location": {
+        "required": [
+          "details",
+          "radius",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/LocationType"
+          },
+          "details": {
+            "$ref": "#/components/schemas/LocationDetails"
+          },
+          "radius": {
+            "$ref": "#/components/schemas/Radius"
+          }
+        },
+        "description": "The location of the property. You can search by coordinates, city, airport or address."
+      },
+      "LocationType": {
+        "type": "string",
+        "description": "The type of location search.",
+        "enum": [
+          "coordinates",
+          "cityIATACode",
+          "airportIATACode",
+          "address"
+        ]
+      },
+      "LocationDetails": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "The latitude of the location.",
+            "format": "float",
+            "example": 51.470241662259895
+          },
+          "longitude": {
+            "type": "number",
+            "description": "The longitude of the location.",
+            "format": "float",
+            "example": -0.45093566335492113
+          },
+          "iataCode": {
+            "pattern": "([A-Z]{3})",
+            "type": "string",
+            "description": "IATA code for an airport or city.",
+            "example": "LHR"
+          },
+          "cityName": {
+            "type": "string",
+            "description": "The name of the city.",
+            "example": "Hounslow"
+          },
+          "stateProvince": {
+            "type": "string",
+            "description": "The state or province of the location.",
+            "example": "Berkshire"
+          },
+          "countryCode": {
+            "pattern": "[A-Z]{2}",
+            "type": "string",
+            "description": "ISO 3166 code for a country.",
+            "example": "GB"
+          }
+        },
+        "description": "The details of the location search."
+      },
+      "Radius": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "description": "The value of the radius of the location search.",
+            "example": 15
+          },
+          "unit": {
+            "type": "string",
+            "description": "The unit of distance of the radius.",
+            "x-enumDescriptions": {
+              "km": "Kilometer. A metric unit used to measure long distances.  C551 kilometer = 1,000 meters = 0.62 miles.  Commonly used in most countries for road distances and travel.",
+              "mi": "Mile. A unit used mainly in the United States and UK to measure long distances. 1 mile = 1.61 kilometers.  Often used for driving distances, running, or travel."
+            },
+            "enum": [
+              "km",
+              "mi"
+            ]
+          }
+        },
+        "description": "The radius of the location search."
+      },
+      "Aggregator": {
+        "type": "string",
+        "description": "The aggregator to filter the invoked suppliers.",
+        "x-enumDescriptions": {
+          "TVPT": "Travelport",
+          "BKNG": "Booking.com",
+          "EXPE": "Expedia - No Longer Supported",
+          "BNTL": "BonoTel - No Longer Supported"
+        },
+        "enum": [
+          "TVPT",
+          "BKNG",
+          "EXPE",
+          "BNTL"
+        ]
+      },
+      "PropertyKey": {
+        "properties": {
+          "chainCode": {
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "description": "Chain code is a required property when authority is not populated or set to TVPT.",
+            "example": "HL"
+          },
+          "propertyCode": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "The property code to filter the properties.",
+            "example": "E7437"
+          },
+          "authority": {
+            "maxLength": 4,
+            "minLength": 4,
+            "type": "string",
+            "description": "The authority to apply the property keys. Default is TVPT.",
+            "example": "TVPT"
+          }
+        },
+        "description": "The property key to filter the properties."
+      },
+      "PropertyType": {
+        "type": "string",
+        "description": "The type of property using OTA definitions.",
+        "x-enumDescriptions": {
+          "Apartment": "A self-contained unit in a residential building often rented short-term for travelers.",
+          "Bed and breakfast": "A small lodging establishment offering overnight stays and breakfast typically run by private hosts.",
+          "Cabin or bungalow": "A standalone rustic accommodation often found in nature or resort areas.",
+          "Chalet": "A wooden house or cottage with a sloping roof commonly found in alpine regions.",
+          "Condominium": "A privately owned unit in a building or complex often rented out for short stays.",
+          "Guest house limited service": "A small lodging facility with fewer amenities than a hotel often family-run.",
+          "Health spa": "A property focused on wellness offering treatments like massages facials and hydrotherapy.",
+          "Hostel": "Budget accommodation with shared rooms and facilities  popular among backpackers.",
+          "Hotel": "A commercial establishment offering lodging meals and other guest services",
+          "Inn": "A small hotel often located in rural or suburban areas offering basic lodging and meals.",
+          "Lodge": "A rural or wilderness accommodation often catering to outdoor activities like hunting or fishing.",
+          "Motel": "A roadside hotel designed for motorists typically with direct access to rooms from parking.",
+          "Resort": "A full-service lodging facility offering recreation and entertainment often in vacation destinations.",
+          "Vacation home": "A privately owned house rented out to travelers typically for longer stays.",
+          "Villa": "A luxurious standalone house often found in upscale vacation destinations.",
+          "Full service": "A hotel offering a wide range of amenities including restaurants room service and concierge.",
+          "Historical": "A property with historical significance often preserved and operated as lodging.",
+          "Vacation rental": "A general term for short-term rental properties including homes apartments and condos."
+        },
+        "enum": [
+          "Apartment",
+          "Bed and breakfast",
+          "Cabin or bungalow",
+          "Chalet",
+          "Condominium",
+          "Guest house limited service",
+          "Health spa",
+          "Hostel",
+          "Hotel",
+          "Inn",
+          "Lodge",
+          "Motel",
+          "Resort",
+          "Vacation home",
+          "Villa",
+          "Full service",
+          "Historical",
+          "Vacation rental"
+        ]
+      },
+      "AmenityCategory": {
+        "type": "string",
+        "description": "The category of the amenities. Assigned for future use. Expected delivery Q3/4 2026.",
+        "x-enumDescriptions": {
+          "Air conditioning": "A climate control system that allows guests to adjust room temperature for comfort, especially in warm climates.",
+          "Free airport shuttle": "Complimentary transportation service provided by the hotel to and from nearby airports, enhancing convenience for travelers.",
+          "Free parking": "On-site parking provided at no additional cost, allowing guests to securely leave their vehicles during their stay.",
+          "Parking": "Designated space for guest vehicles, which may be free or paid depending on the hotel’s policy.",
+          "Pool": "A recreational water facility, either indoor or outdoor, available for guest leisure, relaxation, or exercise.",
+          "Restaurant": "An on-site dining facility offering meals and beverages, ranging from casual to fine dining experiences.",
+          "Spa": "A wellness facility offering services such as massages, facials, and body treatments aimed at relaxation and rejuvenation.",
+          "Lounges/bars": "Social spaces within the hotel serving alcoholic and non-alcoholic beverages, often with seating and entertainment.",
+          "Non-smoking rooms (generic)": "Guest rooms where smoking is prohibited, ensuring a clean and odor-free environment for non-smoking guests.",
+          "Free high speed internet connection": "Complimentary access to fast internet service, enabling guests to work, stream, or browse efficiently.",
+          "Pets allowed": "A policy permitting guests to bring pets, often with specific rules or fees, catering to pet-friendly travelers.",
+          "Complimentary breakfast": "A free morning meal provided by the hotel, typically including continental or buffet-style options.",
+          "Accessible rooms": "Rooms designed to accommodate guests with disabilities, featuring features like wider doorways, grab bars, and roll-in showers.",
+          "Meeting rooms": "Dedicated spaces equipped for business meetings, conferences, or events, often with AV equipment and seating arrangements.",
+          "Smoke-free property": "A hotel-wide policy prohibiting smoking in all indoor areas, promoting a healthier and cleaner environment.",
+          "No parking available": "Indicates that the hotel does not offer on-site or nearby parking facilities for guests.",
+          "Fitness center": "A gym or workout area equipped with exercise machines and weights, available for guest use.",
+          "AHLA Safe Stay compliant": "Certification indicating the hotel follows enhanced health and safety protocols as recommended by the American Hotel & Lodging Association."
+        },
+        "enum": [
+          "Air conditioning",
+          "Free airport shuttle",
+          "Free parking",
+          "Parking",
+          "Pool",
+          "Restaurant",
+          "Spa",
+          "Lounges/bars",
+          "Non-smoking rooms (generic)",
+          "Free high speed internet connection",
+          "Pets allowed",
+          "Complimentary breakfast",
+          "Accessible rooms",
+          "Meeting rooms",
+          "Smoke-free property",
+          "No parking available",
+          "Fitness center",
+          "AHLA Safe Stay compliant"
+        ]
+      },
+      "CustomerLoyaltyCards": {
+        "required": [
+          "supplierCode",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string",
+            "description": "The customer loyalty card number or email address.",
+            "example": "132456"
+          },
+          "supplierCode": {
+            "maxLength": 4,
+            "minLength": 2,
+            "type": "string",
+            "description": "Supplier of the loyalty program.",
+            "example": "HL"
+          },
+          "supplierType": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "The kind of supplier of a loyalty program. Air, Hotel or Aggregator.",
+            "example": "Hotel"
+          }
+        },
+        "description": "Specifies the account ID and supplier for the membership program."
+      },
+      "NegotiatedRates": {
+        "type": "object",
+        "properties": {
+          "rateCodes": {
+            "maxItems": 12,
+            "type": "array",
+            "description": "Array of negotiated rate codes.",
+            "items": {
+              "maxLength": 6,
+              "minLength": 3,
+              "type": "string",
+              "description": "The negotiated rate code."
+            }
+          },
+          "masterRateCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "(^\\d[A-Z]{3}\\d{2}$)",
+            "type": "string",
+            "description": "The master rate code.",
+            "example": "1ABC23"
+          }
+        },
+        "description": "Request negotiated rate codes to obtain negotiated rates.",
+        "deprecated": true
+      },
+      "PrivateRateType": {
+        "type": "object",
+        "properties": {
+          "negotiatedCodes": {
+            "type": "array",
+            "description": "Array of negotiated rate codes.",
+            "items": {
+              "maxLength": 6,
+              "minLength": 3,
+              "type": "string",
+              "description": "The negotiated rate code.",
+              "example": "AAA"
+            }
+          },
+          "consortiaCodes": {
+            "type": "array",
+            "description": "Array of consortia rate codes.",
+            "items": {
+              "maxLength": 6,
+              "minLength": 3,
+              "type": "string",
+              "description": "The consortia rate code.",
+              "example": "THR"
+            }
+          },
+          "tmcCodes": {
+            "type": "array",
+            "description": "Array of TMC rate codes.",
+            "items": {
+              "maxLength": 6,
+              "minLength": 3,
+              "type": "string",
+              "description": "The TMC / Agency / OTA rate code.",
+              "example": "TMC1"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "deprecated": true,
+            "items": {
+              "$ref": "#/components/schemas/RateCategory"
+            }
+          },
+          "masterRateCode": {
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "(^\\\\d[A-Z]{3}\\\\d{2}$)",
+            "type": "string",
+            "description": "The master rate code.",
+            "example": "1ABC23"
+          }
+        },
+        "description": "Request negotiated rate codes to obtain private rates."
+      },
+      "RateCategory": {
+        "type": "string",
+        "description": "Rate Category",
+        "x-enumDescriptions": {
+          "All": "Includes all available rate categories.",
+          "Association": "Rates offered to members of specific associations or organizations.",
+          "Business": "Standard business traveler rates.",
+          "BusinessStandard": "A more restrictive or basic business rate.",
+          "Club": "Rates for members of exclusive clubs or loyalty programs.",
+          "Convention": "Special rates for attendees of a specific convention or event.",
+          "Corporate": "Rates negotiated by companies for their employees.",
+          "Consortiums": "Rates offered through travel consortiums or networks.",
+          "Discount": "General discounted rates not tied to a specific group.",
+          "Credential": "General discounted rates not tied to a specific group.",
+          "Employee": "Rates for employees of the hotel or affiliated companies.",
+          "FamilyPlan": "Rates for employees of the hotel or affiliated companies.",
+          "FullInclusive": "Rates for employees of the hotel or affiliated companies.",
+          "Government": "Rates available to government employees or officials.",
+          "Inclusive": "Rates that include some extras like meals or amenities.",
+          "Industry/TravelAgentRate": "Special rates for travel industry professionals.",
+          "Leisure": "Rates intended for vacation or personal travel.",
+          "Military": "Rates for active duty or retired military personnel.",
+          "Monthly": "Long-stay rates for monthly bookings.",
+          "Multi-DayPackage": "Rates bundled with multi-day activities or services.",
+          "MultiLevel/Negotiated/Secure": "Special negotiated or tiered rates, often requiring authentication.",
+          "Other": "Any rate that doesn’t fit into the predefined categories.",
+          "Package": "Rates bundled with other services like tours or meals.",
+          "PrePaid": "Rates that must be paid in full at the time of booking.",
+          "Promotional": "Limited-time or marketing-driven discounted rates.",
+          "RackGeneral": "The standard, non-discounted rate.",
+          "SeniorCitizen": "Discounted rates for senior travelers.",
+          "Standard": "Basic rate without any special conditions or discounts.",
+          "Tour": "Rates for travelers booking as part of a tour group.",
+          "VIP": "Premium rates with exclusive perks or services.",
+          "Weekend": "Special rates for weekend stays.",
+          "Weekly": "Discounted rates for weekly stays."
+        },
+        "enum": [
+          "All",
+          "Association",
+          "Business",
+          "BusinessStandard",
+          "Club",
+          "Convention",
+          "Corporate",
+          "Consortiums",
+          "Discount",
+          "Credential",
+          "Employee",
+          "FamilyPlan",
+          "FullInclusive",
+          "Government",
+          "Inclusive",
+          "Industry/TravelAgentRate",
+          "Leisure",
+          "Military",
+          "Monthly",
+          "Multi-DayPackage",
+          "MultiLevel/Negotiated/Secure",
+          "Other",
+          "Package",
+          "PrePaid",
+          "Promotional",
+          "RackGeneral",
+          "SeniorCitizen",
+          "Standard",
+          "Tour",
+          "VIP",
+          "Weekend",
+          "Weekly"
+        ]
+      },
+      "RoomFilter": {
+        "type": "object",
+        "properties": {
+          "nonSmoking": {
+            "type": "boolean",
+            "description": "If true, only rates with non-smoking rooms will candidate for the lowest filtered available rate. If false, only rates with smoking rooms will candidate for the lowest filtered available rate."
+          },
+          "balcony": {
+            "type": "boolean",
+            "description": "If true, only rates with balcony rooms will candidate for the lowest filtered available rate."
+          },
+          "accessible": {
+            "type": "boolean",
+            "description": "If true, only rates with accessible rooms will candidate for the lowest filtered available rate. If false, only rates with non-accessible rooms will candidate for the lowest filtered available rate."
+          },
+          "connecting": {
+            "type": "boolean",
+            "description": "If true, only rates with connecting rooms will candidate for the lowest filtered available rate."
+          },
+          "family": {
+            "type": "boolean",
+            "description": "If true, only rates with family rooms will candidate for the lowest filtered available rate."
+          },
+          "highFloor": {
+            "type": "boolean",
+            "description": "Assigned for future use. Expected delivery 2027. If true, only rates with high floor rooms will candidate for the lowest filtered available rate."
+          },
+          "maxOccupancy": {
+            "maximum": 9,
+            "minimum": 1,
+            "type": "integer",
+            "description": "Assigned for future use. Expected delivery 2027. Only rates with rooms which can accommodate this amount of guests will candidate for the lowest filtered rate.",
+            "example": 4
+          },
+          "bedConfiguration": {
+            "$ref": "#/components/schemas/BedroomConfiguration"
+          },
+          "amenityCodes": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "maxLength": 4,
+              "minLength": 1,
+              "type": "integer",
+              "description": "OTA amenity code",
+              "format": "int32",
+              "example": 1
+            }
+          },
+          "recommendedRoomAmenitiesInd": {
+            "type": "boolean",
+            "description": "If true, a limited set of room amenities will be returned in the response. if false, or omitted a full set of room amenities will be returned in the response."
+          }
+        },
+        "description": "Filter applies only to the lowest filtered available rates."
+      },
+      "BedroomConfiguration": {
+        "type": "object",
+        "properties": {
+          "minimumQuantity": {
+            "maximum": 9,
+            "minimum": 1,
+            "type": "integer",
+            "description": "The minimum quantity of beds in the room.",
+            "example": 2
+          },
+          "type": {
+            "$ref": "#/components/schemas/BedSize"
+          }
+        },
+        "description": "Only rates with rooms with the requested bed configuration will candidate for the lowest filtered rate."
+      },
+      "BedSize": {
+        "type": "string",
+        "description": "The size of the bed.",
+        "x-enumDescriptions": {
+          "King": "A large bed ideal for couples who want extra space. Size approx.  76 x 80 in or 193 x 203 cm",
+          "Queen": "A popular bed size for couples or single sleepers who want more room. Size approx. 60 x 80 in or152 x 203 cm",
+          "Double": "A medium-sized bed suitable for one adult or cozy for two.  Sometimes called a Full.  Size approx. 54 x 75 in  or 137 x 191 cm",
+          "Twin": "A small bed typically used for one person, often in kids’ rooms or guest rooms. Size approx. 38 x 75 in or 97 x 191 cm",
+          "Sofa": "A fold-out bed built into a sofa, used for temporary sleeping. Size varies, but most are close to Full (Double) size approx. 54 x 75 in or approx. 137 x 191 cm",
+          "Other": "Any non-standard bed type, such as bunk beds, Murphy beds, or custom sizes. Size varies widely depending on design and purpose."
+        },
+        "enum": [
+          "King",
+          "Queen",
+          "Double",
+          "Twin",
+          "Sofa",
+          "Other"
+        ]
+      },
+      "RateFilter": {
+        "type": "object",
+        "properties": {
+          "rateFlags": {
+            "$ref": "#/components/schemas/RateFlags"
+          },
+          "publicRateBlacklist": {
+            "maxItems": 5,
+            "type": "array",
+            "description": "Array of public rate blacklists.",
+            "items": {
+              "type": "string",
+              "description": "The word or phrase that blacklist a public rate."
+            }
+          }
+        },
+        "description": "Filter applies only to the lowest filtered available rates."
+      },
+      "RateFlags": {
+        "type": "object",
+        "properties": {
+          "refundable": {
+            "type": "boolean",
+            "description": "If true, only refundable rooms will candidate for the lowest filtered available rate. If false, only non-refundable rates will candidate for the lowest filtered available rate."
+          },
+          "commissionable": {
+            "type": "boolean",
+            "description": "If true, only commissionable rates will candidate for the lowest filtered available rate. If false, only non-commissionable rates will candidate for the lowest filtered available rate."
+          },
+          "deposit": {
+            "type": "boolean",
+            "description": "If true, only rates with deposit will candidate for the lowest filtered available rate. If false, only rates without deposit will candidate for the lowest filtered available rate."
+          },
+          "prepay": {
+            "type": "boolean",
+            "description": "If true, only prepay rates will candidate for the lowest filtered available rate."
+          },
+          "postpay": {
+            "type": "boolean",
+            "description": "If true, only postpay rates will candidate for the lowest filtered available rate."
+          },
+          "breakfast": {
+            "type": "boolean",
+            "description": "If true, only rates with breakfast will candidate for the lowest filtered available rate."
+          },
+          "lunch": {
+            "type": "boolean",
+            "description": "If true, only rates with lunch will candidate for the lowest filtered available rate."
+          },
+          "dinner": {
+            "type": "boolean",
+            "description": "If true, only rates with dinner will candidate for the lowest filtered available rate."
+          }
+        },
+        "description": "Rate flags object."
+      },
+      "HotelSearchResponse": {
+        "type": "object",
+        "properties": {
+          "traceId": {
+            "type": "string",
+            "description": "Unique transaction or tracking id for a single request and response."
+          },
+          "transactionId": {
+            "type": "string",
+            "description": "Identifier used to correlate API invocations across a multi-call business flow.",
+            "format": "uuid"
+          },
+          "correlationId": {
+            "type": "string",
+            "description": "Identifier used to correlate hotel API advert flow invocations across a multi-call business flow.",
+            "format": "uuid"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "hotelsResponse": {
+            "$ref": "#/components/schemas/HotelsResponse"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "Response object for Hotel Search Complete."
+      },
+      "Pagination": {
+        "required": [
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "The number of the current page.",
+            "format": "int32",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "The number of items per page.",
+            "format": "int32",
+            "example": 20
+          },
+          "totalPages": {
+            "type": "integer",
+            "description": "The number of total pages.",
+            "format": "int32",
+            "example": 5
+          },
+          "totalItems": {
+            "type": "integer",
+            "description": "The number of total items.",
+            "format": "int32",
+            "example": 81
+          },
+          "paginationToken": {
+            "type": "string",
+            "description": "The token to be used to retrieve the next page.",
+            "format": "uuid"
+          }
+        },
+        "description": "Pagination information."
+      },
+      "HotelsResponse": {
+        "type": "object",
+        "properties": {
+          "searchPoint": {
+            "$ref": "#/components/schemas/Coordinates"
+          },
+          "checkInDateLocal": {
+            "type": "string",
+            "description": "The local date the guest will check in - ISO 8601 - Basic Date.",
+            "format": "date"
+          },
+          "checkOutDateLocal": {
+            "type": "string",
+            "description": "The local date the guest will check out- ISO 8601 - Basic Date.",
+            "format": "date"
+          },
+          "currencyExchangeRates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurrencyExchangeRate"
+            }
+          },
+          "propertyItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyItem"
+            }
+          }
+        },
+        "description": "Response object for Hotel Search Complete."
+      },
+      "Coordinates": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "float",
+            "example": 51.470241662259895
+          },
+          "longitude": {
+            "type": "number",
+            "format": "float",
+            "example": -0.45093566335492113
+          }
+        },
+        "description": "The coordinates of the location or the property."
+      },
+      "CurrencyExchangeRate": {
+        "type": "object",
+        "properties": {
+          "sourceCurrency": {
+            "pattern": "[a-zA-Z]{3}",
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "example": "GBP"
+          },
+          "targetCurrency": {
+            "pattern": "[a-zA-Z]{3}",
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "example": "USD"
+          },
+          "conversionFactor": {
+            "type": "number",
+            "description": "The conversion factor from source to target currency.",
+            "example": 1.5412885
+          }
+        },
+        "description": "The exchange rate of the currency."
+      },
+      "PropertyItem": {
+        "required": [
+          "availability",
+          "name",
+          "propertyCode"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the property.",
+            "example": "Hilton Garden Inn London Heathrow Airport"
+          },
+          "brandCode": {
+            "maxLength": 2,
+            "type": "string",
+            "description": "The brand code of the property.",
+            "example": "EH"
+          },
+          "chainCode": {
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "description": "The chain code of the property.",
+            "example": "HL"
+          },
+          "propertyCode": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "The property code of the property.",
+            "example": "E7434"
+          },
+          "estimatedPropertyType": {
+            "$ref": "#/components/schemas/PropertyType"
+          },
+          "estimatedSegmentCategory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SegmentCategory"
+            }
+          },
+          "longDescription": {
+            "type": "string",
+            "description": "The long description of the property.",
+            "example": "free text property description"
+          },
+          "knowBeforeYouGo": {
+            "type": "string",
+            "description": "The know before you go information of the property.",
+            "example": "free text property instructions"
+          },
+          "dataQualitySummaryScore": {
+            "$ref": "#/components/schemas/DataQualitySummaryScore"
+          },
+          "availability": {
+            "type": "boolean",
+            "description": "If true, the property has availability."
+          },
+          "allRatesFromCache": {
+            "type": "boolean",
+            "description": "If true, all rates returned for this property are from cache.  If false, all rates returned for this property are from a live search.  Element will not be returned if no rates available for this property."
+          },
+          "availabilityNotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilityNote"
+            }
+          },
+          "lowestPublicAvailableRate": {
+            "description": "The lowest public available rate according to the requested filters. If exact match is not found for the requested filters, the generic lowest public rate will be returned.",
+            "deprecated": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LowestAvailableRate"
+              }
+            ]
+          },
+          "lowestPrivateAvailableRate": {
+            "description": "The lowest private available rate according to the requested filters. If exact match is not found for the requested filters, the generic lowest private rate will be returned.",
+            "deprecated": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LowestAvailableRate"
+              }
+            ]
+          },
+          "lowestFilteredPublicAvailableRate": {
+            "description": "The lowest public available rate according to the requested filters. If exact match is not found for the requested filters, it will not be populated.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LowestAvailableRate"
+              }
+            ]
+          },
+          "lowestFilteredPrivateAvailableRate": {
+            "description": "The lowest private available rate according to the requested filters. If exact match is not found for the requested filters, it will not be populated.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LowestAvailableRate"
+              }
+            ]
+          },
+          "lowestUnfilteredPublicAvailableRate": {
+            "description": "The lowest unfiltered public available rate.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LowestAvailableRate"
+              }
+            ]
+          },
+          "lowestUnfilteredPrivateAvailableRate": {
+            "description": "The lowest unfiltered private available rate.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LowestAvailableRate"
+              }
+            ]
+          },
+          "propertyInfo": {
+            "$ref": "#/components/schemas/PropertyInformation"
+          },
+          "rateSummary": {
+            "$ref": "#/components/schemas/RateSummary"
+          },
+          "roomTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Room"
+            }
+          }
+        },
+        "description": "The property item."
+      },
+      "SegmentCategory": {
+        "type": "string",
+        "description": "Segment Category",
+        "x-enumDescriptions": {
+          "All suite": "Properties where all rooms are suites, typically including separate living and sleeping areas.",
+          "Beach": "Properties located near or on a beach, often offering ocean views and beach-related amenities.",
+          "Boutique": "Small, stylish properties offering personalized service and unique design, often independently owned.",
+          "Budget": "Properties offering basic accommodations at low prices, with minimal amenities.",
+          "Corporate business transient": "Properties catering to short-stay business travelers, often located in business districts and typically offering amenities like meeting rooms and high-speed internet.",
+          "Deluxe": "High-end properties offering superior amenities, service, and room quality, often just below luxury classification.",
+          "Economy": "Properties offering very basic accommodations at the lowest price point, often with limited services.",
+          "Efficiency": "Properties where rooms are equipped with kitchenettes or basic cooking facilities, suitable for guests seeking self-service options.",
+          "Extended stay": "Properties designed for long-term guests, typically offering kitchen facilities and weekly housekeeping.",
+          "Family": "Properties catering to families, often with larger rooms, child-friendly amenities, and recreational facilities.",
+          "First class": "Properties offering high-quality service and amenities, typically rated 4 stars.",
+          "Luxury": "Top-tier properties offering exceptional service, upscale amenities, and premium locations, often rated 5 stars.",
+          "Meeting/Convention": "Properties with extensive facilities for hosting conferences, conventions, and large meetings.",
+          "Midscale": "Properties offering moderate pricing and amenities, positioned between economy and upscale.",
+          "Midscale without F&B": "Midscale properties that do not offer full food and beverage services (e.g., no restaurant or bar).",
+          "Moderate": "Properties offering average pricing and amenities, similar to midscale but may vary by region.",
+          "Moderate 2": "A subcategory of moderate properties, indicating superior amenities or services.",
+          "Pet Friendly": "Properties that allow guests to stay with pets, often with designated pet-friendly rooms or services.",
+          "Quality": "A general term often used to indicate a mid-tier property with consistent service and amenities.",
+          "Quality 2": "A subcategory of quality properties, indicating superior amenities or services.",
+          "Residential apartment": "Properties offering apartment-style accommodations for long-term stays, often with full kitchens and living areas.",
+          "Resort": "Properties located in vacation destinations offering extensive recreational amenities like pools, golf, and spas.",
+          "Romantic": "Properties or packages designed for couples, often featuring intimate settings and amenities like spa treatments or candlelit dinners.",
+          "Standard": "Basic property classification offering essential amenities without luxury features.",
+          "Tourist": "Properties catering to leisure travelers, often located near attractions and offering affordable rates.",
+          "Unknown": "Used when the property’s segment classification is not specified or cannot be determined.",
+          "Upscale": "Properties offering enhanced amenities and service, typically rated 4 stars and above.",
+          "Upper upscale": "A higher tier of upscale properties, often close to luxury in terms of service and amenities."
+        },
+        "enum": [
+          "All suite",
+          "Beach",
+          "Boutique",
+          "Budget",
+          "Corporate business transient",
+          "Deluxe",
+          "Economy",
+          "Efficiency",
+          "Extended stay",
+          "Family",
+          "First class",
+          "Luxury",
+          "Meeting/Convention",
+          "Midscale",
+          "Midscale without F&B",
+          "Moderate",
+          "Moderate 2",
+          "Pet Friendly",
+          "Quality",
+          "Quality 2",
+          "Residential apartment",
+          "Resort",
+          "Romantic",
+          "Standard",
+          "Tourist",
+          "Unknown",
+          "Upscale",
+          "Upper upscale"
+        ]
+      },
+      "DataQualitySummaryScore": {
+        "type": "object",
+        "properties": {
+          "parentBrandSummary": {
+            "$ref": "#/components/schemas/QualityMetrics"
+          },
+          "childChainSummary": {
+            "$ref": "#/components/schemas/QualityMetrics"
+          },
+          "propertySummary": {
+            "$ref": "#/components/schemas/PropertyQualityMetrics"
+          }
+        },
+        "description": "The data quality summary score. parentBrandSummary and childChainSummary assigned for future use."
+      },
+      "QualityMetrics": {
+        "type": "object",
+        "properties": {
+          "averageMerchandisingQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "A score representing the overall quality of property, room, and rate information to allow comparison between properties.",
+            "format": "int32",
+            "example": 77
+          },
+          "averagePropertyContentQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "A score that measures important components of the property object.",
+            "format": "int32",
+            "example": 75
+          },
+          "averageVendorRateQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An average score of all vendorRateQualityScores for this property in this transaction, rounded.",
+            "format": "int32",
+            "example": 75
+          },
+          "averageAugmentedRateQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An average score of all augmentedRateQualityScores for this property in this transaction, rounded.",
+            "format": "int32",
+            "example": 65
+          },
+          "averageVendorRoomQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An average score of all vendorRoomQualityScores for this property in this transaction, rounded.",
+            "format": "int32",
+            "example": 35
+          },
+          "averageAugmentedRoomQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An average score of all augmentedRoomQualityScores for this property in this transaction, rounded.",
+            "format": "int32",
+            "example": 85
+          }
+        },
+        "description": "The quality metrics."
+      },
+      "PropertyQualityMetrics": {
+        "type": "object",
+        "properties": {
+          "merchandisingQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "A score representing the overall quality of property, room, and rate information to allow comparison between properties.",
+            "format": "int32",
+            "example": 77
+          },
+          "propertyContentQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "A score that measures important components of the property object.",
+            "format": "int32",
+            "example": 75
+          },
+          "averageVendorRateQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An average score of all vendorRateQualityScores for this property in this transaction, rounded.",
+            "format": "int32",
+            "example": 75
+          },
+          "averageAugmentedRateQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An average score of all augmentedRateQualityScores for this property in this transaction, rounded.",
+            "format": "int32",
+            "example": 65
+          },
+          "averageVendorRoomQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An average score of all vendorRoomQualityScores for this property in this transaction, rounded.",
+            "format": "int32",
+            "example": 35
+          },
+          "averageAugmentedRoomQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An average score of all augmentedRoomQualityScores for this property in this transaction, rounded.",
+            "format": "int32",
+            "example": 85
+          }
+        },
+        "description": "The property quality metrics."
+      },
+      "AvailabilityNote": {
+        "type": "object",
+        "properties": {
+          "authority": {
+            "type": "string",
+            "description": "The authority from where the availability note originates.",
+            "example": "BKNG"
+          },
+          "message": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "The message of the availability note.",
+            "example": "No Room Stays/Rate Plans received from the provider"
+          }
+        },
+        "description": "Shows the availability note."
+      },
+      "LowestAvailableRate": {
+        "type": "object",
+        "properties": {
+          "totalPrice": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "base": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalTaxes": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalIncludedFees": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalFeesDueAtProperty": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "averageNightlyTotalPrice": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "averageNightlyBase": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "averageNightlyTotalTaxes": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "averageNightlyIncludedFees": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "currencyCode": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "example": "GBP"
+          },
+          "rateKey": {
+            "$ref": "#/components/schemas/RateKey"
+          },
+          "bookingCode": {
+            "type": "string",
+            "description": "The booking code for the rate.",
+            "example": "A1KA0C"
+          },
+          "rateCodeInfo": {
+            "$ref": "#/components/schemas/RateCodeInformation"
+          },
+          "shortRoomDescription": {
+            "type": "string",
+            "description": "A concise edited form of the current room description",
+            "example": "King Room High Floor with Run Way View."
+          },
+          "terms": {
+            "$ref": "#/components/schemas/Terms"
+          }
+        },
+        "description": "The lowest available rate."
+      },
+      "MoneyAmount": {
+        "required": [
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "The amount describes unit and subunit of the currency in a single value, where the integer part (digits before the decimal point) is for the major unit and fractional part (digits after the decimal point) is for the minor unit.",
+            "format": "decimal",
+            "example": 99.95
+          }
+        },
+        "description": "The amount of the price."
+      },
+      "RateKey": {
+        "properties": {
+          "value": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "The unique identifier for the rate.",
+            "example": "36e9b231-630f-47fa-b5a0-6116c8c20a04:a75bd474-0de3-477e-984b-dc1daf70b73b"
+          },
+          "authority": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "Name of the authoritative system that created this key.",
+            "example": "TVPT"
+          }
+        },
+        "description": "Unique queue to use in downstream applications for more rate information and/or reservation."
+      },
+      "RateCodeInformation": {
+        "properties": {
+          "rateCode": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Rate access code.",
+            "example": "HL12344"
+          },
+          "rateName": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Rate code name.",
+            "example": "Special"
+          },
+          "ratePlanID": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Identifier for the rate code.",
+            "example": "2345"
+          },
+          "rateCategory": {
+            "$ref": "#/components/schemas/RateCategory"
+          },
+          "rateCategoryCode": {
+            "maxLength": 3,
+            "minLength": 1,
+            "type": "integer",
+            "description": "Category code using OTA rate type code list.",
+            "example": 10
+          },
+          "rateType": {
+            "type": "string",
+            "description": "Rate type.",
+            "x-enumDescriptions": {
+              "Consortia": "A discounted rate offered to travel agencies that are part of a consortium, a group of agencies that negotiate collectively with hotels to get better deals for their clients.",
+              "Negotiated": "A special rate agreed upon between a hotel and a specific company or organization. These rates are usually lower than public rates and are meant for employees or members of that company.",
+              "Public": "The standard rate available to anyone booking a room. These are the prices you see on hotel websites, online travel agencies (OTAs), or booking platforms.",
+              "Private": "A restricted rate not available to the general public. These are often offered through membership programs, corporate portals, or exclusive deals and may require login or a special code to access.",
+              "TMC": "A rate offered through a Travel Management Company (TMC). A business that manages travel for corporations. These rates are often negotiated and may include extra perks like flexible cancellation or added amenities."
+            },
+            "enum": [
+              "Consortia",
+              "Negotiated",
+              "Public",
+              "Private",
+              "TMC"
+            ]
+          },
+          "rateClassificationCode": {
+            "maxLength": 3,
+            "minLength": 1,
+            "type": "integer",
+            "description": "Classification code using OTA rate category code list.",
+            "format": "int32",
+            "example": 13
+          }
+        },
+        "description": "Detail on the rate code applied."
+      },
+      "Terms": {
+        "type": "object",
+        "properties": {
+          "ratePaymentInfo": {
+            "description": "the terms of the payment. PrePay, PostPay etc.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatePayment"
+              }
+            ]
+          },
+          "guaranteeType": {
+            "$ref": "#/components/schemas/GuaranteeType"
+          },
+          "freeCancellationWithin24Hours": {
+            "type": "boolean",
+            "description": "If true, the property only allows free cancellation within 24 hours."
+          },
+          "changes": {
+            "$ref": "#/components/schemas/ChangesPolicy"
+          },
+          "customerLoyaltyIDRequiredAtReservation": {
+            "type": "boolean",
+            "description": "The rate returned is contingent on a membership number to be included within the reservation request, typically associated to frequent guest or frequent flyer loyalty numbers."
+          },
+          "rateQualificationIDRequiredAtCheckIn": {
+            "type": "boolean",
+            "description": "The discounted rate returned may be denied at the property if guest does not show proof of qualifying, typically a government/military/workplace/association/membership ID."
+          },
+          "refundable": {
+            "type": "boolean",
+            "description": "If true, the rate is refundable."
+          },
+          "cancelPenalties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CancelPenalty"
+            }
+          },
+          "cancelNote": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "When cancellation information is incomplete or missing a cancellation note will be included."
+          },
+          "lengthOfStay": {
+            "$ref": "#/components/schemas/LengthOfStayQualification"
+          },
+          "description": {
+            "type": "array",
+            "description": "Array of descriptions.",
+            "items": {
+              "type": "string",
+              "description": "The description of the rate."
+            }
+          },
+          "extraAccommodations": {
+            "maxItems": 10,
+            "type": "array",
+            "description": "Assigned for future use. Expected delivery Q3/4 2026.",
+            "items": {
+              "$ref": "#/components/schemas/ExtraAccommodation"
+            }
+          }
+        },
+        "description": "The terms and conditions of the rate."
+      },
+      "RatePayment": {
+        "type": "string",
+        "description": "Indicates how the rate needs to be paid.",
+        "enum": [
+          "PrePay",
+          "PostPay",
+          "Unknown"
+        ]
+      },
+      "GuaranteeType": {
+        "type": "string",
+        "description": "An enumerated type defining the guarantee to be applied to this reservation.",
+        "enum": [
+          "GuaranteeRequired",
+          "NoGuaranteesAccepted",
+          "DepositRequired",
+          "PrepayRequired"
+        ]
+      },
+      "ChangesPolicy": {
+        "type": "object",
+        "properties": {
+          "changesPermitted": {
+            "type": "boolean",
+            "description": "If true, changes are permitted."
+          },
+          "numberOfDaysBeforeCheckIn": {
+            "type": "integer",
+            "description": "The number of days before check in when changes are permitted.",
+            "format": "int32",
+            "example": 7
+          }
+        },
+        "description": "The changes policy."
+      },
+      "CancelPenalty": {
+        "type": "object",
+        "properties": {
+          "deadlineLocal": {
+            "type": "string",
+            "description": "The local date and time of the deadline of the cancel penalty.",
+            "format": "date-time"
+          },
+          "estimatedDeadlineLocal": {
+            "type": "boolean",
+            "description": "If true, the deadline is estimated."
+          },
+          "cancelShortDescription": {
+            "type": "string",
+            "description": "A short description of the cancel penalty.",
+            "example": "Free cancellation within 1 month 1 day."
+          },
+          "penalty": {
+            "$ref": "#/components/schemas/PenaltyAmount"
+          }
+        },
+        "description": "The cancel penalty object."
+      },
+      "PenaltyAmount": {
+        "properties": {
+          "estimatedAmount": {
+            "type": "boolean",
+            "description": "If true, the penalty amount is an estimated amount."
+          },
+          "currencyAmount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "originalPenaltyInfo": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "If estimatedAmount is true, the original Provider information will be added here as text.",
+            "example": "Penalty percent 100%"
+          }
+        },
+        "description": "The penalty amount that needs to be paid before the deadline if cancelled."
+      },
+      "Money": {
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "The amount describes unit and subunit of the currency in a single value, where the integer part (digits before the decimal point) is for the major unit and fractional part (digits after the decimal point) is for the minor unit.",
+            "format": "decimal",
+            "example": 99.95
+          },
+          "currency": {
+            "type": "string",
+            "description": "3 letter currency code as defined by ISO-4217.",
+            "example": "EUR"
+          }
+        },
+        "description": "The currency and the amount of the price."
+      },
+      "LengthOfStayQualification": {
+        "type": "object",
+        "properties": {
+          "minNightCount": {
+            "type": "integer",
+            "description": "The minimum number of nights the guest must stay.",
+            "format": "int32",
+            "example": 3
+          },
+          "maxNightCount": {
+            "type": "integer",
+            "description": "The maximum number of nights the guest can stay.",
+            "format": "int32",
+            "example": 7
+          }
+        },
+        "description": "The length of stay qualification."
+      },
+      "PropertyInformation": {
+        "type": "object",
+        "properties": {
+          "geolocation": {
+            "$ref": "#/components/schemas/PropertyGeoLocation"
+          },
+          "distanceFromSearchPoint": {
+            "$ref": "#/components/schemas/DistanceFromSearchPoint"
+          },
+          "address": {
+            "$ref": "#/components/schemas/PropertyAddress"
+          },
+          "phone": {
+            "$ref": "#/components/schemas/PropertyPhone"
+          },
+          "fax": {
+            "$ref": "#/components/schemas/PropertyPhone"
+          },
+          "email": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "The email address of the property.",
+            "example": "exampledomain@example.com"
+          },
+          "checkInTimeLocal": {
+            "type": "string",
+            "description": "The local time the guest can check in - ISO 8601 - Basic Time.",
+            "example": "900"
+          },
+          "checkOutTimeLocal": {
+            "type": "string",
+            "description": "The local time the guest can check out - ISO 8601 - Basic Time.",
+            "example": "600"
+          },
+          "adaCompliant": {
+            "type": "boolean",
+            "description": "Moved to new features schema.",
+            "deprecated": true
+          },
+          "features": {
+            "$ref": "#/components/schemas/PropertyFeatures"
+          },
+          "ratings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyRating"
+            }
+          },
+          "imageURLs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageURL"
+            }
+          },
+          "acceptedCreditCards": {
+            "type": "array",
+            "description": "Array of accepted credit cards.",
+            "items": {
+              "type": "string",
+              "description": "The accepted credit card code.",
+              "example": "AX"
+            }
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Amenity"
+            }
+          },
+          "featuredPropertyInd": {
+            "type": "boolean",
+            "description": "Internal Travelport use only."
+          }
+        },
+        "description": "Information about the property."
+      },
+      "PropertyGeoLocation": {
+        "type": "object",
+        "properties": {
+          "center": {
+            "$ref": "#/components/schemas/Coordinates"
+          }
+        },
+        "description": "The geolocation of the property."
+      },
+      "DistanceFromSearchPoint": {
+        "type": "object",
+        "properties": {
+          "unitOfDistance": {
+            "type": "string",
+            "description": "The unit of distance. Miles or Kilometers.",
+            "example": "metres"
+          },
+          "value": {
+            "type": "number",
+            "description": "The distance of the property from the search point.",
+            "example": 4000
+          }
+        },
+        "description": "The distance of the property from the search point."
+      },
+      "PropertyAddress": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": "string",
+            "description": "The street address of the property.",
+            "example": "Heathrow Airport, Eastern Perimeter Road"
+          },
+          "city": {
+            "type": "string",
+            "description": "The city of the property.",
+            "example": "Hounslow"
+          },
+          "stateProvince": {
+            "type": "string",
+            "description": "The state or province of the property.",
+            "example": "Berkshire"
+          },
+          "countryCode": {
+            "pattern": "[a-zA-Z]{2}",
+            "type": "string",
+            "description": "ISO 3166 code for a country.",
+            "example": "GB"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "The postal code of the property.",
+            "example": "TW6 2SQ"
+          }
+        },
+        "description": "The address of the property."
+      },
+      "PropertyPhone": {
+        "type": "object",
+        "properties": {
+          "countryCode": {
+            "type": "integer",
+            "description": "Not in use. Will not implement. Telephone country code.",
+            "example": 44,
+            "deprecated": true
+          },
+          "areaCityCode": {
+            "type": "integer",
+            "description": "Not in use. Will not implement. Telephone area code.",
+            "example": 16,
+            "deprecated": true
+          },
+          "phoneNumber": {
+            "maxLength": 40,
+            "type": "string",
+            "description": "Telephone number.",
+            "example": "8266 4664"
+          }
+        },
+        "description": "The phone number of the property."
+      },
+      "PropertyFeatures": {
+        "type": "object",
+        "properties": {
+          "minimumCheckInAge": {
+            "type": "integer",
+            "description": "Assigned for future use. Expected delivery Q3 2026. The minimum age required to check in.",
+            "format": "int32",
+            "example": 18
+          },
+          "adultsOnly": {
+            "type": "boolean",
+            "description": "Assigned for future use. Expected delivery Q3 2026. Indicates if the property is for adults only."
+          },
+          "openingYear": {
+            "type": "integer",
+            "description": "The year the property opened.",
+            "format": "int32",
+            "example": 1978
+          },
+          "renovationCompletionYear": {
+            "type": "integer",
+            "description": "The year the property was last renovated.",
+            "format": "int32",
+            "example": 2014
+          },
+          "childPolicies": {
+            "$ref": "#/components/schemas/ChildPolicies"
+          },
+          "requestableItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExtraAccomodationENUM"
+            }
+          },
+          "accessibility": {
+            "$ref": "#/components/schemas/PropertyAccessibility"
+          }
+        },
+        "description": "The features of the property."
+      },
+      "ChildPolicies": {
+        "type": "object",
+        "properties": {
+          "inclusiveRates": {
+            "type": "boolean",
+            "description": "If true, the rates are inclusive."
+          },
+          "kidsStayFree": {
+            "type": "boolean",
+            "description": "If true, kids stay free."
+          },
+          "maxFreeChildAge": {
+            "type": "integer",
+            "description": "The maximum age of a child that can stay for free.",
+            "format": "int32",
+            "example": 12
+          },
+          "maxFreeChildrenPerAdult": {
+            "type": "integer",
+            "description": "The maximum number of children that can stay for free per adult.",
+            "format": "int32",
+            "example": 1
+          }
+        },
+        "description": "The child policies of the property."
+      },
+      "PropertyAccessibility": {
+        "type": "object",
+        "properties": {
+          "adaCompliant": {
+            "type": "boolean",
+            "description": "If true, the property is ADA compliant."
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccessibilityOption"
+            }
+          }
+        },
+        "description": "The accessibility information of the property."
+      },
+      "AccessibilityOption": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "The code of the accessibility option.",
+            "format": "int32",
+            "example": 32
+          },
+          "description": {
+            "maxLength": 64,
+            "type": "string",
+            "description": "The description of the accessibility option.",
+            "example": "32-inch Wide Doorways in Guest Rooms"
+          },
+          "availability": {
+            "maxLength": 64,
+            "type": "string",
+            "description": "The availability of the accessibility option.",
+            "example": "Some Rooms/Suites"
+          }
+        },
+        "description": "The accessibility option."
+      },
+      "PropertyRating": {
+        "properties": {
+          "value": {
+            "type": "number",
+            "description": "The rating value.",
+            "format": "float",
+            "example": 3
+          },
+          "provider": {
+            "type": "string",
+            "description": "The provider of the rating.",
+            "example": "AAA"
+          }
+        },
+        "description": "The provider and value pair of rating of the property."
+      },
+      "ImageURL": {
+        "properties": {
+          "recommendedHero": {
+            "type": "boolean",
+            "description": "If true, this image is recommended as the top image of the property."
+          },
+          "curatedImage": {
+            "type": "boolean",
+            "description": "If true, this image is carefully chosen from a wider selection of images."
+          },
+          "curatedImageCategory": {
+            "$ref": "#/components/schemas/CuratedImageCategory"
+          },
+          "curatedImageTier": {
+            "type": "integer",
+            "description": "0 = not curated. 1 = highest level, both manually and algorithmically graded. 2 = manually graded. 3 = algorithmically graded.",
+            "format": "int32",
+            "example": 1
+          },
+          "imageSize": {
+            "$ref": "#/components/schemas/ImageSizeEnum"
+          },
+          "caption": {
+            "type": "string",
+            "description": "The caption of the image.",
+            "example": "Lobby"
+          },
+          "dimensions": {
+            "$ref": "#/components/schemas/Dimensions"
+          },
+          "pictureCategory": {
+            "type": "integer",
+            "description": "The category of the picture.",
+            "example": 2
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL of the image.",
+            "example": "www.hiltonlobby.com"
+          }
+        },
+        "description": "The image object holding the url, size, caption and other image information."
+      },
+      "CuratedImageCategory": {
+        "type": "string",
+        "description": "Category of curated images available.",
+        "enum": [
+          "Exterior",
+          "GuestRoom",
+          "Interior",
+          "Lobby",
+          "Restaurant",
+          "Studio",
+          "Suite",
+          "SwimmingPool",
+          "Other"
+        ]
+      },
+      "ImageSizeEnum": {
+        "type": "string",
+        "description": "Indicates the size of the image. Hospitality APIs no longer support thumbnail.",
+        "example": "Small",
+        "enum": [
+          "Large",
+          "Medium",
+          "Small",
+          "Thumbnail",
+          "ExtraLarge"
+        ]
+      },
+      "Dimensions": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "description": "Width of image in pixels.",
+            "example": 1234
+          },
+          "height": {
+            "type": "integer",
+            "description": "Height of image in pixels.",
+            "example": 123
+          },
+          "kiloBytes": {
+            "type": "integer",
+            "description": "Assigned for future use. Size of image in kilobytes.",
+            "example": 56
+          }
+        },
+        "description": "The dimensions of the image."
+      },
+      "Amenity": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "The description of the amenity.",
+            "example": "Public area air conditioned"
+          },
+          "code": {
+            "maxLength": 4,
+            "minLength": 1,
+            "type": "integer",
+            "description": "OTA Hotel Amenity Code.",
+            "format": "int32",
+            "example": 48
+          },
+          "category": {
+            "type": "string",
+            "description": "The category of the amenity.",
+            "example": "Air Conditioning"
+          }
+        },
+        "description": "The amenity object of the property."
+      },
+      "RateSummary": {
+        "type": "object",
+        "properties": {
+          "authorityCounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthorityCount"
+            }
+          },
+          "consortiaCodeCounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeCount"
+            }
+          },
+          "negotiatedCodeCounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeCount"
+            }
+          },
+          "tmcCodeCounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CodeCount"
+            }
+          },
+          "categoryCounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryCount"
+            }
+          }
+        },
+        "description": "A summary of private and negotiated rates returned in the hotel response."
+      },
+      "AuthorityCount": {
+        "type": "object",
+        "properties": {
+          "authority": {
+            "maxLength": 4,
+            "type": "string",
+            "description": "The authority of the rates.",
+            "example": "TVPT"
+          },
+          "count": {
+            "type": "integer",
+            "description": "The quantity of the rates belonging to an authority.",
+            "format": "int32",
+            "example": 10
+          }
+        },
+        "description": "The quantity of rates returned by authority."
+      },
+      "CodeCount": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "IBM"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32",
+            "example": 20
+          }
+        },
+        "description": "The number of rate codes returned."
+      },
+      "CategoryCount": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/RateCategory"
+          },
+          "count": {
+            "type": "integer",
+            "description": "The quantity of the rates belonging to a category.",
+            "format": "int32",
+            "example": 5
+          },
+          "subCategories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubCategory"
+            }
+          }
+        },
+        "description": "The quantity of rates returned by category"
+      },
+      "SubCategory": {
+        "type": "object",
+        "properties": {
+          "class": {
+            "type": "string",
+            "description": "The class of the category.",
+            "example": "AAA"
+          },
+          "count": {
+            "type": "integer",
+            "description": "The quantity of the rates belonging to a sub category.",
+            "format": "int32",
+            "example": 5
+          }
+        },
+        "description": "The quantity of rates belonging to a sub category."
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "estimatedRoomTypeOTACode": {
+            "maxLength": 4,
+            "minLength": 1,
+            "type": "integer",
+            "description": "OTA code set Guest Room Info - GRI.",
+            "format": "int32",
+            "example": 1
+          },
+          "shortRoomDescription": {
+            "type": "string",
+            "description": "A concise edited form of the current room description.",
+            "example": "1 King Bed(s) Grandioso Da Vinci Studio."
+          },
+          "characteristics": {
+            "$ref": "#/components/schemas/CharacteristicsRoom"
+          },
+          "view": {
+            "description": "This item has been moved to CharacteristicsRoom schema.",
+            "deprecated": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/View"
+              }
+            ]
+          },
+          "bedTypes": {
+            "type": "array",
+            "description": "This item has been moved to CharacteristicsRoom schema.",
+            "deprecated": true,
+            "items": {
+              "$ref": "#/components/schemas/BedType"
+            }
+          },
+          "roomImageURLs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageURL"
+            }
+          },
+          "roomAmenities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Amenity"
+            }
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rate"
+            }
+          },
+          "maxOccupancy": {
+            "type": "integer",
+            "description": "The maximum number of people permitted to occupy the room. This item has been moved to CharacteristicsRoom schema.",
+            "format": "int32",
+            "example": 4,
+            "deprecated": true
+          }
+        },
+        "description": "The room object which collects rates with the same room configuration."
+      },
+      "CharacteristicsRoom": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/CodeDescription"
+          },
+          "class": {
+            "$ref": "#/components/schemas/CodeDescription"
+          },
+          "roomSize": {
+            "$ref": "#/components/schemas/RoomSize"
+          },
+          "bedTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BedType"
+            }
+          },
+          "view": {
+            "$ref": "#/components/schemas/View"
+          },
+          "balconyType": {
+            "$ref": "#/components/schemas/CodeDescription"
+          },
+          "locationInfo": {
+            "$ref": "#/components/schemas/LocationInfo"
+          },
+          "otherFeatures": {
+            "type": "array",
+            "description": "Array of other room features.",
+            "items": {
+              "type": "string",
+              "description": "The other features of the room.",
+              "example": "WALKIN_SHOWER"
+            }
+          },
+          "numberOfBedrooms": {
+            "type": "integer",
+            "description": "The number of bedrooms for this room type.",
+            "format": "int32",
+            "example": 2
+          },
+          "numberOfBathrooms": {
+            "type": "integer",
+            "description": "The number of bathrooms for this room type.",
+            "format": "int32",
+            "example": 1
+          },
+          "maxOccupancy": {
+            "type": "integer",
+            "description": "The maximum number of people permitted to occupy the room.",
+            "format": "int32",
+            "example": 4
+          },
+          "accessible": {
+            "type": "boolean",
+            "description": "If true, this room is designed to be easy for people with disabilities to enter and leave, and to move around comfortably."
+          }
+        },
+        "description": "The characteristics of the room. RoomSize assigned for future use."
+      },
+      "CodeDescription": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "maxLength": 4,
+            "minLength": 1,
+            "type": "integer",
+            "description": "OTA code.",
+            "format": "int32",
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the code.",
+            "example": "text description"
+          }
+        },
+        "description": "The code and description pair."
+      },
+      "RoomSize": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer",
+            "description": "The size of the room.",
+            "format": "int32",
+            "example": 23
+          },
+          "unit": {
+            "type": "string",
+            "description": "The unit of measurement of the room size.",
+            "example": "sq m"
+          }
+        },
+        "description": "Assigned for future use. The size of the room."
+      },
+      "BedType": {
+        "type": "object",
+        "properties": {
+          "bedType": {
+            "type": "string",
+            "description": "The type of the bed.",
+            "example": "King"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The quantity of the beds.",
+            "example": 1
+          },
+          "size": {
+            "type": "string",
+            "description": "The size of the bed in centimeters.",
+            "example": "180 cm X 200 cm"
+          }
+        },
+        "description": "The bed type of the room."
+      },
+      "View": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "maxLength": 4,
+            "minLength": 1,
+            "type": "integer",
+            "description": "OTA code",
+            "format": "int32",
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the view.",
+            "example": "city view"
+          }
+        },
+        "description": "The view of the room."
+      },
+      "LocationInfo": {
+        "type": "object",
+        "properties": {
+          "floor": {
+            "type": "string",
+            "description": "The floor of the room.",
+            "example": "7th floor"
+          },
+          "proximity": {
+            "type": "string",
+            "description": "The proximity of the room.",
+            "example": "Near elevator"
+          }
+        },
+        "description": "Information about the location of the room."
+      },
+      "Rate": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "description": "The date and time the rate was created.",
+            "format": "date-time"
+          },
+          "rateKey": {
+            "$ref": "#/components/schemas/RateKey"
+          },
+          "bookingCode": {
+            "type": "string",
+            "description": "The booking code of the rate.",
+            "example": "A1KA0C"
+          },
+          "rateDescription": {
+            "type": "string",
+            "description": "Honors dicount"
+          },
+          "roomDescription": {
+            "type": "string",
+            "description": "The description of the room.",
+            "example": "Complimentary WiFi, 49-inch TV, mini-fridge, work desk, ergonomic chair. Relax in this stylish 22 sq. m. /237 sq. ft. King Room. Enjoy a restful night's sleep in the luxurious Suite Dreams® by Serta bed. Work in comfort at the desk with ergonomic chair. Watch a program on the 49-inch LCD TV or surf the web with complimentary WiFi. This room also features a mini-fridge, adjustable air-conditioning, coffee/tea maker and an iron/ironing board to make you feel at home. Stay connected to the office with our 24-hour business center, which provides complimentary printing, fax and copy machines."
+          },
+          "rateCodeInfo": {
+            "$ref": "#/components/schemas/RateCodeInformation"
+          },
+          "dataQualityScore": {
+            "$ref": "#/components/schemas/DataQualityScore"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Number of rooms available at this rate.",
+            "example": 4
+          },
+          "nonSmoking": {
+            "type": "boolean",
+            "description": "If true, this is a non smoking room."
+          },
+          "accessibleRoom": {
+            "type": "boolean",
+            "description": "If true, this is an accessible room."
+          },
+          "wifiIncluded": {
+            "type": "boolean",
+            "description": "If true, wifi is included."
+          },
+          "breakfastIncluded": {
+            "type": "boolean",
+            "description": "If true, breakfast is included."
+          },
+          "lunchIncluded": {
+            "type": "boolean",
+            "description": "If true, lunch is included."
+          },
+          "dinnerIncluded": {
+            "type": "boolean",
+            "description": "If true, dinner is included."
+          },
+          "freeParkingIncluded": {
+            "type": "boolean",
+            "description": "If true, free parking is included."
+          },
+          "valetParkingIncluded": {
+            "type": "boolean",
+            "description": "If true, valet parking is included."
+          },
+          "price": {
+            "$ref": "#/components/schemas/RatePrice"
+          },
+          "priceChangeProbability": {
+            "$ref": "#/components/schemas/HighMediumLow"
+          },
+          "terms": {
+            "$ref": "#/components/schemas/Terms"
+          },
+          "credit": {
+            "$ref": "#/components/schemas/RateCredit"
+          },
+          "loyaltyPoints": {
+            "type": "integer",
+            "description": "Loyalty points accrued with this rate.",
+            "format": "int32"
+          }
+        },
+        "description": "The rate object. priceChangeProbability assigned for future use. Expected delivery Q3 2026."
+      },
+      "DataQualityScore": {
+        "type": "object",
+        "properties": {
+          "vendorRateQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "A score representing the overall vendorRateQuality for this room in this transaction, rounded.",
+            "format": "int32",
+            "example": 75
+          },
+          "augmentedRateQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "A score representing the augmentedRateQuality for this room in this transaction, rounded.",
+            "format": "int32",
+            "example": 65
+          },
+          "rateNotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Note"
+            }
+          },
+          "vendorRoomQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An score representing vendorRoomQuality for this room in this transaction, rounded.",
+            "format": "int32",
+            "example": 35
+          },
+          "augmentedRoomQualityScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer",
+            "description": "An score representing augmentedRoomQuality for this room in this transaction, rounded.",
+            "format": "int32",
+            "example": 85
+          },
+          "roomNotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Note"
+            }
+          }
+        },
+        "description": "The data quality score of the rate."
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "The message of the note.",
+            "example": "Additional information"
+          }
+        },
+        "description": "Note object."
+      },
+      "RatePrice": {
+        "type": "object",
+        "properties": {
+          "partialPriceCache": {
+            "type": "boolean",
+            "description": "If true, the rate price has been partially obtained from cache."
+          },
+          "fullPriceCache": {
+            "type": "boolean",
+            "description": "If true, the rate price has been fully obtained from cache."
+          },
+          "currencyCode": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "example": "GBP"
+          },
+          "base": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalTaxes": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalPrice": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalIncludedFees": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalFeesDueAtProperty": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "predictedPriceChangeDuringStay": {
+            "type": "boolean",
+            "description": "If true, nightly rate breakdown information is missing or invalid. For exact nightly rate breakdown request Hotel Rules."
+          },
+          "taxesIncludedInBase": {
+            "type": "boolean",
+            "description": "If true, taxes are included in the base price."
+          },
+          "resortFeeIncluded": {
+            "type": "boolean",
+            "description": "If true, resort fee is included."
+          },
+          "commission": {
+            "$ref": "#/components/schemas/RateCommission"
+          },
+          "perStayTaxAndFeeBreakdown": {
+            "$ref": "#/components/schemas/StayTaxAndFeeBreakdown"
+          },
+          "nightlyRatesBreakdown": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NightlyRate"
+            }
+          },
+          "estimatedNightlyBase": {
+            "type": "boolean",
+            "description": "If true, nightly rate breakdown information is missing or invalid. For exact nightly rate breakdown request Hotel Rules."
+          },
+          "averageNightlyTotalPrice": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "averageNightlyBase": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "averageNightlyTotalTaxes": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "averageNightlyIncludedFees": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "shortRateDescription": {
+            "type": "string",
+            "description": "A normalized rate description for comparing rates across multiple aggregators.",
+            "example": "Flexible Rate"
+          },
+          "priceNote": {
+            "$ref": "#/components/schemas/Note"
+          }
+        },
+        "description": "The price of the rate."
+      },
+      "RateCommission": {
+        "type": "object",
+        "properties": {
+          "application": {
+            "type": "boolean",
+            "description": "If true, the rate is commissionable."
+          },
+          "percent": {
+            "type": "number",
+            "description": "The percentage of commission paid for this rate.",
+            "example": 10.5
+          },
+          "estimatedPercent": {
+            "type": "boolean",
+            "description": "If true, the penalty percent is an estimate."
+          },
+          "originalCommissionInfo": {
+            "type": "string",
+            "description": "If estimatedPercent is true, the original Provider information will be added here as text.",
+            "example": "commission amount 50.00"
+          }
+        },
+        "description": "The commission information of the rate."
+      },
+      "StayTaxAndFeeBreakdown": {
+        "type": "object",
+        "properties": {
+          "taxes": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RateTax"
+            }
+          },
+          "fees": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RateFee"
+            }
+          }
+        },
+        "description": "The tax and fee breakdown for the stay."
+      },
+      "RateTax": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "taxCode": {
+            "maxLength": 3,
+            "minLength": 1,
+            "type": "string",
+            "description": "The OTA tax code.",
+            "example": "14"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the tax.",
+            "example": "Service Charge"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "The purpose of the tax.",
+            "example": "Mandatory tax"
+          }
+        },
+        "description": "The tax object of the rate price."
+      },
+      "RateFee": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "taxCode": {
+            "maxLength": 3,
+            "minLength": 1,
+            "type": "string",
+            "description": "The OTA tax code.",
+            "example": "14"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the fee.",
+            "example": "Laundry Fee"
+          },
+          "includedInTotalPrice": {
+            "type": "boolean",
+            "description": "If true, the fee is included in the total price. If false, the fee is paid at the property."
+          },
+          "purpose": {
+            "type": "string",
+            "description": "The purpose of the fee.",
+            "example": "Mandatory fee"
+          },
+          "feeApplication": {
+            "$ref": "#/components/schemas/FeeApplication"
+          },
+          "feeFrequency": {
+            "$ref": "#/components/schemas/FeeFrequency"
+          }
+        },
+        "description": "The fee object of the rate price."
+      },
+      "FeeApplication": {
+        "type": "string",
+        "description": "Application values like per person , per room.",
+        "enum": [
+          "PerPerson",
+          "PerRoom",
+          "PerAccommodation",
+          "PerHouse",
+          "PerApartment",
+          "PerAdult",
+          "PerChild"
+        ]
+      },
+      "FeeFrequency": {
+        "type": "string",
+        "description": "Stay frequency like per night, per day.",
+        "enum": [
+          "PerNight",
+          "PerDay",
+          "PerStay",
+          "PerWeek"
+        ]
+      },
+      "NightlyRate": {
+        "type": "object",
+        "properties": {
+          "localDate": {
+            "type": "string",
+            "description": "The local date of the nightly rate.",
+            "format": "date"
+          },
+          "base": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalTaxes": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalPrice": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalIncludedFees": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          },
+          "totalFeesDueAtProperty": {
+            "$ref": "#/components/schemas/MoneyAmount"
+          }
+        },
+        "description": "The nightly rate object containing price information applicable for a night of the stay."
+      },
+      "HighMediumLow": {
+        "type": "string",
+        "description": "Probability enum. priceChangeProbability assigned for future use. Expected delivery Q3 2026.",
+        "enum": [
+          "High",
+          "Medium",
+          "Low"
+        ]
+      },
+      "RateCredit": {
+        "type": "object",
+        "properties": {
+          "creditType": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "The type of the rate credit.",
+            "example": "Spa Access"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "frequency": {
+            "type": "string",
+            "description": "The frequency of the rate credit. Per stay, daily, per person.",
+            "example": "PerStay"
+          }
+        },
+        "description": "The rate credit object."
+      },
+      "Warning": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "A unique code specific to this error. This is a machine-readable and actionable code related to this error.Http standard response code.",
+            "format": "int32",
+            "example": 912
+          },
+          "source": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "The source of this error, either Travelport (TVP) or the carrier or supplier code.",
+            "example": "UA"
+          },
+          "details": {
+            "type": "string",
+            "description": "Human readable details on how to fix the error.",
+            "example": "The 'name' field is required."
+          },
+          "help": {
+            "type": "string",
+            "description": "Not currently supported. A link to the documentation for this request and further information about expected input.",
+            "example": "https://developer.travelport.com/docs/abs123.html"
+          }
+        },
+        "description": "The warning object to show non-critical information."
+      },
+      "Error": {
+        "required": [
+          "code",
+          "source"
+        ],
+        "properties": {
+          "category": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "A category to assist in identifying the error.",
+            "example": "VALIDATION"
+          },
+          "code": {
+            "type": "integer",
+            "description": "A unique code specific to this error. This is a machine-readable and actionable code related to this error.Http standard response code.",
+            "format": "int32",
+            "example": 123
+          },
+          "source": {
+            "maxLength": 10,
+            "type": "string",
+            "description": "The source of this error, either Travelport (TVP) or the carrier or supplier code.",
+            "example": "UA"
+          },
+          "details": {
+            "type": "string",
+            "description": "Human readable details on how to fix the error.",
+            "example": "The 'name' field is required."
+          },
+          "help": {
+            "type": "string",
+            "description": "Not currently supported. A link to the documentation for this request and further information about expected input.",
+            "example": "https://developer.travelport.com/docs/abs123.html"
+          }
+        },
+        "description": "The error object to show critical information."
+      },
+      "TVP-Cache-Status": {
+        "description": "Used to identify when Travelport cache has been used."
+      },
+      "ErrorResponse": {
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Identifier used to correlate API invocations across a multi-call business flow."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request- 400",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HotelSearchResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - 403",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HotelSearchResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not Found - 404",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HotelSearchResponse"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Too Many Requests - 429",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HotelSearchResponse"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error - 500",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HotelSearchResponse"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "TVP-Trace-Id": {
+        "name": "TVP-Trace-Id",
+        "in": "header",
+        "description": "Unique transaction or tracking id for a single request and response.",
+        "required": false,
+        "style": "simple",
+        "explode": false,
+        "schema": {
+          "maxLength": 89,
+          "minLength": 10,
+          "pattern": "(^[a-zA-Z-0-9_]*[-]?[+]?$)",
+          "type": "string"
+        }
+      },
+      "TVP-Enable-Error-Details": {
+        "name": "TVP-Enable-Error-Details",
+        "in": "header",
+        "description": "If set to true, additional details are shown to help identify the root cause of the error.",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      "XAUTH_TRAVELPORT_ACCESSGROUP": {
+        "name": "XAUTH_TRAVELPORT_ACCESSGROUP",
+        "in": "header",
+        "description": "Identifies the Travelport access group with which the caller is associated.",
+        "required": false,
+        "style": "simple",
+        "explode": false,
+        "schema": {
+          "maxLength": 36,
+          "minLength": 36,
+          "pattern": "([a-zA-Z-0-9-_]*)",
+          "type": "string"
+        }
+      },
+      "TVP-Cache-Control": {
+        "name": "TVP-Cache-Control",
+        "in": "header",
+        "description": "Used to control use of cache.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/TVPCacheControl"
+        }
+      },
+      "TVP-Correlation-Id": {
+        "name": "TVP-Correlation-Id",
+        "in": "header",
+        "description": "Identifier used to correlate hotel API advert flow invocations across a multi-call business flow.",
+        "required": false,
+        "style": "simple",
+        "explode": false,
+        "schema": {
+          "type": "string",
+          "format": "uuid",
+          "example": "382c74c3-721d-4f34-80e5-57657b6cbc27"
+        }
+      }
+    },
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "description": "OAUTH2 security schema.",
+        "flows": {
+          "password": {
+            "tokenUrl": "https://oauth.pp.travelport.com/oauth/oauth20/token",
+            "scopes": {}
+          }
+        }
+      }
+    }
+  }
+}

@@ -639,7 +639,15 @@ export function VesselsSection({ operatorId }: { operatorId: string }) {
 }
 
 function ClassEditor({ vesselId, classes }: { vesselId: string; classes: FerryVesselClass[] }) {
-  const [draft, setDraft] = useState({ name: '', capacity: '50', adultFare: '35', childFare: '20' });
+  const [draft, setDraft] = useState({
+    name: '',
+    capacity: '50',
+    adultFare: '35',
+    childFare: '20',
+    residentAdultFare: '35000',
+    residentChildFare: '20000',
+  });
+  const number = (value: string) => Number(value) || 0;
 
   return (
     <div className="p-3">
@@ -648,8 +656,10 @@ function ClassEditor({ vesselId, classes }: { vesselId: string; classes: FerryVe
           <tr className="text-[11px] uppercase tracking-wide text-neutral-500">
             <th className="py-1 pr-3">Class</th>
             <th className="py-1 pr-3">Capacity</th>
-            <th className="py-1 pr-3">Adult</th>
-            <th className="py-1 pr-3">Child</th>
+            <th className="py-1 pr-3">Adult (USD)</th>
+            <th className="py-1 pr-3">Child (USD)</th>
+            <th className="py-1 pr-3">Adult (TZS)</th>
+            <th className="py-1 pr-3">Child (TZS)</th>
           </tr>
         </thead>
         <tbody>
@@ -686,6 +696,26 @@ function ClassEditor({ vesselId, classes }: { vesselId: string; classes: FerryVe
                   }
                 />
               </td>
+              <td className="py-1 pr-3">
+                <input
+                  className="w-24 rounded border border-neutral-200 px-2 py-1"
+                  type="number"
+                  value={fareClass.residentAdultFare}
+                  onChange={(event) =>
+                    upsertVesselClass(vesselId, { ...fareClass, residentAdultFare: Number(event.target.value) || 0 })
+                  }
+                />
+              </td>
+              <td className="py-1 pr-3">
+                <input
+                  className="w-24 rounded border border-neutral-200 px-2 py-1"
+                  type="number"
+                  value={fareClass.residentChildFare}
+                  onChange={(event) =>
+                    upsertVesselClass(vesselId, { ...fareClass, residentChildFare: Number(event.target.value) || 0 })
+                  }
+                />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -710,24 +740,52 @@ function ClassEditor({ vesselId, classes }: { vesselId: string; classes: FerryVe
           value={draft.adultFare}
           onChange={(event) => setDraft({ ...draft, adultFare: event.target.value })}
         />
+        <input
+          className={`${inputClass} w-20`}
+          type="number"
+          value={draft.childFare}
+          onChange={(event) => setDraft({ ...draft, childFare: event.target.value })}
+        />
+        <input
+          className={`${inputClass} w-28`}
+          type="number"
+          value={draft.residentAdultFare}
+          onChange={(event) => setDraft({ ...draft, residentAdultFare: event.target.value })}
+        />
+        <input
+          className={`${inputClass} w-28`}
+          type="number"
+          value={draft.residentChildFare}
+          onChange={(event) => setDraft({ ...draft, residentChildFare: event.target.value })}
+        />
         <button
           type="button"
           className="btn-secondary px-3 py-2 text-xs"
           onClick={() => {
             if (!draft.name.trim()) return;
+            const capacity = number(draft.capacity);
             upsertVesselClass(vesselId, {
               id: createId('fc'),
               name: draft.name.trim(),
-              capacity: Number(draft.capacity) || 0,
-              availableCapacity: Number(draft.capacity) || 0,
-              adultFare: Number(draft.adultFare) || 0,
-              childFare: Number(draft.childFare) || 0,
-              residentAdultFare: (Number(draft.adultFare) || 0) * 1000,
-              residentChildFare: (Number(draft.childFare) || 0) * 1000,
+              capacity,
+              availableCapacity: capacity,
+              adultFare: number(draft.adultFare),
+              childFare: number(draft.childFare),
+              // Residents are charged in TZS; the operator sets that fare, it is not
+              // derived from the non-resident price.
+              residentAdultFare: number(draft.residentAdultFare),
+              residentChildFare: number(draft.residentChildFare),
               currency: 'USD',
               description: `${draft.name.trim()} class`,
             });
-            setDraft({ name: '', capacity: '50', adultFare: '35', childFare: '20' });
+            setDraft({
+              name: '',
+              capacity: '50',
+              adultFare: '35',
+              childFare: '20',
+              residentAdultFare: '35000',
+              residentChildFare: '20000',
+            });
           }}
         >
           <Plus size={14} /> Add class
@@ -812,7 +870,11 @@ export function ManifestSection({ operatorId, mode }: { operatorId: string; mode
             <tbody>
               {bookings.map((booking) => (
                 <tr key={booking.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="py-2 pr-4 font-mono text-xs text-neutral-600">{booking.reference}</td>
+                  <td className="py-2 pr-4 font-mono text-xs text-neutral-600">
+                    {booking.reference}
+                    {/* The traveller quotes the network PNR, so the desk needs to see it. */}
+                    <p className="text-[11px] text-neutral-500">{booking.pnr}</p>
+                  </td>
                   <td className="py-2 pr-4">
                     <p className="font-medium text-neutral-900">{booking.customerName}</p>
                     <p className="text-xs text-neutral-500">{booking.customerPhone || booking.customerEmail}</p>
@@ -820,7 +882,7 @@ export function ManifestSection({ operatorId, mode }: { operatorId: string; mode
                   <td className="py-2 pr-4 text-neutral-600">{booking.seats.join(', ') || '—'}</td>
                   <td className="py-2 pr-4">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      booking.channel === 'otc' ? 'bg-amber-50 text-amber-700' : 'bg-brand-50 text-brand-700'
+                      booking.channel === 'otc' ? 'bg-warning-50 text-warning-700' : 'bg-brand-50 text-brand-700'
                     }`}>
                       {booking.channel === 'otc' ? 'OTC' : 'Online'}
                     </span>

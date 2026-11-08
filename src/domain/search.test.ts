@@ -96,14 +96,14 @@ describe('search now returns results for every mode (F3 regression)', () => {
     expect(results.map((sailing) => sailing.id)).toEqual(['ferry_001', 'ferry_002']);
   });
 
-  it('train: Dar es Salaam SGR Station -> Morogoro SGR Station', () => {
+  it('train: Dar Es Salaam -> Dodoma on the SGR corridor', () => {
     const results = TRAIN_SERVICES.filter(
       (service) =>
-        locationMatches('stn_dar_sgr', [service.departureStation]) &&
-        locationMatches('stn_morogoro_sgr', [service.arrivalStation]),
+        locationMatches('Dar Es Salaam', [service.departureStation]) &&
+        locationMatches('Dodoma', [service.arrivalStation]),
     );
 
-    expect(results.map((service) => service.id)).toEqual(['train_001']);
+    expect(results.map((service) => service.id)).toEqual(['sgr_001', 'sgr_002', 'sgr_003', 'sgr_004', 'sgr_005']);
   });
 
   it('flights: Dar es Salaam -> Zanzibar', () => {

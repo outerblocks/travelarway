@@ -1,4 +1,4 @@
-import type { BusTrip, BusSeatMap, BusSeat, FerrySailing, FlightResult, TrainService, StayProperty, Experience } from '@/types';
+import type { BusTrip, BusSeatMap, BusSeat, FerrySailing, FlightResult, StayProperty, Experience } from '@/types';
 
 function generateSeatMap(
   rows: number,
@@ -534,54 +534,9 @@ export const FLIGHT_RESULTS: FlightResult[] = [
   },
 ];
 
-export const TRAIN_SERVICES: TrainService[] = [
-  {
-    id: 'train_001',
-    operatorName: 'Tanzania Railways Corporation',
-    trainName: 'SGR Express',
-    departureStation: 'Dar es Salaam SGR Station',
-    arrivalStation: 'Morogoro SGR Station',
-    departureTime: '08:00',
-    arrivalTime: '09:30',
-    departureDate: '2026-10-25',
-    duration: '1h 30m',
-    classes: [
-      { id: 'tc_business', name: 'Business Class', fare: 23000, currency: 'TZS', availableSeats: 120, hasSeatSelection: true },
-      { id: 'tc_standard', name: 'Standard Class', fare: 15000, currency: 'TZS', availableSeats: 280, hasSeatSelection: false },
-    ],
-  },
-  {
-    id: 'train_002',
-    operatorName: 'Tanzania Railways Corporation',
-    trainName: 'SGR Express',
-    departureStation: 'Dar es Salaam SGR Station',
-    arrivalStation: 'Dodoma SGR Station',
-    departureTime: '08:00',
-    arrivalTime: '11:30',
-    departureDate: '2026-10-25',
-    duration: '3h 30m',
-    classes: [
-      { id: 'tc_business_2', name: 'Business Class', fare: 50000, currency: 'TZS', availableSeats: 95, hasSeatSelection: true },
-      { id: 'tc_standard_2', name: 'Standard Class', fare: 30000, currency: 'TZS', availableSeats: 220, hasSeatSelection: false },
-    ],
-  },
-  {
-    id: 'train_003',
-    operatorName: 'Kenya Railways',
-    trainName: 'Madaraka Express',
-    departureStation: 'Nairobi Terminus (Madaraka Express)',
-    arrivalStation: 'Mombasa Terminus (Madaraka Express)',
-    departureTime: '09:00',
-    arrivalTime: '13:30',
-    departureDate: '2026-10-25',
-    duration: '4h 30m',
-    classes: [
-      { id: 'tc_first', name: 'First Class', fare: 4400, currency: 'KES', availableSeats: 72, hasSeatSelection: true },
-      { id: 'tc_business_3', name: 'Business Class', fare: 3000, currency: 'KES', availableSeats: 130, hasSeatSelection: true },
-      { id: 'tc_economy', name: 'Economy Class', fare: 1000, currency: 'KES', availableSeats: 310, hasSeatSelection: false },
-    ],
-  },
-];
+// SGR (Dar es Salaam — Dodoma) lives in its own module because it carries real coach
+// inventories and seat maps; these exports keep the existing call sites unchanged.
+export { SGR_TRAIN_SERVICES as TRAIN_SERVICES, SGR_RETURN_SERVICES as TRAIN_RETURN_SERVICES } from '@/data/sgr';
 
 export const STAY_PROPERTIES: StayProperty[] = [
   {

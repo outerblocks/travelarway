@@ -1,63 +1,66 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from '@tanstack/react-router';
 import { Link, useNavigate } from '@/router';
-import { Bus, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Bus, Mail, Lock, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useI18n } from '@/context/I18nContext';
 
+const CONSOLE_PATH = '/hq';
+
 /**
  * HIMS — Travelar HQ Internal Management System
- * Dedicated sign-in page for Bus Operator console access.
+ * Sign-in for the HQ console that oversees the whole network.
  * Intentionally isolated from the public Travelar auth flow.
  */
 export function HimsSignInPage() {
   const navigate = useNavigate();
+  const router = useRouter();
   const { signInWithEmail, loading: authLoading, user } = useAuth();
   const { tp } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const leaving = useRef(false);
 
-  // Already signed in → go straight to the console
-  if (!authLoading && user) {
-    navigate('/hq', { replace: true });
-    return null;
-  }
+  // Fetch the HQ console chunk while the form is still on screen.
+  useEffect(() => {
+    void router.preloadRoute({ to: CONSOLE_PATH });
+  }, [router]);
+
+  // An existing session goes straight to the console. Navigation belongs in an
+  // effect: calling navigate during render re-renders the page and navigates again.
+  useEffect(() => {
+    if (!authLoading && user && !leaving.current) {
+      leaving.current = true;
+      navigate(CONSOLE_PATH, { replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setError('');
     if (!email || !password) {
       setError(tp('pleaseEnterEmailAndPassword'));
       return;
     }
-    setLoading(true);
+    setSubmitting(true);
     const { error: authError } = await signInWithEmail(email, password);
-    setLoading(false);
     if (authError) {
+      setSubmitting(false);
       setError(authError);
       return;
     }
-    navigate('/hq');
+    // Keep the submitting state until unmount so the label never flips back mid-navigation.
+    leaving.current = true;
+    navigate(CONSOLE_PATH, { replace: true });
   };
-
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-ink">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen bg-ink">
       {/* Branding panel — hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 flex-col justify-between p-12 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-br from-ink via-brand-900 to-ink" />
-        <div className="absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-brand-600/20 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
-
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-ink p-12">
         <div className="relative z-10">
           {/* Logo row */}
           <div className="flex items-center gap-3">
@@ -94,7 +97,7 @@ export function HimsSignInPage() {
             ].map((feat) => (
               <div
                 key={feat.label}
-                className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
+                className="rounded-xl border border-white/15 bg-white/8 p-4"
               >
                 <p className="text-sm font-semibold text-white">{feat.label}</p>
                 <p className="mt-0.5 text-xs text-white/50">{feat.desc}</p>
@@ -113,7 +116,7 @@ export function HimsSignInPage() {
       </div>
 
       {/* Auth panel */}
-      <div className="flex w-full flex-col items-center justify-center bg-white px-6 py-12 lg:w-1/2 xl:w-2/5">
+      <div className="flex w-full flex-col items-center justify-center bg-white px-6 py-12 lg:w-1/2">
         <div className="w-full max-w-[400px]">
           {/* Mobile branding */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
@@ -122,12 +125,12 @@ export function HimsSignInPage() {
             </div>
             <div>
               <p className="text-base font-bold text-ink">HIMS</p>
-              <p className="text-[11px] text-neutral-500">Intercity Management System</p>
+              <p className="text-[11px] text-neutral-500">HQ Internal Management System</p>
             </div>
           </div>
 
           {/* Heading */}
-          <div className="mb-8">
+          <div className="mb-8 text-center">
             <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-ink/8">
               <ShieldCheck size={24} className="text-ink" />
             </div>
@@ -139,10 +142,10 @@ export function HimsSignInPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="hims_email" className="input-label">
-                Operator Email
+                {tp('emailLabel')}
               </label>
               <div className="relative">
                 <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
@@ -150,8 +153,10 @@ export function HimsSignInPage() {
                   id="hims_email"
                   type="email"
                   autoComplete="email"
-                  className="input-field pl-10"
-                  placeholder="operator@company.com"
+                  required
+                  disabled={submitting}
+                  className="input-field pl-10 disabled:opacity-60"
+                  placeholder="staff@travelar.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -168,7 +173,9 @@ export function HimsSignInPage() {
                   id="hims_password"
                   type="password"
                   autoComplete="current-password"
-                  className="input-field pl-10"
+                  required
+                  disabled={submitting}
+                  className="input-field pl-10 disabled:opacity-60"
                   placeholder={tp('enterPassword')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -176,19 +183,24 @@ export function HimsSignInPage() {
               </div>
             </div>
 
-            {error && (
-              <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700">
-                {error}
-              </div>
-            )}
+            <div aria-live="polite">
+              {error && (
+                <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700">
+                  {error}
+                </div>
+              )}
+            </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="btn-primary w-full"
             >
-              {loading ? 'Signing in…' : 'Sign In to Console'}
-              {!loading && <ArrowRight size={18} />}
+              {submitting ? (
+                <><Loader2 size={18} className="animate-spin" /> Signing in…</>
+              ) : (
+                <>Sign In to Console <ArrowRight size={18} /></>
+              )}
             </button>
           </form>
 

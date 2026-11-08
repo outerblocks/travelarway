@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { InfoPage } from '@/pages/info/InfoPage';
+import { RefundsPage } from '@/pages/info/RefundsPage';
 
 export const Route = createFileRoute('/cancellation-policy')({
-  component: () => <InfoPage title="Cancellation and Refund Policy" />,
+  component: RefundsPage,
 });

@@ -1,12 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   addDays,
+  formatClock,
+  formatClockMeridiem,
   formatCurrency,
   formatDate,
+  formatDurationLong,
+  formatDurationMinutes,
+  formatIsoDuration,
+  formatScheduleHeading,
   formatTime,
   generateBookingRef,
   generateId,
+  minutesBetweenLocal,
   nightsBetween,
+  parseIsoDate,
+  toIsoDate,
   todayISO,
 } from '@/utils/format';
 
@@ -43,6 +52,20 @@ describe('formatDate / formatTime', () => {
   it('formatTime returns its input unchanged', () => {
     expect(formatTime('08:30')).toBe('08:30');
   });
+
+  it('reads a local clock from a provider timestamp without shifting the hour', () => {
+    expect(formatClock('2026-11-30T22:00:00')).toBe('22:00');
+    expect(formatClock('2026-11-30 10:00:00')).toBe('10:00');
+  });
+
+  it('formats elapsed time from naive local stamps and ISO durations', () => {
+    expect(minutesBetweenLocal('2026-11-30T22:00:00', '2026-12-01T10:20:00')).toBe(740);
+    expect(formatDurationMinutes(740)).toBe('12h 20m');
+    expect(formatIsoDuration('PT10H25M')).toBe('10h 25m');
+    expect(formatDurationLong(465)).toBe('7 hrs 45 mins');
+    expect(formatClockMeridiem('2026-11-30T20:15:00')).toBe('08:15 pm');
+    expect(formatScheduleHeading('2026-11-23T20:15:00')).toBe('23 Nov, 08:15 pm');
+  });
 });
 
 describe('date helpers', () => {
@@ -58,6 +81,21 @@ describe('date helpers', () => {
 
   it('addDays supports negative offsets', () => {
     expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
+  });
+
+  it('formats a local calendar day, never a UTC instant', () => {
+    // Local midnight in Dar es Salaam is 21:00 UTC the day before. toISOString() would
+    // have returned 2026-11-03 for this date.
+    expect(toIsoDate(new Date(2026, 10, 4))).toBe('2026-11-04');
+  });
+
+  it('round-trips a calendar date without drifting', () => {
+    expect(toIsoDate(parseIsoDate('2026-01-05'))).toBe('2026-01-05');
+    expect(toIsoDate(parseIsoDate('2026-12-31'))).toBe('2026-12-31');
+  });
+
+  it('addDays crosses into a new year without drifting', () => {
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
   });
 
   it('nightsBetween counts whole nights', () => {

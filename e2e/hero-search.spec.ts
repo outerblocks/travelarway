@@ -10,10 +10,14 @@ test('landing page sections fit the viewport and render without React hydration 
 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Where to next?' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Popular ways to go' })).toBeAttached();
-  await expect(page.getByRole('heading', { name: 'Explore destinations' })).toBeAttached();
-  await expect(page.getByRole('heading', { name: 'Plan a better trip' })).toBeAttached();
+  await expect(page.getByRole('heading', { name: 'All your travel options in one place' })).toBeAttached();
+  await expect(page.getByRole('heading', { name: 'Planning to travel?' })).toBeAttached();
+  await expect(page.getByRole('heading', { name: 'Travel Guides & Tips' })).toBeAttached();
   await expect(page.getByRole('heading', { name: 'Grow your travel business' })).toBeAttached();
+  // The store badges are the only external images on the page, and both must be present:
+  // a lazily loaded badge that never arrives leaves a hole where a control should be.
+  const badges = page.locator('section[aria-labelledby="app-heading"] button img');
+  await expect(badges).toHaveCount(2);
   const footer = page.locator('footer');
   await expect(footer.getByRole('heading', { name: 'Payment methods available' })).toBeAttached();
   for (const method of ['Visa', 'Mastercard', 'UnionPay', 'Airtel Money', 'M-Pesa', 'Mixx by Yas', 'HaloPesa', 'NMB Bank', 'CRDB Bank', 'NBC Bank']) {
@@ -21,7 +25,7 @@ test('landing page sections fit the viewport and render without React hydration 
   }
   await expect(footer).not.toContainText('Multimodal travel booking for Tanzania and beyond.');
   await expect(footer.getByRole('heading', { name: 'Explore', exact: true })).toHaveCount(0);
-  await expect(footer).toContainText('Operated by OuterBlocks Destinations Limited.');
+  await expect(footer).toContainText('Operated by Incroc Limited.');
 
   const pageWidth = await page.evaluate(() => ({
     content: document.documentElement.scrollWidth,
@@ -92,7 +96,8 @@ test('account and booking access pages follow the saved French locale', async ({
 
   await page.goto('/manage-booking');
   await expect(page.getByRole('heading', { name: 'Gérer votre réservation' })).toBeVisible();
-  await expect(page.getByLabel('Référence de réservation')).toBeVisible();
+  await expect(page.getByText('Retrouvez votre réservation avec le PNR imprimé sur votre billet.')).toBeVisible();
+  await expect(page.getByLabel('PNR')).toBeVisible();
 
   await page.evaluate(() => localStorage.setItem(
     'travelar_auth_user',
@@ -313,16 +318,21 @@ test('hero search card keeps the same height across travel tabs', async ({ page 
   await page.keyboard.press('Escape');
 
   await page.getByLabel('Search Bus').click();
-  await page.getByRole('combobox', { name: 'From' }).click();
+  const busFrom = page.getByRole('combobox', { name: 'From' });
+  await busFrom.click();
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+  await busFrom.fill('Dar');
   const busOptions = page.locator('[role="listbox"] [role="option"]').first();
   await expect(busOptions).toBeVisible();
   await expect(page.getByRole('option', { name: 'Ubungo Terminal' })).toHaveCount(0);
   await expect(page.getByRole('option', { name: 'Magomeni Terminal' })).toHaveCount(0);
   await page.getByRole('option', { name: /Dar es Salaam/ }).click();
-  await page.getByRole('combobox', { name: 'To' }).click();
+  const busTo = page.getByRole('combobox', { name: 'To' });
+  await busTo.click();
+  await busTo.fill('Dod');
   await expect(page.getByRole('option', { name: /^Dar es Salaam/ })).toHaveCount(0);
   await expect(page.getByRole('option', { name: /^Dodoma/ })).toBeVisible();
-  await page.getByRole('combobox', { name: 'To' }).press('Escape');
+  await busTo.press('Escape');
 
   await page.getByRole('combobox', { name: 'From' }).click();
   const busOptionIsOnTop = await busOptions.evaluate((element) => {
@@ -336,7 +346,10 @@ test('hero search card keeps the same height across travel tabs', async ({ page 
   expect(busOptionIsOnTop, 'Bus autocomplete options should render above the card').toBe(true);
 
   await page.getByLabel('Search Flight').click();
-  await page.getByRole('combobox', { name: 'Origin Airport' }).click();
+  const flightOrigin = page.getByRole('combobox', { name: 'Origin Airport' });
+  await flightOrigin.click();
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+  await flightOrigin.fill('DAR');
   const flightOptions = page.locator('[role="listbox"] [role="option"]').first();
   await expect(flightOptions).toBeVisible();
   const flightOptionIsOnTop = await flightOptions.evaluate((element) => {

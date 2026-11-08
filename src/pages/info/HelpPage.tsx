@@ -1,12 +1,11 @@
 import { Link } from '@/router';
-import { HelpCircle, Ticket, CreditCard, Ban, User, ChevronRight } from 'lucide-react';
 import { useI18n, type Language } from '@/context/I18nContext';
 
 const HELP_TOPICS = [
-  { icon: Ticket, link: '/manage-booking' },
-  { icon: CreditCard, link: '/cancellation-policy' },
-  { icon: Ban, link: '/cancellation-policy' },
-  { icon: User, link: '/signin' },
+  { label: '1', link: '/manage-booking' },
+  { label: '2', link: '/cancellation-policy' },
+  { label: '3', link: '/cancellation-policy' },
+  { label: '4', link: '/signin' },
 ];
 
 const HELP_COPY: Record<Language, {
@@ -64,12 +63,9 @@ export function HelpPage() {
 
   return (
     <div className="bg-background">
-      <div className="section-container py-14">
+      <div className="section-container py-8 sm:py-14">
         <div className="mx-auto max-w-3xl">
-          <div className="mb-10">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-ink">
-              <HelpCircle size={24} className="text-accent" />
-            </div>
+          <div className="mb-10 text-center">
             <h1 className="mb-2 font-display text-page font-bold text-ink">{copy.title}</h1>
             <p className="text-body text-neutral-600">{copy.intro}</p>
           </div>
@@ -78,23 +74,20 @@ export function HelpPage() {
             {HELP_TOPICS.map((topic, index) => (
               <Link key={topic.link + index} to={topic.link} className="card group p-5">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-background">
-                    <topic.icon size={20} className="text-ink" />
-                  </div>
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-sm bg-ink text-label font-bold text-white">{topic.label}</div>
                   <div className="flex-1">
                     <h3 className="mb-1 font-display text-listing font-bold text-ink">{copy.topics[index].title}</h3>
                     <p className="text-body text-neutral-500">{copy.topics[index].description}</p>
                   </div>
-                  <ChevronRight size={18} className="text-neutral-300 transition-colors group-hover:text-ink" />
-                </div>
+                                  </div>
               </Link>
             ))}
           </div>
 
-          <div className="mt-8 rounded-2xl bg-ink p-6 text-white">
+          <div className="mt-8 rounded-xl bg-ink p-5 sm:p-6 text-white">
             <h3 className="mb-2 font-display text-listing font-bold">{copy.moreTitle}</h3>
             <p className="mb-4 text-body text-white/70">{copy.moreDescription}</p>
-            <Link to="/contact" className="btn-gold">{copy.contact}</Link>
+            <Link to="/contact" className="btn-light">{copy.contact}</Link>
           </div>
         </div>
       </div>

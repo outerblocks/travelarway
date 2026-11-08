@@ -1,0 +1,5 @@
+---
+description: Mandatory Travelar engineering governance for Cursor Agent tasks.
+alwaysApply: true
+---
+Follow repository `AGENTS.md` and applicable `.agents/skills/*/SKILL.md`. For non-trivial changes, use Plan mode first, cite approved requirement IDs, identify gaps and propose ADR/requirement changes before encoding new rules. Work in a bounded task branch. Run actual tests and report commands/results; do not claim completion from UI or agent confidence. Never expose production secrets or live customer data. Do not perform production deployment, live payment/refund, destructive DB operations or financial/permission changes without explicit human approval. Protect source of truth and report unresolved blockers.

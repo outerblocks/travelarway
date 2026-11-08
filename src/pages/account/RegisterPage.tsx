@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate } from '@/router';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { SocialLoginButtons } from '@/components/shared/SocialLoginButtons';
 import { useAuth } from '@/context/AuthContext';
@@ -19,6 +18,7 @@ export function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
     if (!fullName || !email || !password) {
       setError(tp('requiredFields'));
@@ -34,22 +34,20 @@ export function RegisterPage() {
     }
     setLoading(true);
     const { error: authError } = await signUpWithEmail(email, password);
-    setLoading(false);
     if (authError) {
+      setLoading(false);
       setError(authError);
       return;
     }
+    // Stay in the loading state until this page unmounts so the label never flips
+    // back for a frame in the middle of navigation.
     navigate('/');
   };
 
   return (
     <div className="flex min-h-screen bg-background">
       {/* Left branding panel — equal 50% width, hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-ink via-brand-900/90 to-brand-800" />
-        <div className="absolute -bottom-40 -right-40 h-[520px] w-[520px] rounded-full bg-brand-600/15 blur-3xl" />
-        <div className="absolute top-0 left-1/2 h-[300px] w-[300px] rounded-full bg-accent/8 blur-3xl" />
-
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-ink p-12">
         <div className="relative z-10">
           <Link to="/" className="inline-flex">
             <Logo size="lg" variant="light" />
@@ -78,49 +76,45 @@ export function RegisterPage() {
       </div>
 
       {/* Right auth panel — equal 50% */}
-      <div className="flex w-full flex-col items-center justify-center px-6 py-12 lg:w-1/2">
+      <div className="flex w-full flex-col items-center justify-center px-5 py-8 sm:px-6 sm:py-12 lg:w-1/2">
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="mb-8 text-center lg:hidden">
             <Link to="/" className="inline-flex justify-center"><Logo size="lg" /></Link>
           </div>
 
-          <div className="card p-8">
-            <h1 className="mb-2 font-display text-page font-bold text-ink">{tp('createAccountTitle')}</h1>
-            <p className="text-body text-neutral-500 mb-6">{tp('registerIntro')}</p>
+          <div className="card p-6 sm:p-8">
+            <h1 className="mb-2 text-center font-display text-page font-bold text-ink">{tp('createAccountTitle')}</h1>
+            <p className="text-center text-body text-neutral-500 mb-6">{tp('registerIntro')}</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="reg_name" className="input-label">{tp('fullNameLabel')}</label>
-                <div className="relative">
-                  <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input id="reg_name" name="name" type="text" autoComplete="name" className="input-field pl-10" placeholder={tp('enterFullNamePlaceholder')} value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                <div>
+                  <input id="reg_name" name="name" type="text" autoComplete="name" className="input-field" placeholder={tp('enterFullNamePlaceholder')} value={fullName} onChange={(e) => setFullName(e.target.value)} />
                 </div>
               </div>
               <div>
                 <label htmlFor="reg_email" className="input-label">{tp('emailLabel')}</label>
-                <div className="relative">
-                  <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input id="reg_email" name="email" type="email" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} className="input-field pl-10" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <div>
+                  <input id="reg_email" name="email" type="email" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} className="input-field" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
               </div>
               <div>
                 <label htmlFor="reg_password" className="input-label">{tp('passwordLabel')}</label>
-                <div className="relative">
-                  <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input id="reg_password" name="password" type="password" autoComplete="new-password" className="input-field pl-10" placeholder={tp('atLeastSixChars')} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <div>
+                  <input id="reg_password" name="password" type="password" autoComplete="new-password" className="input-field" placeholder={tp('atLeastSixChars')} value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
               </div>
               <div>
                 <label htmlFor="reg_confirm" className="input-label">{tp('confirmPasswordLabel')}</label>
-                <div className="relative">
-                  <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input id="reg_confirm" name="confirmPassword" type="password" autoComplete="new-password" className="input-field pl-10" placeholder={tp('reenterPassword')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                <div>
+                  <input id="reg_confirm" name="confirmPassword" type="password" autoComplete="new-password" className="input-field" placeholder={tp('reenterPassword')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </div>
               </div>
               {error && <p className="text-body text-error-600">{error}</p>}
               <button type="submit" disabled={loading} className="btn-primary w-full">
-                {loading ? tp('creatingAccount') : tp('createAccountTitle')} <ArrowRight size={18} />
+                {loading ? tp('creatingAccount') : tp('createAccountTitle')}
               </button>
             </form>
 

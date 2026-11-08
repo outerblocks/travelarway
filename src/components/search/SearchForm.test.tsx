@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createMemoryHistory,
   createRootRoute,
@@ -16,7 +16,54 @@ import type { BookingMode } from '@/types';
 // Multi-city is the only part of the search form that grows: each leg adds three
 // fields, and the traveller can add or remove trailing legs.
 
+/**
+ * The card now asks the database which places a mode runs between, so the tests answer as
+ * the endpoint would. What the *server* returns per mode is covered by its own tests; what is
+ * covered here is that the card renders the list it was given and excludes the far end.
+ */
+const PLACES_BY_MODE: Record<string, { name: string; kind: string; region: string | null }[]> = {
+  flights: [
+    { name: 'Julius Nyerere International Airport', kind: 'airport', region: 'Dar es Salaam' },
+    { name: 'Kilimanjaro International Airport', kind: 'airport', region: 'Kilimanjaro' },
+  ],
+  bus: [
+    { name: 'Dar es Salaam', kind: 'city', region: 'Dar es Salaam' },
+    { name: 'Arusha', kind: 'city', region: 'Arusha' },
+    { name: 'Dodoma', kind: 'city', region: 'Dodoma' },
+    { name: 'Babati', kind: 'town', region: 'Manyara' },
+  ],
+  train: [{ name: 'Dar es Salaam SGR Station', kind: 'station', region: 'Dar es Salaam' }],
+  ferry: [{ name: 'Zanzibar', kind: 'port', region: null }],
+  stays: [{ name: 'Arusha', kind: 'city', region: 'Arusha' }],
+  experiences: [{ name: 'Arusha', kind: 'city', region: 'Arusha' }],
+};
+
+function stubLocationsEndpoint() {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (!url.includes('/api/locations')) return Response.json({ data: [] });
+      const mode = new URL(url, 'http://localhost').searchParams.get('mode') ?? 'bus';
+      const places = PLACES_BY_MODE[mode] ?? [];
+      return Response.json({
+        data: places.map((place, index) => ({
+          id: `location-${mode}-${index}`,
+          name: place.name,
+          code: place.name.slice(0, 3).toUpperCase(),
+          kind: place.kind,
+          countryCode: 'TZ',
+          source: 'reference',
+          region: place.region,
+        })),
+        count: places.length,
+      });
+    }),
+  );
+}
+
 async function renderForm(mode: BookingMode = 'flights') {
+  stubLocationsEndpoint();
   const rootRoute = createRootRoute({ component: Outlet });
   const homeRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -45,6 +92,10 @@ async function renderForm(mode: BookingMode = 'flights') {
 
 const legFieldCount = (container: HTMLElement) =>
   container.querySelectorAll('input[id^="leg_"]').length;
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 async function chooseMultiCity() {
   const { container } = await renderForm();
@@ -104,8 +155,13 @@ describe('SearchForm flight trip types', () => {
   it('opens autocomplete and date-picker popups below their fields', async () => {
     await renderForm('bus');
 
-    fireEvent.focus(screen.getByRole('combobox', { name: /From/ }));
-    expect(screen.getByRole('listbox')).toHaveClass('top-full');
+    const from = screen.getByRole('combobox', { name: /From/ });
+    fireEvent.focus(from);
+    expect(from).toHaveAttribute('autocomplete', 'off');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(screen.getByText('Start typing to search')).toBeInTheDocument();
+    fireEvent.change(from, { target: { value: 'Dar' } });
+    expect(await screen.findByRole('listbox')).toHaveClass('top-full');
 
     fireEvent.click(screen.getByRole('textbox', { name: /Departure Date/ }));
     expect(screen.getByRole('dialog', { name: /Departure Date/ })).toHaveClass('top-full');
@@ -126,6 +182,28 @@ describe('SearchForm flight trip types', () => {
     expect(screen.getByRole('button', { name: /Travelers: 3 travelers/ })).toHaveTextContent('3 travelers');
     expect(screen.getByRole('button', { name: /Travelers: 3 travelers/ })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+  });
+
+  it('does not require a second place for stays search', async () => {
+    await renderForm('stays');
+    fireEvent.click(screen.getByRole('button', { name: /Search Stays/ }));
+    expect(screen.getByText('Please select a departure location')).toBeInTheDocument();
+    expect(screen.queryByText('Please select a destination')).not.toBeInTheDocument();
+  });
+
+  it('navigates to stays results without a second place', async () => {
+    await renderForm('stays');
+    const destination = screen.getByRole('combobox', { name: /Destination/ });
+    fireEvent.focus(destination);
+    fireEvent.change(destination, { target: { value: 'Aru' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Arusha/ }));
+    fireEvent.click(screen.getByPlaceholderText('Select check-in'));
+    fireEvent.click(screen.getAllByRole('button', { name: /^[0-9]+$/ }).find((button) => !button.hasAttribute('disabled'))!);
+    fireEvent.click(screen.getByPlaceholderText('Select check-out'));
+    const checkoutDays = screen.getAllByRole('button', { name: /^[0-9]+$/ }).filter((button) => !button.hasAttribute('disabled'));
+    fireEvent.click(checkoutDays[Math.min(1, checkoutDays.length - 1)]);
+    fireEvent.click(screen.getByRole('button', { name: /Search Stays/ }));
+    expect(await screen.findByText('RESULTS PAGE')).toBeInTheDocument();
   });
 
   it('includes rooms in the stays summary and closes the dropdown with Escape', async () => {
@@ -150,28 +228,39 @@ describe('SearchForm flight trip types', () => {
   it('does not offer the selected origin as a flight destination', async () => {
     await renderForm();
 
-    fireEvent.focus(screen.getByRole('combobox', { name: /Origin Airport/ }));
-    fireEvent.click(screen.getByRole('option', { name: /Julius Nyerere International Airport/ }));
-    fireEvent.focus(screen.getByRole('combobox', { name: /Destination Airport/ }));
+    const origin = screen.getByRole('combobox', { name: /Origin Airport/ });
+    fireEvent.focus(origin);
+    fireEvent.change(origin, { target: { value: 'Julius' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Julius Nyerere International Airport/ }));
+    const destination = screen.getByRole('combobox', { name: /Destination Airport/ });
+    fireEvent.focus(destination);
+    fireEvent.change(destination, { target: { value: 'Kili' } });
 
-    expect(
-      screen.queryByRole('option', { name: /Julius Nyerere International Airport/ }),
-    ).not.toBeInTheDocument();
+    await expect
+      .poll(() => screen.queryByRole('option', { name: /Julius Nyerere International Airport/ }))
+      .toBeNull();
   });
 
   it('offers bus cities rather than terminals and excludes the selected origin from the destination', async () => {
     await renderForm('bus');
 
-    fireEvent.focus(screen.getByRole('combobox', { name: /From/ }));
+    const from = screen.getByRole('combobox', { name: /From/ });
+    fireEvent.focus(from);
+    fireEvent.change(from, { target: { value: 'Dar' } });
+    const darOption = await screen.findByRole('option', { name: /^Dar es Salaam City · Tanzania$/ });
+    // A bus terminus is a place you board at, not a place you can travel to from the card.
+    expect(darOption).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /Ubungo Terminal/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /Magomeni Terminal/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('option', { name: /^Dar es Salaam Dar es Salaam, Tanzania$/ }));
-    fireEvent.focus(screen.getByRole('combobox', { name: /To/ }));
+    fireEvent.click(darOption);
+    const to = screen.getByRole('combobox', { name: /To/ });
+    fireEvent.focus(to);
+    fireEvent.change(to, { target: { value: 'Dod' } });
 
-    expect(
-      screen.queryByRole('option', { name: /^Dar es Salaam Dar es Salaam, Tanzania$/ }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /^Dodoma Dodoma, Tanzania$/ })).toBeInTheDocument();
+    await expect
+      .poll(() => screen.queryByRole('option', { name: /^Dar es Salaam City · Tanzania$/ }))
+      .toBeNull();
+    expect(await screen.findByRole('option', { name: /^Dodoma City · Tanzania$/ })).toBeInTheDocument();
   });
 
   it('shows two legs with three labelled fields each when multi-city is chosen', async () => {

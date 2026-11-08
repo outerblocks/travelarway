@@ -1,10 +1,3 @@
-import {
-  EXPERIENCES,
-  FLIGHT_RESULTS,
-  STAY_PROPERTIES,
-  TRAIN_SERVICES,
-} from '@/data/mockData';
-import { getBusTrip, getFerrySailing } from '@/data/operations';
 import { formatMoney } from '@/domain/money';
 import { nightsBetween } from '@/utils/format';
 import type {
@@ -35,6 +28,27 @@ export interface Quote {
 }
 
 export type Residency = 'resident' | 'non_resident';
+
+/** Resident passengers are charged in TZS, non-residents in the class currency (USD). */
+export const RESIDENT_CURRENCY = 'TZS';
+
+/**
+ * The fare pair that applies to a residency. Single source of truth so the search
+ * card, the class picker, the review and the ticket can never disagree.
+ */
+export function ferryFares(fareClass: FerryVesselClass, residency: Residency) {
+  return residency === 'resident'
+    ? {
+        currency: RESIDENT_CURRENCY,
+        adultFare: fareClass.residentAdultFare,
+        childFare: fareClass.residentChildFare,
+      }
+    : {
+        currency: fareClass.currency,
+        adultFare: fareClass.adultFare,
+        childFare: fareClass.childFare,
+      };
+}
 
 /** Children pay half the adult bus fare. */
 const CHILD_FARE_RATE = 0.5;
@@ -69,10 +83,11 @@ export function quoteFerrySailing(
   adults: number,
   children: number,
 ): Quote {
-  const adultFare = residency === 'resident' ? fareClass.residentAdultFare : fareClass.adultFare;
-  const childFare = residency === 'resident' ? fareClass.residentChildFare : fareClass.childFare;
+  const { currency, adultFare, childFare } = ferryFares(fareClass, residency);
 
-  const lines: QuoteLine[] = [{ label: `Adult (${adults})`, amount: adultFare * adults }];
+  const lines: QuoteLine[] = [
+    { label: `Adult (${adults})`, amount: adultFare * adults },
+  ];
   if (children > 0) {
     lines.push({ label: `Child (${children})`, amount: childFare * children });
   }
@@ -80,8 +95,9 @@ export function quoteFerrySailing(
 
   return {
     mode: 'ferry',
-    currency: fareClass.currency,
-    total: adultFare * adults + childFare * children,
+    currency,
+    // Derived from the lines so the total can never disagree with what the customer sees.
+    total: sumLines(lines),
     lines,
   };
 }
@@ -94,6 +110,25 @@ export function quoteTrainService(fareClass: TrainClass, passengerCount: number)
     currency: fareClass.currency,
     total,
     lines: [{ label: `Fare (${passengerCount} pax)`, amount: total }],
+  };
+}
+
+export function quoteTrainRoundTrip(
+  departureClass: TrainClass,
+  returnClass: TrainClass,
+  passengerCount: number,
+): Quote {
+  const departureTotal = departureClass.fare * passengerCount;
+  const returnTotal = returnClass.fare * passengerCount;
+
+  return {
+    mode: 'train',
+    currency: departureClass.currency,
+    total: departureTotal + returnTotal,
+    lines: [
+      { label: `Departure fare (${passengerCount} pax)`, amount: departureTotal },
+      { label: `Return fare (${passengerCount} pax)`, amount: returnTotal },
+    ],
   };
 }
 
@@ -126,7 +161,7 @@ export function quoteFlight(flight: FlightResult, passengerCount: number): Quote
     mode: 'flights',
     currency: flight.currency,
     total: flight.totalPrice,
-    lines: [{ label: `Base fare (${passengerCount} pax)`, amount: flight.totalPrice }],
+    lines: [{ label: `Fare (${passengerCount} pax, all segments)`, amount: flight.totalPrice }],
   };
 }
 
@@ -143,60 +178,16 @@ export function stayRoomsOf(params: SearchParams): number {
 }
 
 /**
- * Resolves the quote for the booking currently held in AppContext, using the
- * same lookups each review page performs. Returns null when the selected
- * service cannot be resolved (e.g. a reloaded page with no search state).
+ * Client-side catalogue quotes are gone. Bus and train price from the server;
+ * unmodelled modes have no inventory, so there is nothing to quote.
  */
-export function quoteForBooking(input: {
+export function quoteForBooking(_input: {
   params: SearchParams;
   passengerCount: number;
   selectedServiceId?: string | null;
   selectedClassId?: string | null;
 }): Quote | null {
-  const { params, passengerCount, selectedServiceId, selectedClassId } = input;
-  const extras = params.extras ?? {};
-
-  switch (params.mode) {
-    case 'bus': {
-      const trip = getBusTrip(extras.tripId || selectedServiceId);
-      return trip ? quoteBusTrip(trip, params.adults, params.children) : null;
-    }
-
-    case 'ferry': {
-      const sailing = getFerrySailing(extras.sailingId);
-      const fareClass = sailing?.classes.find(
-        (candidate) => candidate.id === (extras.selectedClassId || selectedClassId),
-      );
-      return fareClass
-        ? quoteFerrySailing(fareClass, residencyOf(params), params.adults, params.children)
-        : null;
-    }
-
-    case 'train': {
-      const service = TRAIN_SERVICES.find((candidate) => candidate.id === extras.trainId);
-      const fareClass = service?.classes.find((candidate) => candidate.id === extras.classId);
-      return fareClass ? quoteTrainService(fareClass, passengerCount) : null;
-    }
-
-    case 'flights': {
-      const flight = FLIGHT_RESULTS.find((candidate) => candidate.id === extras.flightId);
-      return flight ? quoteFlight(flight, passengerCount) : null;
-    }
-
-    case 'stays': {
-      const property = STAY_PROPERTIES.find((candidate) => candidate.id === extras.propertyId);
-      const room = property?.rooms.find((candidate) => candidate.id === extras.roomId);
-      return room ? quoteStay(room, stayNightsOf(params), stayRoomsOf(params)) : null;
-    }
-
-    case 'experiences': {
-      const experience = EXPERIENCES.find((candidate) => candidate.id === extras.experienceId);
-      return experience ? quoteExperience(experience, params.adults) : null;
-    }
-
-    default:
-      return null;
-  }
+  return null;
 }
 
 function sumLines(lines: QuoteLine[]): number {

@@ -25,3 +25,11 @@ test-results
 *.sln
 *.sw?
 .env
+.env.*
+!.env.example
+
+# TypeScript incremental build state (tsc -b).
+*.tsbuildinfo
+
+# Raw OurAirports dump used only to build db/datasets/iata-airports.json
+db/datasets/ourairports-airports.csv

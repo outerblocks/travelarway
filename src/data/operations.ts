@@ -1,8 +1,3 @@
-import {
-  BUS_TRIPS,
-  FERRY_SAILINGS,
-} from '@/data/mockData';
-import { BUS_OPERATORS, FERRY_OPERATORS } from '@/data/operatorData';
 import type { BusStop, BusTrip, FerrySailing, FerryVesselClass } from '@/types';
 
 /**
@@ -98,7 +93,14 @@ export interface OpsSchedule {
 
 export interface OpsBooking {
   id: string;
+  /** Internal booking reference the operator's own system knows it by. */
   reference: string;
+  /**
+   * Passenger Name Record: the single code a traveller uses to find their ticket,
+   * whatever operator sold the seat. One namespace across the network, so the lookup
+   * never needs to know who runs the departure.
+   */
+  pnr: string;
   operatorId: string;
   mode: OpsMode;
   scheduleId: string;
@@ -148,208 +150,60 @@ export const BUS_AMENITIES = [
   'Blanket',
 ];
 
-// ─── Seed ──────────────────────────────────────────────────────────────────
+// ─── PNR ───────────────────────────────────────────────────────────────────
+
+const PNR_PREFIX = 'TRV-';
+// Ambiguity-free alphabet: no 0/O or 1/I, because passengers read these off a ticket
+// over the phone.
+const PNR_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/**
+ * Accepts whatever a traveller types - lower case, spaces, a missing dash, or no
+ * prefix at all - and returns the canonical `TRV-XXXXXX`, or null when the input
+ * cannot be a PNR.
+ */
+export function normalizePnr(input: string): string | null {
+  const cleaned = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const body = cleaned.length === 9 && cleaned.startsWith(PNR_PREFIX.replace('-', ''))
+    ? cleaned.slice(3)
+    : cleaned;
+  if (body.length !== 6) return null;
+  return `${PNR_PREFIX}${body}`;
+}
+
+function randomPnr(): string {
+  let suffix = '';
+  for (let index = 0; index < 6; index += 1) {
+    suffix += PNR_ALPHABET[Math.floor(Math.random() * PNR_ALPHABET.length)];
+  }
+  return `${PNR_PREFIX}${suffix}`;
+}
+
+// ─── Seed ─────────────────────────────────────────────────────────────────
 
 function minutesOf(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 }
 
-function routeFromTrip(trip: BusTrip): { route: OpsRoute; schedule: OpsSchedule } {
-  const stops: RouteStop[] = [
-    { id: `${trip.id}_s0`, name: trip.serviceOrigin, terminal: trip.departureTerminal, offsetMinutes: 0 },
-    ...trip.intermediateStops.map((stop, index) => ({
-      id: `${trip.id}_s${index + 1}`,
-      name: stop.name,
-      terminal: stop.location,
-      offsetMinutes: Math.max(0, minutesOf(stop.time) - minutesOf(trip.departureTime)),
-    })),
-  ].sort((a, b) => a.offsetMinutes - b.offsetMinutes);
-
-  const route: OpsRoute = {
-    id: `route_${trip.id}`,
-    operatorId: trip.operatorId,
-    mode: 'bus',
-    name: `${trip.serviceOrigin} → ${trip.serviceDestination}`,
-    stops,
-    segmentFares: [
-      { fromStopId: stops[0].id, toStopId: stops[stops.length - 1].id, fare: trip.segmentFare },
-    ],
-  };
-
-  const schedule: OpsSchedule = {
-    id: trip.id,
-    operatorId: trip.operatorId,
-    mode: 'bus',
-    routeId: route.id,
-    vehicleId: `veh_${trip.registrationNumber.replace(/\W+/g, '_')}`,
-    vesselId: null,
-    departureTime: trip.departureTime,
-    arrivalTime: trip.arrivalTime,
-    duration: trip.duration,
-    departureDate: trip.departureDate,
-    arrivalDate: trip.arrivalDate,
-    currency: trip.currency,
-    status: 'scheduled',
-    seatsForSale: trip.availableSeats,
-    boardingPoints: trip.boardingPoints,
-    dropOffPoints: trip.dropOffPoints,
-  };
-
-  return { route, schedule };
-}
-
-function routeFromSailing(sailing: FerrySailing): OpsRoute {
+function emptyOperationsState(): OperationsState {
   return {
-    id: `route_${sailing.id}`,
-    operatorId: sailing.operatorId,
-    mode: 'ferry',
-    name: `${sailing.departurePort} → ${sailing.arrivalPort}`,
-    stops: [
-      { id: `${sailing.id}_p0`, name: sailing.departurePort, terminal: sailing.departurePort, offsetMinutes: 0 },
-      {
-        id: `${sailing.id}_p1`,
-        name: sailing.arrivalPort,
-        terminal: sailing.arrivalPort,
-        offsetMinutes: Math.max(0, minutesOf(sailing.arrivalTime) - minutesOf(sailing.departureTime)),
-      },
-    ],
-    segmentFares: [],
+    operators: [],
+    routes: [],
+    seatMaps: [],
+    vehicles: [],
+    vessels: [],
+    schedules: [],
+    bookings: [],
   };
 }
 
-function seatMapFromTrip(trip: BusTrip): SeatMapConfig {
-  return {
-    id: `sm_${trip.registrationNumber.replace(/\W+/g, '_')}`,
-    operatorId: trip.operatorId,
-    name: `${trip.busModel} · ${trip.seatMap.rows} rows`,
-    rows: trip.seatMap.rows,
-    columns: trip.seatMap.columns,
-  };
-}
-
-function buildSeedState(): OperationsState {
-  const operators: OpsOperator[] = [
-    ...BUS_OPERATORS.map((operator) => ({
-      id: operator.operatorId,
-      mode: 'bus' as const,
-      name: operator.operatorName,
-      logo: operator.operatorLogo,
-      contactEmail: `ops@${operator.operatorName.toLowerCase().replace(/\W+/g, '')}.co.tz`,
-      contactPhone: '+255 22 000 0000',
-      hqApproved: true,
-    })),
-    ...FERRY_OPERATORS.map((operator) => ({
-      id: operator.operatorId,
-      mode: 'ferry' as const,
-      name: operator.operatorName,
-      logo: operator.operatorLogo,
-      contactEmail: `ops@${operator.operatorName.toLowerCase().replace(/\W+/g, '')}.co.tz`,
-      contactPhone: '+255 24 000 0000',
-      hqApproved: true,
-    })),
-  ];
-
-  const routes: OpsRoute[] = [];
-  const schedules: OpsSchedule[] = [];
-  const seatMaps: SeatMapConfig[] = [];
-  const vehicles: OpsVehicle[] = [];
-
-  for (const trip of BUS_TRIPS) {
-    const { route, schedule } = routeFromTrip(trip);
-    routes.push(route);
-    schedules.push(schedule);
-
-    const seatMap = seatMapFromTrip(trip);
-    if (!seatMaps.some((map) => map.id === seatMap.id)) seatMaps.push(seatMap);
-
-    const vehicleId = `veh_${trip.registrationNumber.replace(/\W+/g, '_')}`;
-    if (!vehicles.some((vehicle) => vehicle.id === vehicleId)) {
-      vehicles.push({
-        id: vehicleId,
-        operatorId: trip.operatorId,
-        registrationNumber: trip.registrationNumber,
-        model: trip.busModel,
-        busClass: trip.busClass,
-        seatMapId: seatMap.id,
-        amenities: [...trip.amenities],
-        status: 'active',
-        lastService: '2026-10-15',
-        mileage: 0,
-      });
-    }
-  }
-
-  const vessels: OpsVessel[] = [];
-  for (const sailing of FERRY_SAILINGS) {
-    if (!routes.some((route) => route.id === `route_${sailing.id}`)) {
-      routes.push(routeFromSailing(sailing));
-    }
-
-    schedules.push({
-      id: sailing.id,
-      operatorId: sailing.operatorId,
-      mode: 'ferry',
-      routeId: `route_${sailing.id}`,
-      vehicleId: null,
-      vesselId: `fsv_${sailing.id}`,
-      departureTime: sailing.departureTime,
-      arrivalTime: sailing.arrivalTime,
-      duration: sailing.duration,
-      departureDate: sailing.departureDate,
-      arrivalDate: sailing.arrivalDate,
-      currency: sailing.classes[0]?.currency ?? 'TZS',
-      status: 'scheduled',
-      seatsForSale: null,
-      boardingPoints: [],
-      dropOffPoints: [],
-    });
-
-    if (!vessels.some((vessel) => vessel.id === `fsv_${sailing.id}`)) {
-      vessels.push({
-        id: `fsv_${sailing.id}`,
-        operatorId: sailing.operatorId,
-        name: sailing.vesselName,
-        capacity: sailing.classes.reduce((sum, fareClass) => sum + fareClass.capacity, 0),
-        status: 'active',
-        lastInspection: '2026-09-15',
-        yearBuilt: 2018,
-        classes: sailing.classes.map((fareClass) => ({ ...fareClass })),
-      });
-    }
-  }
-
-  const bookings: OpsBooking[] = [...BUS_OPERATORS, ...FERRY_OPERATORS].flatMap((operator) =>
-    operator.bookings.map((booking, index) => ({
-      id: booking.id,
-      reference: booking.reference,
-      operatorId: operator.operatorId,
-      mode: 'sailings' in operator ? 'ferry' : 'bus',
-      scheduleId: booking.serviceId,
-      routeLabel: booking.route,
-      date: booking.date,
-      passengers: booking.passengers,
-      seats: [...booking.seatNumbers],
-      classBooked: booking.classBooked,
-      amount: booking.amount,
-      currency: booking.currency,
-      status: booking.status,
-      // Counter sales are the ones issued at the operator desk, not online.
-      channel: index % 5 === 0 ? 'otc' : 'online',
-      soldBy: index % 5 === 0 ? 'OTC desk' : undefined,
-      customerName: booking.customerName,
-      customerPhone: booking.customerPhone,
-      customerEmail: booking.customerEmail,
-      bookedAt: booking.bookedAt,
-    })),
-  );
-
-  return { operators, routes, seatMaps, vehicles, vessels, schedules, bookings };
-}
-
-// ─── Store ─────────────────────────────────────────────────────────────────
-
-let state: OperationsState = buildSeedState();
+/**
+ * OIMS/HIMS start empty. Operators, routes, schedules and bookings appear only after
+ * they are recorded here (or later, from the API). Seeded mock catalogues are not
+ * a substitute for inventory that has not been provisioned.
+ */
+let state: OperationsState = emptyOperationsState();
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -374,6 +228,26 @@ let counter = 0;
 export function createId(prefix: string): string {
   counter += 1;
   return `${prefix}_${Date.now().toString(36)}${counter}`;
+}
+
+/** A PNR that no booking on the network already holds. */
+function unusedPnr(): string {
+  const taken = new Set(state.bookings.map((booking) => booking.pnr));
+  let candidate = randomPnr();
+  while (taken.has(candidate)) {
+    candidate = randomPnr();
+  }
+  return candidate;
+}
+
+/**
+ * The one lookup a traveller needs: a PNR returns their booking whichever operator
+ * sold it. Matching ignores case, spacing and the prefix.
+ */
+export function findBookingByPnr(input: string): OpsBooking | null {
+  const wanted = normalizePnr(input);
+  if (!wanted) return null;
+  return state.bookings.find((booking) => booking.pnr === wanted) ?? null;
 }
 
 // ─── Reads ─────────────────────────────────────────────────────────────────
@@ -433,7 +307,27 @@ function stopByName(route: OpsRoute, name: string): RouteStop | undefined {
 function bookedSeats(scheduleId: string): string[] {
   return state.bookings
     .filter((booking) => booking.scheduleId === scheduleId && booking.status === 'confirmed')
-    .flatMap((booking) => booking.seats);
+    // Departures sold by capacity (ferries) carry no seat numbers, so each passenger
+    // still occupies one place.
+    .flatMap((booking) => (
+      booking.seats.length
+        ? booking.seats
+        : Array.from({ length: booking.passengers }, (_unused, index) => `${booking.id}-pax-${index + 1}`)
+    ));
+}
+
+/**
+ * Bookings taken online or at the counter occupy real seats: the operator's seat
+ * map is the truth, and a paid booking writes through to it.
+ */
+function withBookedSeats(
+  layout: BusTrip['seatMap']['layout'],
+  booked: Set<string>,
+): BusTrip['seatMap']['layout'] {
+  if (booked.size === 0) return layout;
+  return layout.map((row) =>
+    row.map((cell) => (cell.type === 'seat' && booked.has(cell.id) ? { ...cell, status: 'occupied' } : cell)),
+  );
 }
 
 function seatCapacity(seatMap: SeatMapConfig | undefined): number {
@@ -473,58 +367,23 @@ export function getBusTrips(): BusTrip[] {
       time: addMinutes(schedule.departureTime, stop.offsetMinutes),
       order: index + 1,
     }));
+    const originStop = route.stops[0];
     const destinationStop = route.stops[route.stops.length - 1];
-    const sold = bookedSeats(schedule.id).length;
+    if (!originStop || !destinationStop) continue;
+    const bookedSeatIds = new Set(bookedSeats(schedule.id));
+    const sold = bookedSeatIds.size;
     const seatMap = seatMapById(vehicle.seatMapId);
-    const template = BUS_TRIPS.find((trip) => trip.id === schedule.id);
 
     trips.push({
-      ...(template ?? {
-        id: schedule.id,
-        operatorId: operator.id,
-        operatorName: operator.name,
-        operatorLogo: operator.logo,
-        serviceOrigin: route.stops[0].name,
-        serviceDestination: destinationStop.name,
-        passengerOrigin: route.stops[0].name,
-        passengerDestination: destinationStop.name,
-        departureTerminal: route.stops[0].terminal,
-        arrivalTerminal: destinationStop.terminal,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        departureDate: schedule.departureDate,
-        arrivalDate: schedule.arrivalDate,
-        duration: schedule.duration,
-        intermediateStops: [],
-        busClass: vehicle.busClass,
-        busModel: vehicle.model,
-        registrationNumber: vehicle.registrationNumber,
-        amenities: [...vehicle.amenities],
-        availableSeats: 0,
-        segmentFare: 0,
-        currency: schedule.currency,
-        seatMap: {
-          rows: seatMap?.rows ?? 11,
-          columns: seatMap?.columns ?? ['A', 'B', '_', 'C', 'D'],
-          layout: [],
-          busModel: vehicle.model,
-          busClass: vehicle.busClass,
-          registrationNumber: vehicle.registrationNumber,
-        },
-        boardingPoints: [],
-        dropOffPoints: [],
-      } as BusTrip),
       id: schedule.id,
       operatorId: operator.id,
       operatorName: operator.name,
       operatorLogo: operator.logo,
-      serviceOrigin: route.stops[0].name,
+      serviceOrigin: originStop.name,
       serviceDestination: destinationStop.name,
-      // The seeded trip carries the passenger-facing segment; a newly added schedule
-      // is sold end to end until the operator adds more segments.
-      passengerOrigin: template?.passengerOrigin ?? route.stops[0].name,
-      passengerDestination: template?.passengerDestination ?? destinationStop.name,
-      departureTerminal: route.stops[0].terminal,
+      passengerOrigin: originStop.name,
+      passengerDestination: destinationStop.name,
+      departureTerminal: originStop.terminal,
       arrivalTerminal: destinationStop.terminal,
       departureTime: schedule.departureTime,
       arrivalTime: schedule.arrivalTime,
@@ -537,18 +396,18 @@ export function getBusTrips(): BusTrip[] {
       registrationNumber: vehicle.registrationNumber,
       amenities: [...vehicle.amenities],
       availableSeats: Math.max(0, (schedule.seatsForSale ?? seatCapacity(seatMap)) - sold),
-      segmentFare: fareForSegment(route.id, route.stops[0].id, destinationStop.id) ?? template?.segmentFare ?? 0,
+      segmentFare: fareForSegment(route.id, originStop.id, destinationStop.id) ?? 0,
       currency: schedule.currency,
       seatMap: {
-        rows: seatMap?.rows ?? seatMap?.rows ?? 11,
+        rows: seatMap?.rows ?? 11,
         columns: seatMap?.columns ?? ['A', 'B', '_', 'C', 'D'],
-        layout: template?.seatMap.layout ?? layoutFor(seatMap),
+        layout: withBookedSeats(layoutFor(seatMap), bookedSeatIds),
         busModel: vehicle.model,
         busClass: vehicle.busClass,
         registrationNumber: vehicle.registrationNumber,
       },
-      boardingPoints: schedule.boardingPoints.length ? schedule.boardingPoints : template?.boardingPoints ?? [],
-      dropOffPoints: schedule.dropOffPoints.length ? schedule.dropOffPoints : template?.dropOffPoints ?? [],
+      boardingPoints: schedule.boardingPoints,
+      dropOffPoints: schedule.dropOffPoints,
     });
   }
 
@@ -784,6 +643,7 @@ export function recordOtcSale(input: {
   const booking: OpsBooking = {
     id: createId('bk'),
     reference: `OTC-${Date.now().toString(36).toUpperCase()}`,
+    pnr: unusedPnr(),
     operatorId: input.operatorId,
     mode: input.mode,
     scheduleId: input.scheduleId,
@@ -817,16 +677,61 @@ export function setBookingStatus(bookingId: string, status: OpsBooking['status']
 }
 
 /** Online booking captured during the passenger flow. */
-export function recordOnlineBooking(input: Omit<OpsBooking, 'id' | 'channel' | 'bookedAt' | 'status'>): OpsBooking {
+export function recordOnlineBooking(input: Omit<OpsBooking, 'id' | 'channel' | 'bookedAt' | 'status' | 'pnr'>): OpsBooking {
   const booking: OpsBooking = {
     ...input,
     id: createId('bk'),
+    pnr: unusedPnr(),
     channel: 'online',
     status: 'confirmed',
     bookedAt: new Date().toISOString(),
   };
   setState({ bookings: [booking, ...state.bookings] });
   return booking;
+}
+
+/**
+ * Writes a completed passenger-side purchase back against the operator schedule, so
+ * it shows up in the OIMS manifest, counts toward revenue and takes capacity. Returns
+ * null when the purchased service is not a schedule the operator runs (stays, flights,
+ * experiences), because there is no departure to attribute it to.
+ */
+export function recordBookingFromCheckout(input: {
+  serviceId: string | null | undefined;
+  reference: string;
+  amount: number;
+  currency: string;
+  passengers: number;
+  seats?: string[];
+  classBooked?: string | null;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+}): OpsBooking | null {
+  const schedule = input.serviceId
+    ? state.schedules.find((candidate) => candidate.id === input.serviceId)
+    : undefined;
+  if (!schedule) return null;
+
+  const route = state.routes.find((candidate) => candidate.id === schedule.routeId);
+  const passengerCount = Math.max(1, input.passengers);
+
+  return recordOnlineBooking({
+    reference: input.reference,
+    operatorId: schedule.operatorId,
+    mode: schedule.mode,
+    scheduleId: schedule.id,
+    routeLabel: route?.name ?? 'Online booking',
+    date: schedule.departureDate,
+    passengers: passengerCount,
+    seats: input.seats ?? [],
+    classBooked: input.classBooked ?? undefined,
+    amount: input.amount,
+    currency: input.currency,
+    customerName: input.customerName,
+    customerPhone: input.customerPhone,
+    customerEmail: input.customerEmail,
+  });
 }
 
 export function resolveOperatorForService(mode: OpsMode, serviceId: string | null | undefined): string | null {

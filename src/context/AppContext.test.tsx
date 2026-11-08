@@ -32,9 +32,7 @@ describe('AppContext', () => {
       boardingPointId: null,
       dropOffPointId: null,
       selectedClassId: null,
-      bookingReference: null,
-      paidAmount: null,
-      demoTicket: null,
+      activeBooking: null,
     });
   });
 
@@ -55,8 +53,18 @@ describe('AppContext', () => {
       result.current.setBoardingPointId('b1');
       result.current.setDropOffPointId('d1');
       result.current.setSelectedClassId('c1');
-      result.current.setBookingReference('TRV-123456');
-      result.current.setPaidAmount(18000);
+      result.current.setActiveBooking({
+        bookingId: 'bk-1',
+        pnr: 'TRV-123456',
+        totalMinor: 1800000,
+        currency: 'TZS',
+        status: 'pending_payment',
+        paymentDueAt: '2026-10-30T21:15:00.000Z',
+        collectionStarted: false,
+        collectionFailure: null,
+        collectionDetail: null,
+        accessToken: 'payload.signature',
+      });
     });
     const s = result.current.bookingState;
     expect(s.selectedServiceId).toBe('trip-1');
@@ -65,23 +73,34 @@ describe('AppContext', () => {
     expect(s.boardingPointId).toBe('b1');
     expect(s.dropOffPointId).toBe('d1');
     expect(s.selectedClassId).toBe('c1');
-    expect(s.bookingReference).toBe('TRV-123456');
-    expect(s.paidAmount).toBe(18000);
-    expect(s.demoTicket).toBeNull();
+    expect(s.activeBooking?.pnr).toBe('TRV-123456');
+    expect(s.activeBooking?.status).toBe('pending_payment');
     expect(s.mode).toBe('bus');
   });
 
-  it('keeps simulated ticket data separate from confirmed payment data', () => {
+  it('a booking carries the server state, not a guessed one', () => {
     const { result } = renderHook(() => useApp(), { wrapper });
     act(() => {
-      result.current.setBookingReference('TRV-REAL');
-      result.current.setPaidAmount(18000);
-      result.current.setDemoTicket({ reference: 'DEMO-123', amount: 18000 });
+      result.current.setActiveBooking({
+        bookingId: 'bk-2',
+        pnr: 'TRV-PENDING',
+        totalMinor: 5800000,
+        currency: 'TZS',
+        status: 'pending_payment',
+        paymentDueAt: '2026-10-30T21:15:00.000Z',
+        collectionStarted: false,
+        collectionFailure: null,
+        collectionDetail: null,
+        accessToken: 'payload.signature',
+      });
     });
 
-    expect(result.current.bookingState.bookingReference).toBeNull();
-    expect(result.current.bookingState.paidAmount).toBeNull();
-    expect(result.current.bookingState.demoTicket).toEqual({ reference: 'DEMO-123', amount: 18000 });
+    // Creating a booking is not a sale: the status says so, and no ticket exists here.
+    expect(result.current.bookingState.activeBooking).toMatchObject({
+      pnr: 'TRV-PENDING',
+      status: 'pending_payment',
+      collectionStarted: false,
+    });
   });
 
   it('resetBooking restores defaults for the requested mode', () => {
@@ -91,8 +110,7 @@ describe('AppContext', () => {
     expect(result.current.bookingState.mode).toBe('ferry');
     expect(result.current.bookingState.searchParams.mode).toBe('ferry');
     expect(result.current.bookingState.selectedServiceId).toBeNull();
-    expect(result.current.bookingState.paidAmount).toBeNull();
-    expect(result.current.bookingState.demoTicket).toBeNull();
+    expect(result.current.bookingState.activeBooking).toBeNull();
   });
 
   it('useApp throws outside AppProvider', () => {

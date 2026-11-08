@@ -1,14 +1,50 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@/router';
-import { ChevronDown, Plus, Search } from 'lucide-react';
 import { Autocomplete } from '@/components/ui/Autocomplete';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { PassengerCounter } from '@/components/ui/Select';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { TANZANIA_LOCATIONS, TANZANIA_PORTS, TANZANIA_AIRPORTS, TANZANIA_STATIONS } from '@/data/locations';
 import { todayISO, addDays, generateId } from '@/utils/format';
 import type { BookingMode, SearchParams } from '@/types';
+
+/** How each non-settlement kind is described under a place name in the picker. */
+const PLACE_KIND_LABELS: Record<string, string> = {
+  station: 'Railway station',
+  port: 'Ferry port',
+  terminal: 'Bus terminal',
+  airport: 'Airport',
+  property: 'Property',
+};
+
+function countryLabel(code: string): string {
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+function optionFromLocation(location: {
+  id: string;
+  name: string;
+  kind: string;
+  region: string | null;
+  countryCode: string;
+  code?: string;
+}) {
+  const country = countryLabel(location.countryCode);
+  return {
+    id: location.id,
+    name: location.name,
+    subText:
+      location.kind === 'city' || location.kind === 'town'
+        ? [location.kind === 'town' ? 'Town' : 'City', country].filter(Boolean).join(' · ')
+        : location.kind === 'airport'
+          ? ['Airport', country, location.code].filter(Boolean).join(' · ')
+          : [PLACE_KIND_LABELS[location.kind] ?? location.kind, country].filter(Boolean).join(' · '),
+  };
+}
 
 interface SearchFormProps {
   mode: BookingMode;
@@ -103,26 +139,64 @@ export function SearchForm({ mode }: SearchFormProps) {
     setLegs((prev) => (prev.length > MIN_FLIGHT_LEGS ? prev.slice(0, -1) : prev));
   };
 
-  const getLocations = () => {
-    switch (mode) {
-      case 'bus': return TANZANIA_LOCATIONS;
-      case 'ferry': return TANZANIA_PORTS;
-      case 'flights': return TANZANIA_AIRPORTS;
-      case 'train': return TANZANIA_STATIONS;
-      case 'stays': return TANZANIA_LOCATIONS;
-      case 'experiences': return TANZANIA_LOCATIONS;
-      default: return TANZANIA_LOCATIONS;
-    }
-  };
+  /**
+   * Places come from the database, per mode.
+   *
+   * They used to be four hand-maintained lists in `data/locations.ts`, which meant opening a
+   * new SGR station required editing that file and shipping it. Now HIMS adds the row and the
+   * station appears in the card on the next load.
+   */
+  const [placeOptions, setPlaceOptions] = useState<{ id: string; name: string; subText: string }[]>([]);
+  const [placesState, setPlacesState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const remotePlaces = mode === 'flights' || mode === 'stays';
 
-  const locations = mode === 'bus'
-    ? TANZANIA_LOCATIONS.filter((location) => location.type === 'city' || location.type === 'town')
-    : getLocations();
-  const locationOptions = locations.map((l) => ({
-    id: l.id,
-    name: l.name,
-    subText: l.type === 'city' ? `${l.region}, ${l.country}` : `${l.type}, ${l.region}`,
-  }));
+  useEffect(() => {
+    if (remotePlaces) {
+      setPlaceOptions([]);
+      setPlacesState('ready');
+      return;
+    }
+    let cancelled = false;
+    setPlacesState('loading');
+    fetch(`/api/locations?mode=${encodeURIComponent(mode)}`, { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(String(response.status));
+        return (await response.json()) as { data: { id: string; name: string; kind: string; region: string | null; countryCode: string; code: string }[] };
+      })
+      .then((body) => {
+        if (cancelled) return;
+        setPlaceOptions(body.data.map(optionFromLocation));
+        setPlacesState('ready');
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPlaceOptions([]);
+          setPlacesState('failed');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, remotePlaces]);
+
+  const loadRemotePlaces = useCallback(async (query: string) => {
+    const search = new URLSearchParams({ mode, q: query });
+    const response = await fetch(`/api/locations?${search.toString()}`, { cache: 'no-store' });
+    if (!response.ok) return [];
+    const body = (await response.json()) as { data: { id: string; name: string; kind: string; region: string | null; countryCode: string; code: string }[] };
+    return (body.data ?? []).map(optionFromLocation);
+  }, [mode]);
+
+  const loadOriginPlaces = useCallback(
+    (query: string) => loadRemotePlaces(query).then((rows) => rows.filter((row) => row.id !== destination)),
+    [destination, loadRemotePlaces],
+  );
+  const loadDestinationPlaces = useCallback(
+    (query: string) => loadRemotePlaces(query).then((rows) => rows.filter((row) => row.id !== origin)),
+    [loadRemotePlaces, origin],
+  );
+
+  const locationOptions = placeOptions;
   const originOptions = locationOptions.filter((location) => location.id !== destination);
   const destinationOptions = locationOptions.filter((location) => location.id !== origin);
 
@@ -138,14 +212,16 @@ export function SearchForm({ mode }: SearchFormProps) {
         }
         if (!leg.date) e[`leg_${index}_date`] = tp('departureDateRequired');
       });
-    } else if (mode !== 'experiences') {
+    } else if (mode === 'experiences') {
+      if (!origin) e.origin = tp('destinationOrActivityRequired');
+    } else if (mode === 'stays') {
+      if (!origin) e.origin = tp('originRequired');
+    } else {
       if (!origin) e.origin = tp('originRequired');
       if (!destination) e.destination = tp('destinationRequired');
       if (origin && destination && origin === destination) {
         e.destination = tp('destinationMustDifferOrigin');
       }
-    } else {
-      if (!origin) e.origin = tp('destinationOrActivityRequired');
     }
 
     if (!isMultiCity && mode !== 'experiences' && !date) e.date = tp('pleaseSelectDate');
@@ -174,23 +250,30 @@ export function SearchForm({ mode }: SearchFormProps) {
   const handleSearch = () => {
     if (!validate()) return;
 
+    /**
+     * The place *name* travels in `origin`/`destination`; the row id travels in extras.
+     *
+     * Every screen downstream either matches on the name or prints it, so an id in that field
+     * shows a UUID in a heading and fails a name comparison. The id is still carried because
+     * two places can share a name, and a search that has to disambiguate should do it by row.
+     */
     const params: SearchParams = {
       mode,
-      origin,
-      destination,
+      origin: originName || origin,
+      destination: destinationName || destination,
       date,
       returnDate: supportsReturn && tripType === 'return' ? returnDate : undefined,
       adults,
       children,
       infants,
-      extras: {},
+      extras: { originId: origin, destinationId: destination },
     };
 
     if (mode === 'stays') {
-      params.extras = { checkOut, rooms: String(rooms) };
+      params.extras = { ...params.extras, checkOut, rooms: String(rooms) };
     }
     if (mode === 'flights') {
-      params.extras = { tripType, cabinClass };
+      params.extras = { ...params.extras, tripType, cabinClass };
       if (isMultiCity) {
         params.legs = legs.map((leg) => ({
           origin: leg.origin,
@@ -198,20 +281,30 @@ export function SearchForm({ mode }: SearchFormProps) {
           date: leg.date,
         }));
         // Results are still searched on the first leg; multi-leg pricing is not modelled yet.
-        params.origin = legs[0].origin;
-        params.destination = legs[0].destination;
+        params.origin = legs[0].originName || legs[0].origin;
+        params.destination = legs[0].destinationName || legs[0].destination;
         params.date = legs[0].date;
       }
     }
     if (mode === 'ferry') {
-      params.extras = { residency, tripType };
+      params.extras = { ...params.extras, residency, tripType };
     }
     if (mode === 'bus' || mode === 'train') {
-      params.extras = { tripType };
+      params.extras = { ...params.extras, tripType };
     }
 
     setSearchParams(params);
-    navigate(`/${mode}/results`);
+
+    const query = new URLSearchParams();
+    if (origin) query.set('from', origin);
+    if (destination) query.set('to', destination);
+    if (originName) query.set('fromName', originName);
+    if (destinationName) query.set('toName', destinationName);
+    if (date) query.set('date', date);
+    if (mode === 'stays' && checkOut) query.set('checkOut', checkOut);
+    if (mode === 'stays') query.set('rooms', String(rooms));
+    const suffix = query.toString();
+    navigate(`/${mode}/results${suffix ? `?${suffix}` : ''}`);
   };
 
   const labelMap = {
@@ -230,10 +323,14 @@ export function SearchForm({ mode }: SearchFormProps) {
   const singleRowDesktopGrid = desktopLayout?.formClass ?? '';
 
   return (
-    <div
+    <form
       className={`search-form flex flex-col overflow-visible ${formHeight} ${singleRowDesktopGrid}`}
       data-mode={mode}
       data-desktop-grid={desktopLayout?.breakpoint}
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleSearch();
+      }}
     >
       <div className={`search-form-fields overflow-visible ${isMultiCity ? 'flex-none' : 'min-h-0 flex-1'} pr-0.5`}>
       {supportsReturn && (
@@ -268,7 +365,8 @@ export function SearchForm({ mode }: SearchFormProps) {
                 id={`leg_${index}_origin`}
                 label={tp('flightLegDeparture').replace('{number}', String(index + 1))}
                 placeholder={tp('airportOrCity')}
-                options={locationOptions.filter((location) => location.id !== leg.destination)}
+                options={remotePlaces ? undefined : locationOptions.filter((location) => location.id !== leg.destination)}
+                loadOptions={remotePlaces ? (query) => loadRemotePlaces(query).then((rows) => rows.filter((row) => row.id !== leg.destination)) : undefined}
                 value={leg.originName}
                 onChange={(id, name) => {
                   updateLeg(index, {
@@ -286,7 +384,8 @@ export function SearchForm({ mode }: SearchFormProps) {
                 id={`leg_${index}_destination`}
                 label={tp('flightLegDestination').replace('{number}', String(index + 1))}
                 placeholder={tp('airportOrCity')}
-                options={locationOptions.filter((location) => location.id !== leg.origin)}
+                options={remotePlaces ? undefined : locationOptions.filter((location) => location.id !== leg.origin)}
+                loadOptions={remotePlaces ? (query) => loadRemotePlaces(query).then((rows) => rows.filter((row) => row.id !== leg.origin)) : undefined}
                 value={leg.destinationName}
                 onChange={(id, name) => {
                   updateLeg(index, {
@@ -323,7 +422,7 @@ export function SearchForm({ mode }: SearchFormProps) {
               disabled={legs.length >= MAX_FLIGHT_LEGS}
               className="inline-flex items-center gap-1.5 text-label font-semibold text-brand-600 transition-colors hover:text-brand-700 disabled:cursor-not-allowed disabled:text-neutral-400"
             >
-              <Plus size={16} /> {tp('addFlightLeg')}
+              + {tp('addFlightLeg')}
             </button>
             {legs.length > MIN_FLIGHT_LEGS && (
               <button
@@ -342,7 +441,8 @@ export function SearchForm({ mode }: SearchFormProps) {
           id="search_origin"
           label={labels.origin}
           placeholder={mode === 'bus' ? tp('chooseCity') : tp('searchLocation')}
-          options={originOptions}
+          options={remotePlaces ? undefined : originOptions}
+          loadOptions={remotePlaces ? loadOriginPlaces : undefined}
           value={originName}
           onChange={(id, name) => {
             setOrigin(id);
@@ -362,7 +462,8 @@ export function SearchForm({ mode }: SearchFormProps) {
             id="search_destination"
             label={labels.destination}
             placeholder={mode === 'bus' ? tp('chooseCity') : tp('searchLocation')}
-            options={destinationOptions}
+            options={remotePlaces ? undefined : destinationOptions}
+            loadOptions={remotePlaces ? loadDestinationPlaces : undefined}
             value={destinationName}
             onChange={(id, name) => {
               setDestination(id);
@@ -495,11 +596,7 @@ export function SearchForm({ mode }: SearchFormProps) {
                 )}
               </span>
             </span>
-            <ChevronDown
-              size={18}
-              aria-hidden="true"
-              className={`shrink-0 text-neutral-500 transition-transform ${travelersOpen ? 'rotate-180' : ''}`}
-            />
+            <span aria-hidden="true" className={`shrink-0 text-meta text-neutral-400 transition-transform ${travelersOpen ? "rotate-180" : ""}`}>▾</span>
           </button>
 
           {travelersOpen && (
@@ -521,7 +618,7 @@ export function SearchForm({ mode }: SearchFormProps) {
                   }}
                   min={1}
                   max={9}
-                  description={tp('age12Plus')}
+                  description={tp(mode === 'train' ? 'trainAdultAge' : 'age12Plus')}
                 />
                 <PassengerCounter
                   id="children"
@@ -530,7 +627,7 @@ export function SearchForm({ mode }: SearchFormProps) {
                   onChange={setChildren}
                   min={0}
                   max={9}
-                  description={tp('age2to11')}
+                  description={tp(mode === 'train' ? 'trainChildAge' : 'age2to11')}
                 />
                 {mode === 'bus' && (
                   <PassengerCounter
@@ -567,14 +664,22 @@ export function SearchForm({ mode }: SearchFormProps) {
 
         {errors.adults && <p className="search-form-adult-error field-error lg:mb-2">{errors.adults}</p>}
 
+        {/* The place list is fetched, so its failure is the traveller's problem to see. A card
+            that silently offered no stations reads as a network with no stations. */}
+        {placesState === 'failed' && (
+          <p className="field-error" role="alert">
+            {tp('placesLoadFailed')}
+          </p>
+        )}
+
         <div className="search-form-submit-wrapper flex justify-end">
-          <button type="button" onClick={handleSearch} className="btn-primary search-submit w-full px-6 py-2.5 sm:w-auto">
-          <Search size={20} />
+          <button type="submit" className="btn-primary search-submit w-full px-6 py-2.5 sm:w-auto">
+          
           {mode === 'stays' ? tp('searchStays') : mode === 'experiences' ? tp('searchExperiences') : tp('searchTrips')}
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
 

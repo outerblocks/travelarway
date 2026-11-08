@@ -1,0 +1,16 @@
+---
+description: Data-driven Travelar route scheduling, seat inventory, role administration, HIMS controls, payouts, auditing, logging and partner API implementation.
+alwaysApply: false
+---
+
+Read root `AGENTS.md` and Documents 76–82 plus relevant earlier requirements/ADRs before work. Audit actual repository and create a requirement-to-code/test gap matrix before major implementation.
+
+Routes, recurrence rules, dated trip instances, vehicle/layout assignments and inventory must be separate. Schedule generation requires preview, timezone/calendar handling, conflict detection, idempotency and an audit trail. Bus seats are allocated by route segment in a concurrency-safe PostgreSQL transaction; ferry and supplier-controlled inventory use their own semantics.
+
+All dynamic operational values are sourced from scoped APIs and DB/provider records. Keep rendering schema typed and allow-listed. Never store or execute arbitrary JS/SQL/HTML in DB configuration; never trust client-side totals or availability.
+
+Enforce org/operator/branch/object scopes on every backend request. Use database constraints and RLS where appropriate, not as the only control. Add negative tenant/role tests.
+
+Payout workers need durable idempotent jobs, eligibility checks, approved beneficiaries, separation of duties, provider rate limits, status reconciliation, logs, and alerts. Distinguish accepted/pending from completed. Audit events, application/security logs and finance journals are separate records with secret/PII redaction.
+
+Expose only Travelar-owned partner APIs with real code-backed OpenAPI, scopes, quotas, idempotency, webhook security, versioning and usage reconciliation. No production deployment, destructive data operation, live funds movement or privileged permission change without explicit human approval.

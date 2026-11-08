@@ -1,0 +1,28 @@
+# Stage 6 Sources and Evidence Register
+
+**Access date:** 23 October 2026 unless a source page indicates another date. Primary/official sources are preferred. Provider marketing describes provider claims; it is not an independent audit of service performance or a signed service-level agreement.
+
+| Topic | Source | What it supports | Limits / follow-up |
+|---|---|---|---|
+| Supabase region availability and primary data location | https://supabase.com/docs/guides/platform/regions | Current documented region options; selected region determines where primary project data is stored; general regional options may not guarantee a specific jurisdiction. | List can change; recheck at contracting. Need written backup/log/support/subprocessor location terms and counsel view. |
+| Supabase self-hosting | https://supabase.com/docs/guides/self-hosting | Self-hosting option and responsibilities (server, security, Postgres, HA, backups, DR, monitoring); some managed features unavailable. | Does not establish that OuterBlocks has capacity to run it. Cost staffing and SLAs are open. |
+| Supabase self-host upgrades | https://supabase.com/docs/guides/self-hosting/updating | Updates require care and separate database backup; upgrade is not magic/one-click across arbitrary drift. | Version-specific procedures need review at implementation. |
+| Supabase backups/PITR | https://supabase.com/docs/guides/platform/backups | Published backup/PITR features and restore constraints. | Exact capability/cost depends on plan and can change; backup is not restore proof. |
+| Supabase Row Level Security | https://supabase.com/docs/guides/database/postgres/row-level-security | Exposed tables require RLS/grants; policies need tests; privileged keys can bypass RLS and must stay server-side. | RLS does not replace application authz, service-level testing or DB role design. |
+| PostgreSQL 18 explicit locks | https://www.postgresql.org/docs/18/explicit-locking.html | Row-level locks and concurrency behavior. | Choose supported host/version and test the specific inventory algorithm. |
+| PostgreSQL 18 transactions | https://www.postgresql.org/docs/18/sql-begin.html | Transaction blocks and commit/rollback behavior. | Transaction design is application-specific; external API calls must not be hidden in long DB transactions. |
+| PDPC Tanzania registration | https://pdpc.go.tz/services/registration/ | PDPC statement on controller/processor registration before processing. | Confirm applicability/roles and exact requirements for OuterBlocks with counsel/PDPC. |
+| PDPC Tanzania transfers | https://pdpc.go.tz/services/cross-border-data-transfer-permit/ | Permit process and described transfer information/safeguards. | Obtain country/data-flow-specific confirmation; do not assume all data must stay locally or transfers are automatically allowed. |
+| ODPC Kenya guidelines | https://www.odpc.go.ke/guidelines-2/ | Official collection of Kenyan data protection guidance. | Need applicability analysis for each Travelar flow. |
+| ODPC Kenya cross-border (2026) | https://www.odpc.go.ke/wp-content/uploads/2026/09/ODPC-%E2%80%93-Guidance-Notes-for-Cross-border-Data-Transfers.pdf | Official cross-border-transfer guidance dated 2026. | Legal counsel to interpret requirements for actual transfers and contractual safeguards. |
+| NIDC official site | https://nidc.co.tz/ and https://nidc.co.tz/about | NIDC publicly advertises cloud services and connection to NICTBB. | No SLA, certification, pricing, DR-site or exact location assumptions without RFI. |
+| Wingu Tanzania | https://www.wingu.africa/markets/tanzania | Provider describes Tanzanian data-centre infrastructure/colocation/connectivity. | Need evidence on managed compute/Postgres, certifications, SLA and all pricing. |
+| Raxio Tanzania | https://www.raxiogroup.com/data-centres/tanzania/ | Official page labels TZ1 “Under Development” as reviewed on 23 Oct 2026. | Verify operational status in future before contracting. |
+| AWS regions | https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html | AWS region list includes Africa (Cape Town), `af-south-1`. | Regional location does not itself resolve Tanzanian/Kenyan transfer rules or all service-level data locations. |
+| OWASP Top 10 2025 | https://owasp.org/projects/top-ten/ | Current web application risk awareness list as of access. | Awareness baseline, not complete control or compliance standard. |
+| OWASP API Security | https://owasp.org/www-project-api-security/ | API-specific risk categories (API Top 10). | Need threat model and tests for Travelar's actual interfaces. |
+| OWASP ASVS 5.0 | https://asvs.owasp.org/ | Published application-security verification standard version 5.0.0. | Select levels/controls and tailor acceptance criteria. |
+| NIST SP 800-61 Rev.3 | https://csrc.nist.gov/pubs/sp/800/61/r3/final | Incident response recommendations; final published April 2025, supersedes Rev.2. | Framework/guidance, not a country-specific legal deadline. |
+| OpenTelemetry | https://opentelemetry.io/docs/what-is-opentelemetry/ | Vendor-neutral telemetry instrumentation/collection/export model. | Does not provide a telemetry backend by itself; select backend subject to data and support review. |
+| HashiCorp Vault | https://developer.hashicorp.com/vault/docs | Secret management, rotation, identity, audit and key integration capabilities. | Candidate technology, not mandatory; compare cloud/KMS secrets managers and operational burden. |
+| PostGIS | https://postgis.net/documentation/ | Spatial capability documentation. | Enable only if proximity/route queries benefit; no need to introduce solely due to maps. |

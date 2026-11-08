@@ -114,7 +114,7 @@ export function OperatorManagementLayout({
                 onClick={() => handleNav(item.id)}
                 className={`flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium rounded-md transition-colors mb-0.5 ${
                   isActive
-                    ? 'bg-accent text-ink'
+                    ? 'bg-white text-ink'
                     : 'text-white/60 hover:bg-white/8 hover:text-white'
                 }`}
               >
