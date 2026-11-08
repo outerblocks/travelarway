@@ -2,10 +2,20 @@ import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import { cloudflare } from '@cloudflare/vite-plugin';
 import { fileURLToPath, URL } from 'node:url';
 
-export default defineConfig({
-  plugins: [tailwindcss(), tanstackStart(), react()],
+export default defineConfig(({ command, isPreview }) => ({
+  plugins: [
+    // Local `vite dev` stays on Node so PostgreSQL (`pg`) keeps working. Workers
+    // packaging is applied for `vite build` / `vite preview` / `wrangler deploy`.
+    ...(!process.env.VITEST && (command === 'build' || isPreview)
+      ? [cloudflare({ viteEnvironment: { name: 'ssr' } })]
+      : []),
+    tailwindcss(),
+    tanstackStart(),
+    react(),
+  ],
   server: {
     headers: {
       'X-Frame-Options': 'DENY',
@@ -35,4 +45,4 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-});
+}));

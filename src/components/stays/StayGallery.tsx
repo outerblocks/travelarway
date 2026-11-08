@@ -17,6 +17,7 @@ export function StayGallery({
   const { tp } = useI18n();
   const https = urls.filter((url) => url.startsWith('https://'));
   const [openAt, setOpenAt] = useState<number | null>(null);
+  const [mode, setMode] = useState<'album' | 'zoom'>('album');
 
   if (!https.length) {
     return <StayPhoto urls={[]} name={name} className={layout === 'card' ? 'h-52 w-full sm:h-full sm:min-h-[12.5rem]' : 'h-64 w-full sm:h-80'} />;
@@ -25,14 +26,19 @@ export function StayGallery({
   const preview = layout === 'card' ? https.slice(0, 1) : https.slice(0, DETAIL_PREVIEW);
   const remaining = https.length - preview.length;
 
+  const openAlbum = (index: number, nextMode: 'album' | 'zoom' = 'album') => {
+    setMode(nextMode);
+    setOpenAt(index);
+  };
+
   return (
     <>
       {layout === 'card' ? (
         <button
           type="button"
           className="relative block h-52 w-full sm:h-full sm:min-h-[12.5rem]"
-          onClick={() => setOpenAt(0)}
-          aria-label={tp('viewPhotos')}
+          onClick={() => openAlbum(0, https.length > 1 ? 'album' : 'zoom')}
+          aria-label={https.length > 1 ? tp('viewAllPhotos').replace('{count}', String(https.length)) : tp('viewPhotos')}
         >
           <StayPhoto urls={preview} name={name} className="h-full w-full" />
           {https.length > 1 ? (
@@ -52,7 +58,7 @@ export function StayGallery({
                   key={`${url}-${index}`}
                   type="button"
                   className={`relative block overflow-hidden ${isHero ? 'col-span-2 h-56 sm:col-span-2 sm:h-72' : 'h-28 sm:h-36'}`}
-                  onClick={() => setOpenAt(index)}
+                  onClick={() => openAlbum(index, isLast ? 'album' : 'zoom')}
                   aria-label={isLast ? tp('viewAllPhotos').replace('{count}', String(https.length)) : tp('viewPhoto')}
                 >
                   <StayPhoto urls={[url]} name={name} className="h-full w-full" />
@@ -66,7 +72,7 @@ export function StayGallery({
             })}
           </div>
           {https.length > DETAIL_PREVIEW ? (
-            <button type="button" className="mt-3 text-label font-medium text-brand-700" onClick={() => setOpenAt(0)}>
+            <button type="button" className="mt-3 text-label font-medium text-brand-700" onClick={() => openAlbum(0, 'album')}>
               {tp('viewAllPhotos').replace('{count}', String(https.length))}
             </button>
           ) : null}
@@ -77,7 +83,9 @@ export function StayGallery({
           urls={https}
           name={name}
           index={openAt}
+          mode={mode}
           onIndex={setOpenAt}
+          onMode={setMode}
           onClose={() => setOpenAt(null)}
         />
       ) : null}

@@ -11,6 +11,10 @@ dist
 dist-ssr
 .output
 .tanstack
+.wrangler
+.dev.vars
+.dev.vars*
+worker-configuration.d.ts
 playwright-report
 test-results
 *.local
