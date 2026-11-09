@@ -38,6 +38,8 @@ export const RATE_LIMITS = {
   search: { limit: 120, windowMs: 60_000 },
   /** Ticket QR verification. Tight so a guessed token cannot enumerate bookings. */
   tickets: { limit: 30, windowMs: 60_000 },
+  oims: { limit: 60, windowMs: 60_000 },
+  hims: { limit: 60, windowMs: 60_000 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitBucket = keyof typeof RATE_LIMITS;

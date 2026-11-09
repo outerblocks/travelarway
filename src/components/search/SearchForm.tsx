@@ -148,7 +148,9 @@ export function SearchForm({ mode }: SearchFormProps) {
    */
   const [placeOptions, setPlaceOptions] = useState<{ id: string; name: string; subText: string }[]>([]);
   const [placesState, setPlacesState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [placesAttempt, setPlacesAttempt] = useState(0);
   const remotePlaces = mode === 'flights' || mode === 'stays';
+  const placesBusy = !remotePlaces && placesState === 'loading';
 
   useEffect(() => {
     if (remotePlaces) {
@@ -157,8 +159,10 @@ export function SearchForm({ mode }: SearchFormProps) {
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 8000);
     setPlacesState('loading');
-    fetch(`/api/locations?mode=${encodeURIComponent(mode)}`, { cache: 'no-store' })
+    fetch(`/api/locations?mode=${encodeURIComponent(mode)}`, { cache: 'no-store', signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(String(response.status));
         return (await response.json()) as { data: { id: string; name: string; kind: string; region: string | null; countryCode: string; code: string }[] };
@@ -176,8 +180,10 @@ export function SearchForm({ mode }: SearchFormProps) {
       });
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
+      controller.abort();
     };
-  }, [mode, remotePlaces]);
+  }, [mode, remotePlaces, placesAttempt]);
 
   const loadRemotePlaces = useCallback(async (query: string) => {
     const search = new URLSearchParams({ mode, q: query });
@@ -327,12 +333,14 @@ export function SearchForm({ mode }: SearchFormProps) {
       className={`search-form flex flex-col overflow-visible ${formHeight} ${singleRowDesktopGrid}`}
       data-mode={mode}
       data-desktop-grid={desktopLayout?.breakpoint}
+      aria-busy={placesBusy}
       onSubmit={(event) => {
         event.preventDefault();
+        if (placesState === 'failed') return;
         handleSearch();
       }}
     >
-      <div className={`search-form-fields overflow-visible ${isMultiCity ? 'flex-none' : 'min-h-0 flex-1'} pr-0.5`}>
+      <div className={`search-form-fields overflow-visible ${isMultiCity ? 'flex-none' : 'min-h-0 flex-1'} pr-0.5 ${placesBusy ? 'pointer-events-none' : ''}`}>
       {supportsReturn && (
         <div className="search-trip-type mb-4 inline-flex flex-wrap rounded-full bg-neutral-100 p-1">
           {([
@@ -577,7 +585,7 @@ export function SearchForm({ mode }: SearchFormProps) {
       </div>
 
       <div className="search-form-bottom mt-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div ref={travelersRef} className="search-travelers-field relative w-full min-w-0">
+        <div ref={travelersRef} className={`search-travelers-field relative w-full min-w-0 ${placesBusy ? 'pointer-events-none' : ''}`}>
           <label className="input-label">{tp('travelersLabel')}</label>
           <button
             type="button"
@@ -662,23 +670,46 @@ export function SearchForm({ mode }: SearchFormProps) {
           )}
         </div>
 
-        {errors.adults && <p className="search-form-adult-error field-error lg:mb-2">{errors.adults}</p>}
-
-        {/* The place list is fetched, so its failure is the traveller's problem to see. A card
-            that silently offered no stations reads as a network with no stations. */}
-        {placesState === 'failed' && (
-          <p className="field-error" role="alert">
-            {tp('placesLoadFailed')}
-          </p>
-        )}
-
         <div className="search-form-submit-wrapper flex justify-end">
-          <button type="submit" className="btn-primary search-submit w-full px-6 py-2.5 sm:w-auto">
+          <button
+            type="submit"
+            className="btn-primary search-submit w-full px-6 py-2.5 sm:w-auto"
+            disabled={placesState === 'failed' || placesBusy}
+          >
           
           {mode === 'stays' ? tp('searchStays') : mode === 'experiences' ? tp('searchExperiences') : tp('searchTrips')}
           </button>
         </div>
       </div>
+
+      {errors.adults && (
+        <p className="search-form-adult-error search-form-status field-error mt-3" role="alert">
+          {errors.adults}
+        </p>
+      )}
+
+      {placesBusy && (
+        <p className="search-form-status mt-3 text-meta text-neutral-500" role="status">
+          {tp('placesLoading')}
+        </p>
+      )}
+
+      {placesState === 'failed' && (
+        <div
+          className="search-form-status mt-3 flex items-center gap-3 rounded-xl bg-neutral-50 px-3.5 py-2.5"
+          role="alert"
+        >
+          <span className="h-8 w-0.5 shrink-0 self-stretch rounded-full bg-accent" aria-hidden="true" />
+          <p className="min-w-0 flex-1 text-meta text-neutral-800">{tp('placesLoadFailed')}</p>
+          <button
+            type="button"
+            className="shrink-0 text-label font-semibold text-ink hover:underline"
+            onClick={() => setPlacesAttempt((n) => n + 1)}
+          >
+            {tp('tryAgain')}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

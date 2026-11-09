@@ -3,14 +3,15 @@ import { useNavigate, Link } from '@/router';
 import { ArrowLeft } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { getFerrySailing } from '@/data/operations';
+import { useFerrySailing } from '@/hooks/useFerrySailing';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
+import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
 import { partyMismatched } from '@/domain/passengers';
-import { ErrorState, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
 import { ferryFares, quoteFerrySailing } from '@/domain/pricing';
 import { formatMoney } from '@/domain/money';
 import { formatDate } from '@/utils/format';
-import type { FerrySailing, PassengerInfo } from '@/types';
+import type { PassengerInfo } from '@/types';
 
 /**
  * Ferry step 2: passenger details. The vessel class is chosen on the result card,
@@ -29,16 +30,24 @@ export function FerryBookingPage() {
   const totalPassengers = adults + children;
   const residency = (bookingState.searchParams.extras?.residency || 'resident') as 'resident' | 'non_resident';
 
-  const sailing = useMemo<FerrySailing | null>(() => getFerrySailing(sailingId) ?? null, [sailingId]);
+  const { sailing, status: sailingStatus } = useFerrySailing(sailingId);
   const selectedClass = sailing?.classes.find((cls) => cls.id === selectedClassId) ?? null;
+  const residentFareMissing = Boolean(
+    selectedClass && residency === 'resident' && selectedClass.hasResidentFare === false,
+  );
   const quote = selectedClass
     ? quoteFerrySailing(selectedClass, residency, adults, children)
     : null;
   const fares = selectedClass ? ferryFares(selectedClass, residency) : null;
 
   const [passengers, setPassengersState] = useState<PassengerInfo[]>(() =>
-    Array.from({ length: totalPassengers }, () => createPassenger()),
+    Array.from({ length: Math.max(1, totalPassengers) }, () => createPassenger()),
   );
+  const sizedPassengers = useMemo(() => {
+    const count = Math.max(1, totalPassengers);
+    if (passengers.length === count) return passengers;
+    return Array.from({ length: count }, (_, index) => passengers[index] ?? createPassenger());
+  }, [passengers, totalPassengers]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handlePassengerChange = (index: number, updated: PassengerInfo) => {
@@ -52,7 +61,7 @@ export function FerryBookingPage() {
   const validate = (): boolean => {
     const e: Record<string, string> = {};
 
-    passengers.forEach((p, i) => {
+    sizedPassengers.forEach((p, i) => {
       if (!p.fullName) e[`name_${i}`] = tp('requiredLabel');
       if (!p.email) e[`email_${i}`] = tp('requiredLabel');
       if (!p.phone) e[`phone_${i}`] = tp('requiredLabel');
@@ -65,7 +74,7 @@ export function FerryBookingPage() {
 
     // Ferry prices by fare type, so a party that no longer matches the search would be a
     // quote the customer never agreed to.
-    if (Object.keys(e).length === 0 && partyMismatched(passengers, adults, children)) {
+    if (Object.keys(e).length === 0 && partyMismatched(sizedPassengers, adults, children)) {
       e.party = tp('partyMixMismatch')
         .replace('{adults}', String(adults))
         .replace('{children}', String(children));
@@ -77,7 +86,7 @@ export function FerryBookingPage() {
 
   const handleContinue = () => {
     if (!selectedClass || !validate()) return;
-    setPassengers(passengers);
+    setPassengers(sizedPassengers);
     setSelectedClassId(selectedClass.id);
     if (sailing) {
       setSearchParams({
@@ -98,6 +107,7 @@ export function FerryBookingPage() {
     navigate('/ferry/review');
   };
 
+  if (sailingStatus === 'loading') return <LoadingState />;
   if (!sailing) {
     return (
       <ErrorState
@@ -108,7 +118,7 @@ export function FerryBookingPage() {
     );
   }
 
-  if (!selectedClass || !quote || !fares) {
+  if (!selectedClass || !quote || !fares || residentFareMissing) {
     return (
       <ErrorState
         message={tp('classNotSelected')}
@@ -148,6 +158,9 @@ export function FerryBookingPage() {
         <div className="mx-auto max-w-5xl">
           <h1 className="text-page font-bold text-neutral-900">{tp('passengerInformation')}</h1>
           <p className="mt-1.5 text-body text-neutral-500">{tp('ferryPassengerIdNote')}</p>
+          <div className="mt-4">
+            <TravelerPartyNote adults={adults} children={children} />
+          </div>
 
           {errors.party && (
             <p role="alert" className="mt-6 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-meta text-error-700">
@@ -157,7 +170,7 @@ export function FerryBookingPage() {
 
           <section className="card mt-6 px-5 py-6 sm:px-8 sm:py-8">
             <div className="space-y-8">
-              {passengers.map((p, i) => (
+              {sizedPassengers.map((p, i) => (
                 <div key={p.id} className="passenger-block" data-error={errors[`name_${i}`] ? 'true' : undefined}>
                   <PassengerForm
                     passenger={p}

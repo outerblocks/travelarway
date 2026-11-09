@@ -37,8 +37,8 @@ const PARTNER_COPY: Record<Language, {
     ],
     apiLink: 'API enquiries',
     ctaTitle: 'Ready to partner with us?',
-    ctaDescription: 'Contact our partnerships team to learn more about onboarding and integration.',
-    ctaButton: 'Get in touch',
+    ctaDescription: 'Write to our partnerships team at partners@travelarway.com about onboarding and integration.',
+    ctaButton: 'Email partners',
   },
   sw: {
     title: 'Kuwa Mshirika wa Travelar',
@@ -67,8 +67,8 @@ const PARTNER_COPY: Record<Language, {
     ],
     apiLink: 'Maswali kuhusu API',
     ctaTitle: 'Tuko tayari kushirikiana?',
-    ctaDescription: 'Wasiliana na timu yetu ya washirika ili upate maelezo kuhusu kujiunga na kuunganisha mifumo.',
-    ctaButton: 'Wasiliana nasi',
+    ctaDescription: 'Andika kwa timu yetu ya washirika kupitia partners@travelarway.com kuhusu kujiunga na kuunganisha mifumo.',
+    ctaButton: 'Tuma barua pepe',
   },
   fr: {
     title: 'Devenir partenaire Travelar',
@@ -97,8 +97,8 @@ const PARTNER_COPY: Record<Language, {
     ],
     apiLink: 'Demandes API',
     ctaTitle: 'Prêt à devenir partenaire ?',
-    ctaDescription: 'Contactez notre équipe Partenariats pour en savoir plus sur l’intégration et le démarrage.',
-    ctaButton: 'Nous contacter',
+    ctaDescription: 'Écrivez à notre équipe Partenariats à partners@travelarway.com pour l’intégration et le démarrage.',
+    ctaButton: 'Écrire aux partenaires',
   },
 };
 
@@ -142,7 +142,7 @@ export function PartnersPage() {
         <div className="rounded-2xl bg-ink p-8 text-white">
           <h2 className="mb-3 font-display text-section font-bold">{copy.ctaTitle}</h2>
           <p className="mb-6 max-w-xl text-body text-white/75">{copy.ctaDescription}</p>
-          <Link to="/contact" className="btn-light">{copy.ctaButton}</Link>
+          <a href="mailto:partners@travelarway.com" className="btn-light">{copy.ctaButton}</a>
         </div>
       </div>
     </div>

@@ -68,7 +68,21 @@ import { Route as TrainReviewRouteImport } from './routes/train.review'
 import { Route as ApiAuthSessionRouteImport } from './routes/api.auth.session'
 import { Route as ApiBusResultsRouteImport } from './routes/api.bus.results'
 import { Route as ApiGuidesSlugRouteImport } from './routes/api.guides.$slug'
+import { Route as ApiHimsAuditRouteImport } from './routes/api.hims.audit'
+import { Route as ApiHimsCommissionRouteImport } from './routes/api.hims.commission'
+import { Route as ApiHimsFinanceRouteImport } from './routes/api.hims.finance'
+import { Route as ApiHimsOperatorsRouteImport } from './routes/api.hims.operators'
+import { Route as ApiHimsOverviewRouteImport } from './routes/api.hims.overview'
+import { Route as ApiHimsPayoutsRouteImport } from './routes/api.hims.payouts'
+import { Route as ApiHimsSessionRouteImport } from './routes/api.hims.session'
 import { Route as ApiInternalSweepRouteImport } from './routes/api.internal.sweep'
+import { Route as ApiOimsComplianceRouteImport } from './routes/api.oims.compliance'
+import { Route as ApiOimsFleetRouteImport } from './routes/api.oims.fleet'
+import { Route as ApiOimsOperatorsRouteImport } from './routes/api.oims.operators'
+import { Route as ApiOimsRoutesRouteImport } from './routes/api.oims.routes'
+import { Route as ApiOimsSchedulesRouteImport } from './routes/api.oims.schedules'
+import { Route as ApiOimsSessionRouteImport } from './routes/api.oims.session'
+import { Route as ApiOimsWorkspaceRouteImport } from './routes/api.oims.workspace'
 import { Route as ApiPaymentsCallbackRouteImport } from './routes/api.payments.callback'
 import { Route as ApiPaymentsClickpesaRouteImport } from './routes/api.payments.clickpesa'
 import { Route as ApiPaymentsPreviewRouteImport } from './routes/api.payments.preview'
@@ -76,7 +90,9 @@ import { Route as ApiPaymentsStartRouteImport } from './routes/api.payments.star
 import { Route as ApiSgrHoldsRouteImport } from './routes/api.sgr.holds'
 import { Route as ApiSgrLayoutsRouteImport } from './routes/api.sgr.layouts'
 import { Route as ApiSgrServicesRouteImport } from './routes/api.sgr.services'
+import { Route as ApiFerrySailingsIdRouteImport } from './routes/api.ferry.sailings.$id'
 import { Route as ApiFlightsOffersIdRouteImport } from './routes/api.flights.offers.$id'
+import { Route as ApiOimsManifestsTripIdRouteImport } from './routes/api.oims.manifests.$tripId'
 import { Route as ApiStaysOffersIdRouteImport } from './routes/api.stays.offers.$id'
 import { Route as ApiSgrTripsTripIdClassesRouteImport } from './routes/api.sgr.trips.$tripId.classes'
 import { Route as ApiSgrTripsTripIdQuoteRouteImport } from './routes/api.sgr.trips.$tripId.quote'
@@ -377,9 +393,79 @@ const ApiGuidesSlugRoute = ApiGuidesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ApiGuidesRoute,
 } as any)
+const ApiHimsAuditRoute = ApiHimsAuditRouteImport.update({
+  id: '/api/hims/audit',
+  path: '/api/hims/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsCommissionRoute = ApiHimsCommissionRouteImport.update({
+  id: '/api/hims/commission',
+  path: '/api/hims/commission',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsFinanceRoute = ApiHimsFinanceRouteImport.update({
+  id: '/api/hims/finance',
+  path: '/api/hims/finance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsOperatorsRoute = ApiHimsOperatorsRouteImport.update({
+  id: '/api/hims/operators',
+  path: '/api/hims/operators',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsOverviewRoute = ApiHimsOverviewRouteImport.update({
+  id: '/api/hims/overview',
+  path: '/api/hims/overview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsPayoutsRoute = ApiHimsPayoutsRouteImport.update({
+  id: '/api/hims/payouts',
+  path: '/api/hims/payouts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsSessionRoute = ApiHimsSessionRouteImport.update({
+  id: '/api/hims/session',
+  path: '/api/hims/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInternalSweepRoute = ApiInternalSweepRouteImport.update({
   id: '/api/internal/sweep',
   path: '/api/internal/sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsComplianceRoute = ApiOimsComplianceRouteImport.update({
+  id: '/api/oims/compliance',
+  path: '/api/oims/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsFleetRoute = ApiOimsFleetRouteImport.update({
+  id: '/api/oims/fleet',
+  path: '/api/oims/fleet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsOperatorsRoute = ApiOimsOperatorsRouteImport.update({
+  id: '/api/oims/operators',
+  path: '/api/oims/operators',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsRoutesRoute = ApiOimsRoutesRouteImport.update({
+  id: '/api/oims/routes',
+  path: '/api/oims/routes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsSchedulesRoute = ApiOimsSchedulesRouteImport.update({
+  id: '/api/oims/schedules',
+  path: '/api/oims/schedules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsSessionRoute = ApiOimsSessionRouteImport.update({
+  id: '/api/oims/session',
+  path: '/api/oims/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsWorkspaceRoute = ApiOimsWorkspaceRouteImport.update({
+  id: '/api/oims/workspace',
+  path: '/api/oims/workspace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPaymentsCallbackRoute = ApiPaymentsCallbackRouteImport.update({
@@ -417,9 +503,19 @@ const ApiSgrServicesRoute = ApiSgrServicesRouteImport.update({
   path: '/api/sgr/services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiFerrySailingsIdRoute = ApiFerrySailingsIdRouteImport.update({
+  id: '/api/ferry/sailings/$id',
+  path: '/api/ferry/sailings/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiFlightsOffersIdRoute = ApiFlightsOffersIdRouteImport.update({
   id: '/api/flights/offers/$id',
   path: '/api/flights/offers/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsManifestsTripIdRoute = ApiOimsManifestsTripIdRouteImport.update({
+  id: '/api/oims/manifests/$tripId',
+  path: '/api/oims/manifests/$tripId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStaysOffersIdRoute = ApiStaysOffersIdRouteImport.update({
@@ -505,7 +601,21 @@ export interface FileRoutesByFullPath {
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/bus/results': typeof ApiBusResultsRoute
   '/api/guides/$slug': typeof ApiGuidesSlugRoute
+  '/api/hims/audit': typeof ApiHimsAuditRoute
+  '/api/hims/commission': typeof ApiHimsCommissionRoute
+  '/api/hims/finance': typeof ApiHimsFinanceRoute
+  '/api/hims/operators': typeof ApiHimsOperatorsRoute
+  '/api/hims/overview': typeof ApiHimsOverviewRoute
+  '/api/hims/payouts': typeof ApiHimsPayoutsRoute
+  '/api/hims/session': typeof ApiHimsSessionRoute
   '/api/internal/sweep': typeof ApiInternalSweepRoute
+  '/api/oims/compliance': typeof ApiOimsComplianceRoute
+  '/api/oims/fleet': typeof ApiOimsFleetRoute
+  '/api/oims/operators': typeof ApiOimsOperatorsRoute
+  '/api/oims/routes': typeof ApiOimsRoutesRoute
+  '/api/oims/schedules': typeof ApiOimsSchedulesRoute
+  '/api/oims/session': typeof ApiOimsSessionRoute
+  '/api/oims/workspace': typeof ApiOimsWorkspaceRoute
   '/api/payments/callback': typeof ApiPaymentsCallbackRoute
   '/api/payments/clickpesa': typeof ApiPaymentsClickpesaRoute
   '/api/payments/preview': typeof ApiPaymentsPreviewRoute
@@ -513,7 +623,9 @@ export interface FileRoutesByFullPath {
   '/api/sgr/holds': typeof ApiSgrHoldsRoute
   '/api/sgr/layouts': typeof ApiSgrLayoutsRoute
   '/api/sgr/services': typeof ApiSgrServicesRoute
+  '/api/ferry/sailings/$id': typeof ApiFerrySailingsIdRoute
   '/api/flights/offers/$id': typeof ApiFlightsOffersIdRoute
+  '/api/oims/manifests/$tripId': typeof ApiOimsManifestsTripIdRoute
   '/api/stays/offers/$id': typeof ApiStaysOffersIdRoute
   '/api/sgr/trips/$tripId/classes': typeof ApiSgrTripsTripIdClassesRouteWithChildren
   '/api/sgr/trips/$tripId/quote': typeof ApiSgrTripsTripIdQuoteRoute
@@ -578,7 +690,21 @@ export interface FileRoutesByTo {
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/bus/results': typeof ApiBusResultsRoute
   '/api/guides/$slug': typeof ApiGuidesSlugRoute
+  '/api/hims/audit': typeof ApiHimsAuditRoute
+  '/api/hims/commission': typeof ApiHimsCommissionRoute
+  '/api/hims/finance': typeof ApiHimsFinanceRoute
+  '/api/hims/operators': typeof ApiHimsOperatorsRoute
+  '/api/hims/overview': typeof ApiHimsOverviewRoute
+  '/api/hims/payouts': typeof ApiHimsPayoutsRoute
+  '/api/hims/session': typeof ApiHimsSessionRoute
   '/api/internal/sweep': typeof ApiInternalSweepRoute
+  '/api/oims/compliance': typeof ApiOimsComplianceRoute
+  '/api/oims/fleet': typeof ApiOimsFleetRoute
+  '/api/oims/operators': typeof ApiOimsOperatorsRoute
+  '/api/oims/routes': typeof ApiOimsRoutesRoute
+  '/api/oims/schedules': typeof ApiOimsSchedulesRoute
+  '/api/oims/session': typeof ApiOimsSessionRoute
+  '/api/oims/workspace': typeof ApiOimsWorkspaceRoute
   '/api/payments/callback': typeof ApiPaymentsCallbackRoute
   '/api/payments/clickpesa': typeof ApiPaymentsClickpesaRoute
   '/api/payments/preview': typeof ApiPaymentsPreviewRoute
@@ -586,7 +712,9 @@ export interface FileRoutesByTo {
   '/api/sgr/holds': typeof ApiSgrHoldsRoute
   '/api/sgr/layouts': typeof ApiSgrLayoutsRoute
   '/api/sgr/services': typeof ApiSgrServicesRoute
+  '/api/ferry/sailings/$id': typeof ApiFerrySailingsIdRoute
   '/api/flights/offers/$id': typeof ApiFlightsOffersIdRoute
+  '/api/oims/manifests/$tripId': typeof ApiOimsManifestsTripIdRoute
   '/api/stays/offers/$id': typeof ApiStaysOffersIdRoute
   '/api/sgr/trips/$tripId/classes': typeof ApiSgrTripsTripIdClassesRouteWithChildren
   '/api/sgr/trips/$tripId/quote': typeof ApiSgrTripsTripIdQuoteRoute
@@ -653,7 +781,21 @@ export interface FileRoutesById {
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/bus/results': typeof ApiBusResultsRoute
   '/api/guides/$slug': typeof ApiGuidesSlugRoute
+  '/api/hims/audit': typeof ApiHimsAuditRoute
+  '/api/hims/commission': typeof ApiHimsCommissionRoute
+  '/api/hims/finance': typeof ApiHimsFinanceRoute
+  '/api/hims/operators': typeof ApiHimsOperatorsRoute
+  '/api/hims/overview': typeof ApiHimsOverviewRoute
+  '/api/hims/payouts': typeof ApiHimsPayoutsRoute
+  '/api/hims/session': typeof ApiHimsSessionRoute
   '/api/internal/sweep': typeof ApiInternalSweepRoute
+  '/api/oims/compliance': typeof ApiOimsComplianceRoute
+  '/api/oims/fleet': typeof ApiOimsFleetRoute
+  '/api/oims/operators': typeof ApiOimsOperatorsRoute
+  '/api/oims/routes': typeof ApiOimsRoutesRoute
+  '/api/oims/schedules': typeof ApiOimsSchedulesRoute
+  '/api/oims/session': typeof ApiOimsSessionRoute
+  '/api/oims/workspace': typeof ApiOimsWorkspaceRoute
   '/api/payments/callback': typeof ApiPaymentsCallbackRoute
   '/api/payments/clickpesa': typeof ApiPaymentsClickpesaRoute
   '/api/payments/preview': typeof ApiPaymentsPreviewRoute
@@ -661,7 +803,9 @@ export interface FileRoutesById {
   '/api/sgr/holds': typeof ApiSgrHoldsRoute
   '/api/sgr/layouts': typeof ApiSgrLayoutsRoute
   '/api/sgr/services': typeof ApiSgrServicesRoute
+  '/api/ferry/sailings/$id': typeof ApiFerrySailingsIdRoute
   '/api/flights/offers/$id': typeof ApiFlightsOffersIdRoute
+  '/api/oims/manifests/$tripId': typeof ApiOimsManifestsTripIdRoute
   '/api/stays/offers/$id': typeof ApiStaysOffersIdRoute
   '/api/sgr/trips/$tripId/classes': typeof ApiSgrTripsTripIdClassesRouteWithChildren
   '/api/sgr/trips/$tripId/quote': typeof ApiSgrTripsTripIdQuoteRoute
@@ -729,7 +873,21 @@ export interface FileRouteTypes {
     | '/api/auth/session'
     | '/api/bus/results'
     | '/api/guides/$slug'
+    | '/api/hims/audit'
+    | '/api/hims/commission'
+    | '/api/hims/finance'
+    | '/api/hims/operators'
+    | '/api/hims/overview'
+    | '/api/hims/payouts'
+    | '/api/hims/session'
     | '/api/internal/sweep'
+    | '/api/oims/compliance'
+    | '/api/oims/fleet'
+    | '/api/oims/operators'
+    | '/api/oims/routes'
+    | '/api/oims/schedules'
+    | '/api/oims/session'
+    | '/api/oims/workspace'
     | '/api/payments/callback'
     | '/api/payments/clickpesa'
     | '/api/payments/preview'
@@ -737,7 +895,9 @@ export interface FileRouteTypes {
     | '/api/sgr/holds'
     | '/api/sgr/layouts'
     | '/api/sgr/services'
+    | '/api/ferry/sailings/$id'
     | '/api/flights/offers/$id'
+    | '/api/oims/manifests/$tripId'
     | '/api/stays/offers/$id'
     | '/api/sgr/trips/$tripId/classes'
     | '/api/sgr/trips/$tripId/quote'
@@ -802,7 +962,21 @@ export interface FileRouteTypes {
     | '/api/auth/session'
     | '/api/bus/results'
     | '/api/guides/$slug'
+    | '/api/hims/audit'
+    | '/api/hims/commission'
+    | '/api/hims/finance'
+    | '/api/hims/operators'
+    | '/api/hims/overview'
+    | '/api/hims/payouts'
+    | '/api/hims/session'
     | '/api/internal/sweep'
+    | '/api/oims/compliance'
+    | '/api/oims/fleet'
+    | '/api/oims/operators'
+    | '/api/oims/routes'
+    | '/api/oims/schedules'
+    | '/api/oims/session'
+    | '/api/oims/workspace'
     | '/api/payments/callback'
     | '/api/payments/clickpesa'
     | '/api/payments/preview'
@@ -810,7 +984,9 @@ export interface FileRouteTypes {
     | '/api/sgr/holds'
     | '/api/sgr/layouts'
     | '/api/sgr/services'
+    | '/api/ferry/sailings/$id'
     | '/api/flights/offers/$id'
+    | '/api/oims/manifests/$tripId'
     | '/api/stays/offers/$id'
     | '/api/sgr/trips/$tripId/classes'
     | '/api/sgr/trips/$tripId/quote'
@@ -876,7 +1052,21 @@ export interface FileRouteTypes {
     | '/api/auth/session'
     | '/api/bus/results'
     | '/api/guides/$slug'
+    | '/api/hims/audit'
+    | '/api/hims/commission'
+    | '/api/hims/finance'
+    | '/api/hims/operators'
+    | '/api/hims/overview'
+    | '/api/hims/payouts'
+    | '/api/hims/session'
     | '/api/internal/sweep'
+    | '/api/oims/compliance'
+    | '/api/oims/fleet'
+    | '/api/oims/operators'
+    | '/api/oims/routes'
+    | '/api/oims/schedules'
+    | '/api/oims/session'
+    | '/api/oims/workspace'
     | '/api/payments/callback'
     | '/api/payments/clickpesa'
     | '/api/payments/preview'
@@ -884,7 +1074,9 @@ export interface FileRouteTypes {
     | '/api/sgr/holds'
     | '/api/sgr/layouts'
     | '/api/sgr/services'
+    | '/api/ferry/sailings/$id'
     | '/api/flights/offers/$id'
+    | '/api/oims/manifests/$tripId'
     | '/api/stays/offers/$id'
     | '/api/sgr/trips/$tripId/classes'
     | '/api/sgr/trips/$tripId/quote'
@@ -948,7 +1140,21 @@ export interface RootRouteChildren {
   TrainReviewRoute: typeof TrainReviewRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiBusResultsRoute: typeof ApiBusResultsRoute
+  ApiHimsAuditRoute: typeof ApiHimsAuditRoute
+  ApiHimsCommissionRoute: typeof ApiHimsCommissionRoute
+  ApiHimsFinanceRoute: typeof ApiHimsFinanceRoute
+  ApiHimsOperatorsRoute: typeof ApiHimsOperatorsRoute
+  ApiHimsOverviewRoute: typeof ApiHimsOverviewRoute
+  ApiHimsPayoutsRoute: typeof ApiHimsPayoutsRoute
+  ApiHimsSessionRoute: typeof ApiHimsSessionRoute
   ApiInternalSweepRoute: typeof ApiInternalSweepRoute
+  ApiOimsComplianceRoute: typeof ApiOimsComplianceRoute
+  ApiOimsFleetRoute: typeof ApiOimsFleetRoute
+  ApiOimsOperatorsRoute: typeof ApiOimsOperatorsRoute
+  ApiOimsRoutesRoute: typeof ApiOimsRoutesRoute
+  ApiOimsSchedulesRoute: typeof ApiOimsSchedulesRoute
+  ApiOimsSessionRoute: typeof ApiOimsSessionRoute
+  ApiOimsWorkspaceRoute: typeof ApiOimsWorkspaceRoute
   ApiPaymentsCallbackRoute: typeof ApiPaymentsCallbackRoute
   ApiPaymentsClickpesaRoute: typeof ApiPaymentsClickpesaRoute
   ApiPaymentsPreviewRoute: typeof ApiPaymentsPreviewRoute
@@ -956,7 +1162,9 @@ export interface RootRouteChildren {
   ApiSgrHoldsRoute: typeof ApiSgrHoldsRoute
   ApiSgrLayoutsRoute: typeof ApiSgrLayoutsRoute
   ApiSgrServicesRoute: typeof ApiSgrServicesRoute
+  ApiFerrySailingsIdRoute: typeof ApiFerrySailingsIdRoute
   ApiFlightsOffersIdRoute: typeof ApiFlightsOffersIdRoute
+  ApiOimsManifestsTripIdRoute: typeof ApiOimsManifestsTripIdRoute
   ApiStaysOffersIdRoute: typeof ApiStaysOffersIdRoute
   ApiSgrTripsTripIdClassesRoute: typeof ApiSgrTripsTripIdClassesRouteWithChildren
   ApiSgrTripsTripIdQuoteRoute: typeof ApiSgrTripsTripIdQuoteRoute
@@ -1377,11 +1585,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGuidesSlugRouteImport
       parentRoute: typeof ApiGuidesRoute
     }
+    '/api/hims/audit': {
+      id: '/api/hims/audit'
+      path: '/api/hims/audit'
+      fullPath: '/api/hims/audit'
+      preLoaderRoute: typeof ApiHimsAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/commission': {
+      id: '/api/hims/commission'
+      path: '/api/hims/commission'
+      fullPath: '/api/hims/commission'
+      preLoaderRoute: typeof ApiHimsCommissionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/finance': {
+      id: '/api/hims/finance'
+      path: '/api/hims/finance'
+      fullPath: '/api/hims/finance'
+      preLoaderRoute: typeof ApiHimsFinanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/operators': {
+      id: '/api/hims/operators'
+      path: '/api/hims/operators'
+      fullPath: '/api/hims/operators'
+      preLoaderRoute: typeof ApiHimsOperatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/overview': {
+      id: '/api/hims/overview'
+      path: '/api/hims/overview'
+      fullPath: '/api/hims/overview'
+      preLoaderRoute: typeof ApiHimsOverviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/payouts': {
+      id: '/api/hims/payouts'
+      path: '/api/hims/payouts'
+      fullPath: '/api/hims/payouts'
+      preLoaderRoute: typeof ApiHimsPayoutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/session': {
+      id: '/api/hims/session'
+      path: '/api/hims/session'
+      fullPath: '/api/hims/session'
+      preLoaderRoute: typeof ApiHimsSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/internal/sweep': {
       id: '/api/internal/sweep'
       path: '/api/internal/sweep'
       fullPath: '/api/internal/sweep'
       preLoaderRoute: typeof ApiInternalSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/compliance': {
+      id: '/api/oims/compliance'
+      path: '/api/oims/compliance'
+      fullPath: '/api/oims/compliance'
+      preLoaderRoute: typeof ApiOimsComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/fleet': {
+      id: '/api/oims/fleet'
+      path: '/api/oims/fleet'
+      fullPath: '/api/oims/fleet'
+      preLoaderRoute: typeof ApiOimsFleetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/operators': {
+      id: '/api/oims/operators'
+      path: '/api/oims/operators'
+      fullPath: '/api/oims/operators'
+      preLoaderRoute: typeof ApiOimsOperatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/routes': {
+      id: '/api/oims/routes'
+      path: '/api/oims/routes'
+      fullPath: '/api/oims/routes'
+      preLoaderRoute: typeof ApiOimsRoutesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/schedules': {
+      id: '/api/oims/schedules'
+      path: '/api/oims/schedules'
+      fullPath: '/api/oims/schedules'
+      preLoaderRoute: typeof ApiOimsSchedulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/session': {
+      id: '/api/oims/session'
+      path: '/api/oims/session'
+      fullPath: '/api/oims/session'
+      preLoaderRoute: typeof ApiOimsSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/workspace': {
+      id: '/api/oims/workspace'
+      path: '/api/oims/workspace'
+      fullPath: '/api/oims/workspace'
+      preLoaderRoute: typeof ApiOimsWorkspaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/payments/callback': {
@@ -1433,11 +1739,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSgrServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ferry/sailings/$id': {
+      id: '/api/ferry/sailings/$id'
+      path: '/api/ferry/sailings/$id'
+      fullPath: '/api/ferry/sailings/$id'
+      preLoaderRoute: typeof ApiFerrySailingsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/flights/offers/$id': {
       id: '/api/flights/offers/$id'
       path: '/api/flights/offers/$id'
       fullPath: '/api/flights/offers/$id'
       preLoaderRoute: typeof ApiFlightsOffersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/manifests/$tripId': {
+      id: '/api/oims/manifests/$tripId'
+      path: '/api/oims/manifests/$tripId'
+      fullPath: '/api/oims/manifests/$tripId'
+      preLoaderRoute: typeof ApiOimsManifestsTripIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/stays/offers/$id': {
@@ -1568,7 +1888,21 @@ const rootRouteChildren: RootRouteChildren = {
   TrainReviewRoute: TrainReviewRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiBusResultsRoute: ApiBusResultsRoute,
+  ApiHimsAuditRoute: ApiHimsAuditRoute,
+  ApiHimsCommissionRoute: ApiHimsCommissionRoute,
+  ApiHimsFinanceRoute: ApiHimsFinanceRoute,
+  ApiHimsOperatorsRoute: ApiHimsOperatorsRoute,
+  ApiHimsOverviewRoute: ApiHimsOverviewRoute,
+  ApiHimsPayoutsRoute: ApiHimsPayoutsRoute,
+  ApiHimsSessionRoute: ApiHimsSessionRoute,
   ApiInternalSweepRoute: ApiInternalSweepRoute,
+  ApiOimsComplianceRoute: ApiOimsComplianceRoute,
+  ApiOimsFleetRoute: ApiOimsFleetRoute,
+  ApiOimsOperatorsRoute: ApiOimsOperatorsRoute,
+  ApiOimsRoutesRoute: ApiOimsRoutesRoute,
+  ApiOimsSchedulesRoute: ApiOimsSchedulesRoute,
+  ApiOimsSessionRoute: ApiOimsSessionRoute,
+  ApiOimsWorkspaceRoute: ApiOimsWorkspaceRoute,
   ApiPaymentsCallbackRoute: ApiPaymentsCallbackRoute,
   ApiPaymentsClickpesaRoute: ApiPaymentsClickpesaRoute,
   ApiPaymentsPreviewRoute: ApiPaymentsPreviewRoute,
@@ -1576,7 +1910,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSgrHoldsRoute: ApiSgrHoldsRoute,
   ApiSgrLayoutsRoute: ApiSgrLayoutsRoute,
   ApiSgrServicesRoute: ApiSgrServicesRoute,
+  ApiFerrySailingsIdRoute: ApiFerrySailingsIdRoute,
   ApiFlightsOffersIdRoute: ApiFlightsOffersIdRoute,
+  ApiOimsManifestsTripIdRoute: ApiOimsManifestsTripIdRoute,
   ApiStaysOffersIdRoute: ApiStaysOffersIdRoute,
   ApiSgrTripsTripIdClassesRoute: ApiSgrTripsTripIdClassesRouteWithChildren,
   ApiSgrTripsTripIdQuoteRoute: ApiSgrTripsTripIdQuoteRoute,

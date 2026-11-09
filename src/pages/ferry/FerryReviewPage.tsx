@@ -1,14 +1,12 @@
-import { useMemo } from 'react';
 import { useNavigate, Link } from '@/router';
 import { ArrowLeft, Pencil, Check } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { getFerrySailing } from '@/data/operations';
-import { ErrorState, SearchSummaryBar } from '@/components/shared/States';
+import { useFerrySailing } from '@/hooks/useFerrySailing';
+import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
 import { formatDate } from '@/utils/format';
 import { formatMoney } from '@/domain/money';
 import { quoteFerrySailing } from '@/domain/pricing';
-import type { FerrySailing } from '@/types';
 
 export function FerryReviewPage() {
   const navigate = useNavigate();
@@ -18,8 +16,9 @@ export function FerryReviewPage() {
   const selectedClassId = bookingState.searchParams.extras?.selectedClassId || bookingState.selectedClassId;
   const residency = (bookingState.searchParams.extras?.residency || 'resident') as 'resident' | 'non_resident';
 
-  const sailing = useMemo<FerrySailing | null>(() => getFerrySailing(sailingId) ?? null, [sailingId]);
+  const { sailing, status } = useFerrySailing(sailingId);
 
+  if (status === 'loading') return <LoadingState />;
   if (!sailing) return (
     <ErrorState message={tp('unableLoadBookingReview')} onRetry={() => navigate('/ferry/results')} />
   );

@@ -5,8 +5,18 @@ import viteConfig from './vite.config.ts';
 // Africa/Dar_es_Salaam (UTC+3, no DST) is Travelar's primary market.
 process.env.TZ = 'Africa/Dar_es_Salaam';
 
+const resolvedViteConfig =
+  typeof viteConfig === 'function'
+    ? await viteConfig({
+        command: 'serve',
+        mode: 'test',
+        isSsrBuild: false,
+        isPreview: false,
+      })
+    : viteConfig;
+
 export default mergeConfig(
-  viteConfig,
+  resolvedViteConfig,
   defineConfig({
     test: {
       environment: 'jsdom',

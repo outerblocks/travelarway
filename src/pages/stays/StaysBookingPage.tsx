@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
+import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
 import { ErrorState, LoadingState, QueryFeedback, SearchSummaryBar } from '@/components/shared/States';
 import { partyMismatched } from '@/domain/passengers';
 import { roomFromOffer } from '@/domain/stay-offer';
@@ -111,6 +112,7 @@ export function StaysBookingPage() {
             <p className="mt-2 max-w-2xl text-body text-neutral-600">{tp('stayGuestIntro')}</p>
             <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="space-y-4">
+                <TravelerPartyNote adults={adults} children={children} />
                 {errors.party ? <p className="text-body text-error-600">{errors.party}</p> : null}
                 {sizedGuests.map((guest, index) => (
                   <div key={guest.id} className="border border-neutral-300 bg-white p-5">

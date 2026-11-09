@@ -3,6 +3,7 @@ import { useNavigate, Link } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
+import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
 import { partyMismatched } from '@/domain/passengers';
 import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
 import { Select } from '@/components/ui/Select';
@@ -363,7 +364,16 @@ export function BusBookingPage() {
     }
   };
 
-  if (loadState === 'loading') return <LoadingState />;
+  if (loadState === 'loading') {
+    return (
+      <>
+        <SearchSummaryBar>
+          <Link to="/bus/results" className="btn-ghost text-label">← {tp('backToResults')}</Link>
+        </SearchSummaryBar>
+        <LoadingState />
+      </>
+    );
+  }
 
   if (loadState === 'missing' || !trip) return (
     <ErrorState
@@ -502,6 +512,12 @@ export function BusBookingPage() {
               </header>
 
               <div className="px-5 py-5 sm:px-6">
+                <div className="mb-5">
+                  <TravelerPartyNote
+                    adults={bookingState.searchParams.adults}
+                    children={bookingState.searchParams.children}
+                  />
+                </div>
                 {errors.party && (
                   <p role="alert" className="mb-5 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-meta text-error-700">
                     {errors.party}

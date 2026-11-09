@@ -14,11 +14,11 @@ describe('parseTerms', () => {
     expect(headings[26]).toBe('27. Contact Us');
   });
 
-  it('keeps product subheadings and Incroc Limited as operator', () => {
+  it('keeps product subheadings and OuterBlocks Limited as operator', () => {
     const nodes = parseTerms(TERMS_BODY);
     expect(nodes.some((node) => node.kind === 'h3' && node.text === '9.1 Flights')).toBe(true);
     expect(nodes.some((node) => node.kind === 'h3' && node.text.startsWith('9.5 Stays'))).toBe(true);
-    expect(TERMS_BODY).toContain('Incroc Limited');
+    expect(TERMS_BODY).toContain('OuterBlocks Limited');
     expect(TERMS_BODY).not.toContain('OuterBlocks');
     expect(TERMS_BODY).not.toContain('Compliance Notes');
   });
@@ -37,7 +37,7 @@ describe('parseTerms', () => {
       'Where it comes from',
     ]);
     expect(tables[0].kind === 'table' && tables[0].rows).toHaveLength(10);
-    expect(PRIVACY_BODY).toContain('Incroc Limited');
+    expect(PRIVACY_BODY).toContain('OuterBlocks Limited');
     expect(PRIVACY_BODY).not.toContain('Drafting note');
   });
 
@@ -73,7 +73,7 @@ describe('parseTerms', () => {
     expect(tables[1].kind === 'table' && tables[1].headers).toEqual(['Step', 'Our commitment']);
     const steps = nodes.find((node) => node.kind === 'ol');
     expect(steps?.kind === 'ol' && steps.items).toHaveLength(4);
-    expect(REFUNDS_BODY).toContain('Incroc Limited');
+    expect(REFUNDS_BODY).toContain('OuterBlocks Limited');
     expect(REFUNDS_BODY).not.toContain('Drafting note');
   });
 });

@@ -62,8 +62,18 @@ function stubLocationsEndpoint() {
   );
 }
 
-async function renderForm(mode: BookingMode = 'flights') {
-  stubLocationsEndpoint();
+async function renderForm(mode: BookingMode = 'flights', locations: 'ok' | 'fail' = 'ok') {
+  if (locations === 'fail') {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input).includes('/api/locations')) return Promise.reject(new Error('offline'));
+        return Response.json({ data: [] });
+      }),
+    );
+  } else {
+    stubLocationsEndpoint();
+  }
   const rootRoute = createRootRoute({ component: Outlet });
   const homeRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -182,6 +192,20 @@ describe('SearchForm flight trip types', () => {
     expect(screen.getByRole('button', { name: /Travelers: 3 travelers/ })).toHaveTextContent('3 travelers');
     expect(screen.getByRole('button', { name: /Travelers: 3 travelers/ })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+  });
+
+  it('keeps the search button in place when places fail to load', async () => {
+    const { container } = await renderForm('bus', 'fail');
+    const alert = await screen.findByRole('alert');
+    const submit = screen.getByRole('button', { name: /Search Trips/ });
+    const bottom = container.querySelector('.search-form-bottom');
+
+    expect(alert).toHaveTextContent('Places could not be loaded');
+    expect(container.querySelector('.search-form-status')).toContainElement(alert);
+    expect(bottom?.contains(submit)).toBe(true);
+    expect(bottom?.contains(alert)).toBe(false);
+    expect(submit).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('does not require a second place for stays search', async () => {

@@ -119,7 +119,9 @@ function FlightOfferCard({
             <p className="whitespace-nowrap text-listing font-semibold tabular-nums text-brand-800">
               {formatMoney(offer.totalPrice, offer.currency)}
             </p>
-            {offer.baggageInfo ? <p className="mt-1 text-meta text-neutral-600">{offer.baggageInfo}</p> : null}
+            <p className="mt-1 text-meta text-neutral-600">
+              {offer.baggageInfo?.trim() || tp('baggageNotOnOffer')}
+            </p>
           </div>
           <Link to={`/flights/booking?offer=${encodeURIComponent(offer.id)}`} className="btn-primary px-4 py-2 text-label">
             {tp('selectFlight')}

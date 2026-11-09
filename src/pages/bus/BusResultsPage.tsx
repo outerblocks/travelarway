@@ -171,7 +171,7 @@ export function BusResultsPage() {
         </div>
 
         {status === 'loading' ? (
-          <LoadingState />
+          <LoadingState inset />
         ) : trips.length === 0 ? (
           <EmptyResults
             message={tp('noTripsForRoute')}

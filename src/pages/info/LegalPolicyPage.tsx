@@ -5,7 +5,7 @@ import { parseTerms, type TermsNode } from '@/pages/info/parse-terms';
 
 function richText(text: string, skipSelf?: 'terms' | 'privacy' | 'cookies'): ReactNode[] {
   const pattern =
-    /(customer@travelaraway\.com)|(\+255 714 559 749)|(Terms and Conditions)|(our Terms)(?! and Conditions)|(Privacy Policy at \[link\])|(Privacy Policy)|(Cookie Policy)/g;
+    /(customer@travelaraway\.com|partners@travelarway\.com)|(\+255 714 559 749)|(Terms and Conditions)|(our Terms)(?! and Conditions)|(Privacy Policy at \[link\])|(Privacy Policy)|(Cookie Policy)/g;
   const parts: ReactNode[] = [];
   let last = 0;
   let match: RegExpExecArray | null;
@@ -14,8 +14,8 @@ function richText(text: string, skipSelf?: 'terms' | 'privacy' | 'cookies'): Rea
     if (match.index > last) parts.push(text.slice(last, match.index));
     if (match[1]) {
       parts.push(
-        <a key={key} className="text-ink underline underline-offset-2" href="mailto:customer@travelaraway.com">
-          customer@travelaraway.com
+        <a key={key} className="text-ink underline underline-offset-2" href={`mailto:${match[1]}`}>
+          {match[1]}
         </a>,
       );
     } else if (match[2]) {

@@ -3,7 +3,7 @@ export const PRIVACY_EFFECTIVE_DATE = '8 November 2026';
 export const PRIVACY_LAST_UPDATED = '8 November 2026';
 
 export const PRIVACY_BODY = `1. Who We Are
-Travelar is a travel marketplace operated by Incroc Limited, a company registered in [country] under number [registration number], with its registered office at [address] ("Travelar", "we", "us" or "our"). Through our website and apps (the "Platform") you can search for and book bus, train, ferry and flight tickets, stays and experiences in Africa and around the world.
+Travelar is a travel marketplace operated by OuterBlocks Limited, a company registered in [country] under number [registration number], with its registered office at [address] ("Travelar", "we", "us" or "our"). Through our website and apps (the "Platform") you can search for and book bus, train, ferry and flight tickets, stays and experiences in Africa and around the world.
 We are the controller (or the equivalent under your local law) of the personal data described in this policy. Contact details are in section 15.
 
 2. What This Policy Covers
@@ -101,7 +101,7 @@ To use any right, contact us through section 15. We may need to verify your iden
 The Platform may link to Suppliers' sites and other third-party services whose privacy practices we do not control, so please read their policies. We may update this policy from time to time. We will post the new version with a new "last updated" date and, for material changes, tell you by email, app notification or banner before they take effect, unless the law or an urgent security need requires otherwise.
 
 15. Contact Us
-Travelar (operated by Incroc Limited)
+Travelar (operated by OuterBlocks Limited)
 Registered address: [address]
 Email: customer@travelaraway.com
 Phone: +255 714 559 749

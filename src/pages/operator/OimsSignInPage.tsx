@@ -193,7 +193,11 @@ export function OimsSignInPage() {
             <p className="text-xs text-neutral-500 leading-relaxed">
               <strong className="text-neutral-700">Restricted Access.</strong>{' '}
               This portal is exclusively for registered operators partnered with Travelar.
-              If you need access, contact your account manager.
+              If you need access, email{' '}
+              <a className="text-ink underline underline-offset-2" href="mailto:partners@travelarway.com">
+                partners@travelarway.com
+              </a>
+              {' '}or contact your account manager.
             </p>
           </div>
 

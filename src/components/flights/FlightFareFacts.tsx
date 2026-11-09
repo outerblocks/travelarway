@@ -7,7 +7,7 @@ export function FlightFareFacts({ offer, compact = false }: { offer: PublicAirOf
   const rows = [
     offer.fareBrand ? [tp('fareBrandLabel'), offer.fareBrand] : null,
     offer.cabinClass ? [tp('cabinLabel'), offer.cabinClass] : null,
-    offer.baggageInfo ? [tp('baggageLabel'), offer.baggageInfo] : null,
+    [tp('includedBaggage'), offer.baggageInfo?.trim() || tp('baggageNotOnOffer')],
     offer.refundInfo ? [tp('refundLabel'), offer.refundInfo] : null,
     offer.changeInfo ? [tp('changeLabel'), offer.changeInfo] : null,
     offer.basePrice != null ? [tp('searchFareBase'), formatMoney(offer.basePrice, offer.currency)] : null,

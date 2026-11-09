@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@/router';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
+import { FlightCheckoutSteps } from '@/components/flights/FlightCheckoutSteps';
 import { FlightFareFacts } from '@/components/flights/FlightFareFacts';
 import { FlightItineraryList } from '@/components/flights/FlightItineraryList';
 import { ErrorState, LoadingState, QueryFeedback, SearchSummaryBar } from '@/components/shared/States';
@@ -103,6 +104,12 @@ export function FlightReviewPage() {
                           <p className="text-meta text-neutral-500">
                             {guest.email} · {guest.phoneCountryCode} {guest.phone}
                           </p>
+                          {guest.idType ? (
+                            <p className="text-meta text-neutral-500">
+                              {tp(guest.idType === 'passport' ? 'passport' : guest.idType === 'national_id' ? 'nationalId' : guest.idType === 'driving_licence' ? 'drivingLicence' : 'voterCard')}
+                              {guest.idNumber ? ` · ${guest.idNumber}` : ''}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     ))}
@@ -112,6 +119,10 @@ export function FlightReviewPage() {
               <aside className="card sticky top-20 h-fit p-6">
                 <h2 className="mb-4 text-listing font-bold text-neutral-900">{tp('fareSummary')}</h2>
                 <FlightFareFacts offer={offer} compact />
+                <p className="mt-5 text-meta leading-relaxed text-neutral-600">{tp('flightNextDocumentedSteps')}</p>
+                <div className="mt-3">
+                  <FlightCheckoutSteps current="review" />
+                </div>
                 <button type="button" className="btn-primary mt-6 w-full opacity-60" disabled>
                   {tp('proceedToCheckout')}
                 </button>

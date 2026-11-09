@@ -32,8 +32,8 @@ import { useOperations } from '@/hooks/useOperations';
 import type { FerryVesselClass } from '@/types';
 
 /**
- * Operator (OIMS) management surfaces. Everything written here is immediately
- * visible to the passenger search, because both read the same operations store.
+ * Legacy in-memory OIMS sketches. The live console is OimsLiveSections + /api/oims/*.
+ * Do not wire passenger search to this file.
  */
 
 const nf = (value: number, currency: string) =>

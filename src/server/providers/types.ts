@@ -40,10 +40,12 @@ export interface CanonicalAirSegment {
   originCode: string;
   originName?: string;
   originCountry?: string;
+  originCountryCode?: string;
   originTerminal?: string;
   destinationCode: string;
   destinationName?: string;
   destinationCountry?: string;
+  destinationCountryCode?: string;
   destinationTerminal?: string;
   departureAt: string;
   arrivalAt: string;

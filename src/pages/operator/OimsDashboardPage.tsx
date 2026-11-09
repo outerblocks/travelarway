@@ -9,13 +9,29 @@ import type { TranslationKey } from '@/context/I18nContext';
 import { RoutePending } from '@/components/shared/RouteStates';
 import { OperatorManagementLayout, type MgmtSection, type OperatorInfo } from '@/components/layout/OperatorManagementLayout';
 import {
-  FleetSection, ManifestSection, RoutesSection, SchedulesSection, VesselsSection,
-} from '@/pages/operator/OimsSections';
-import { useOperations } from '@/hooks/useOperations';
+  CompliancePanel, LiveFleetSection, LiveManifestSection, LiveRoutesSection, LiveSchedulesSection,
+} from '@/pages/operator/OimsLiveSections';
+import { useOimsConsole } from '@/hooks/useOimsConsole';
 import type { OpsMode } from '@/data/operations';
 
 const nf = (value: number, currency: string) =>
   currency === 'TZS' ? `TSh ${Math.round(value).toLocaleString()}` : `$${Math.round(value).toLocaleString()}`;
+
+interface OimsBookingRow {
+  id: string;
+  reference: string;
+  scheduleId: string;
+  status: string;
+  channel: string;
+  currency: string;
+  amount?: number;
+  amountMinor?: number;
+  passengers: number;
+  bookedAt: string;
+  customerName: string;
+  routeLabel: string;
+  seats: string[];
+}
 
 /**
  * OIMS: the operator's own console. Bus and ferry operators share the shell; the
@@ -24,33 +40,48 @@ const nf = (value: number, currency: string) =>
  */
 export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
   const { user, loading } = useAuth();
-  const ops = useOperations();
-  const [selectedOperatorId, setSelectedOperatorId] = useState<string | null>(null);
+  const consoleState = useOimsConsole(mode);
   const [activeSection, setActiveSection] = useState<MgmtSection>('overview');
-
-  const operators = ops.operators.filter((operator) => operator.mode === mode);
-  const operator = operators.find((candidate) => candidate.id === selectedOperatorId) ?? operators[0];
-
+  const workspace = consoleState.workspace as {
+    operator?: {
+      name: string;
+      latraLicenceNumber: string | null;
+      tasacLicenceNumber: string | null;
+      electronicTicketingRegistered: boolean;
+      licenceValidTo: string | null;
+      passengerCertificateMax: number | null;
+    };
+    routes?: { id: string; name: string; stops: { id: string; locationName: string; sequence: number }[]; fares?: { fromStopId: string; toStopId: string; fareMinor: number; currency: string }[] }[];
+    vehicles?: { id: string; registration: string; serviceClass: string | null }[];
+    vessels?: { id: string; name: string; passengerCertificateMax: number; classes?: { id: string; name: string; capacity: number }[] }[];
+    trips?: { id: string; serviceDate: string; status: string; scheduleId: string }[];
+    bookings?: OimsBookingRow[];
+    staffInvites?: { status: string; reason: string };
+  } | null;
+  const operators = consoleState.operators;
+  const operator = operators.find((candidate) => candidate.id === consoleState.operatorId) ?? operators[0];
   const operatorInfo: OperatorInfo | null = operator
-    ? { operatorId: operator.id, operatorName: operator.name, operatorLogo: operator.logo }
+    ? { operatorId: operator.id, operatorName: operator.name, operatorLogo: '' }
     : null;
   const allOperatorInfos: OperatorInfo[] = operators.map((candidate) => ({
     operatorId: candidate.id,
     operatorName: candidate.name,
-    operatorLogo: candidate.logo,
+    operatorLogo: '',
   }));
-
-  const scheduleIds = useMemo(
-    () => new Set(ops.schedules.filter((schedule) => schedule.operatorId === operator?.id).map((schedule) => schedule.id)),
-    [ops.schedules, operator?.id],
-  );
-  const bookings = useMemo(
-    () => ops.bookings.filter((booking) => booking.operatorId === operator?.id),
-    [ops.bookings, operator?.id],
-  );
-  const schedules = ops.schedules.filter((schedule) => schedule.operatorId === operator?.id);
-  const activeSchedules = schedules.filter((schedule) => schedule.status === 'scheduled' || schedule.status === 'boarding');
-  const confirmed = bookings.filter((booking) => booking.status === 'confirmed');
+  const trips = workspace?.trips ?? [];
+  const routes = workspace?.routes ?? [];
+  const vehicles = workspace?.vehicles ?? [];
+  const vessels = workspace?.vessels ?? [];
+  const bookings = (workspace?.bookings ?? []).map((booking) => ({
+    ...booking,
+    amount: Number(booking.amount ?? booking.amountMinor ?? 0),
+    bookedAt: typeof booking.bookedAt === 'string' ? booking.bookedAt : String(booking.bookedAt ?? ''),
+    seats: booking.seats ?? [],
+  }));
+  const scheduleIds = useMemo(() => new Set(trips.map((trip) => trip.scheduleId)), [trips]);
+  const schedules = trips;
+  const activeSchedules = trips.filter((trip) => trip.status === 'scheduled');
+  const confirmed = bookings.filter((booking) => booking.status === 'issued');
   const seatsSold = confirmed.reduce((sum, booking) => sum + booking.passengers, 0);
   const otcSales = bookings.filter((booking) => booking.channel === 'otc');
   const currency = mode === 'bus' ? 'TZS' : 'USD';
@@ -59,8 +90,11 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
     .reduce((sum, booking) => sum + booking.amount, 0);
 
   // One frame while the browser session is adopted, then the console or sign-in.
-  if (loading) return <RoutePending />;
+  if (loading || consoleState.status === 'loading') return <RoutePending />;
   if (!user) return <Navigate to="/operator/oims-signin" replace />;
+  if (consoleState.status === 'error') {
+    return <div className="p-12 text-center text-sm text-error-600">{consoleState.error || 'OIMS workspace unavailable.'}</div>;
+  }
   if (!operator || !operatorInfo) {
     return <div className="p-12 text-center text-sm text-neutral-500">No operators are provisioned for this mode yet.</div>;
   }
@@ -84,7 +118,7 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
       mode={mode}
       operators={allOperatorInfos}
       selectedOperatorId={operator.id}
-      onSelectOperator={setSelectedOperatorId}
+      onSelectOperator={consoleState.setOperatorId}
       activeSection={activeSection}
       onSectionChange={setActiveSection}
     >
@@ -100,16 +134,15 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
           <div className="grid gap-6 lg:grid-cols-2">
             <Panel title="Next departures" subtitle={`${schedules.length} published`}>
               <div className="divide-y divide-neutral-100">
-                {activeSchedules.slice(0, 5).map((schedule) => {
-                  const route = ops.routes.find((candidate) => candidate.id === schedule.routeId);
-                  const pax = ops.bookings
-                    .filter((booking) => booking.scheduleId === schedule.id && booking.status === 'confirmed')
+                {activeSchedules.slice(0, 5).map((trip) => {
+                  const pax = bookings
+                    .filter((booking) => booking.scheduleId === trip.scheduleId && booking.status === 'issued')
                     .reduce((sum, booking) => sum + booking.passengers, 0);
                   return (
-                    <div key={schedule.id} className="flex items-center gap-3 px-4 py-3">
+                    <div key={trip.id} className="flex items-center gap-3 px-4 py-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-neutral-900">{route?.name ?? '—'}</p>
-                        <p className="text-xs text-neutral-500">{schedule.departureDate} · {schedule.departureTime} → {schedule.arrivalTime}</p>
+                        <p className="truncate text-sm font-semibold text-neutral-900">{trip.serviceDate}</p>
+                        <p className="text-xs text-neutral-500">{trip.status}</p>
                       </div>
                       <span className="text-xs font-semibold text-neutral-600">{pax} pax</span>
                     </div>
@@ -138,15 +171,33 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
               </div>
             </Panel>
           </div>
+
+          {workspace?.operator ? (
+            <CompliancePanel mode={mode} operator={workspace.operator} onSaved={consoleState.reload} />
+          ) : null}
+          <p className="text-xs text-neutral-500">
+            Staff invitations stay blocked until the identity provider is live
+            ({workspace?.staffInvites?.reason ?? 'identity_provider_required'}).
+            Manifest issue stores LATRA/TASAC copies here; it does not file with police or Maritime Single Window.
+          </p>
         </div>
       )}
 
-      {activeSection === 'routes' && <RoutesSection operatorId={operator.id} mode={mode} />}
-      {activeSection === 'schedules' && <SchedulesSection operatorId={operator.id} mode={mode} />}
-      {activeSection === 'fleet' && (mode === 'bus'
-        ? <FleetSection operatorId={operator.id} />
-        : <VesselsSection operatorId={operator.id} />)}
-      {activeSection === 'manifest' && <ManifestSection operatorId={operator.id} mode={mode} />}
+      {activeSection === 'routes' && <LiveRoutesSection mode={mode} routes={routes} onChanged={consoleState.reload} />}
+      {activeSection === 'schedules' && (
+        <LiveSchedulesSection
+          mode={mode}
+          routes={routes}
+          vehicles={vehicles}
+          vessels={vessels}
+          trips={trips}
+          onChanged={consoleState.reload}
+        />
+      )}
+      {activeSection === 'fleet' && (
+        <LiveFleetSection mode={mode} vehicles={vehicles} vessels={vessels} onChanged={consoleState.reload} />
+      )}
+      {activeSection === 'manifest' && <LiveManifestSection mode={mode} trips={trips} />}
 
       {activeSection === 'bookings' && (
         <BookingList
@@ -186,11 +237,11 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
 }
 
 function BookingList({ bookings, currency, scheduleIds }: {
-  bookings: ReturnType<typeof useOperations>['bookings'];
+  bookings: OimsBookingRow[];
   currency: string;
   scheduleIds: Set<string>;
 }) {
-  const [status, setStatus] = useState<'all' | 'confirmed' | 'pending' | 'cancelled' | 'refunded'>('all');
+  const [status, setStatus] = useState<'all' | 'issued' | 'held' | 'cancelled' | 'refunded'>('all');
   const [channel, setChannel] = useState<'all' | 'online' | 'otc'>('all');
 
   const rows = bookings
@@ -202,8 +253,8 @@ function BookingList({ bookings, currency, scheduleIds }: {
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi icon={Users} label="All bookings" value={String(bookings.length)} />
-        <Kpi icon={CheckCircle2} label="Confirmed" value={String(bookings.filter((b) => b.status === 'confirmed').length)} />
-        <Kpi icon={Clock} label="Pending" value={String(bookings.filter((b) => b.status === 'pending').length)} />
+        <Kpi icon={CheckCircle2} label="Issued" value={String(bookings.filter((b) => b.status === 'issued').length)} />
+        <Kpi icon={Clock} label="Held" value={String(bookings.filter((b) => b.status === 'held').length)} />
         <Kpi icon={Ticket} label="OTC" value={String(bookings.filter((b) => b.channel === 'otc').length)} />
       </div>
 
@@ -215,7 +266,7 @@ function BookingList({ bookings, currency, scheduleIds }: {
             value={status}
             onChange={(event) => setStatus(event.target.value as typeof status)}
           >
-            {['all', 'confirmed', 'pending', 'cancelled', 'refunded'].map((value) => (
+            {['all', 'issued', 'held', 'cancelled', 'refunded'].map((value) => (
               <option key={value} value={value}>{value}</option>
             ))}
           </select>

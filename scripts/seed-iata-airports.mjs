@@ -38,8 +38,8 @@ try {
     const values = [];
     const params = [];
     chunk.forEach((row, index) => {
-      const offset = index * 5;
-      values.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, 'airport', $${offset + 4}, true, true, 'reference', $${offset + 5})`);
+      const offset = index * 6;
+      values.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, 'airport', $${offset + 4}, true, true, 'reference', $${offset + 5}, $${offset + 6})`);
       const display = row.name.includes(`(${row.code})`) ? row.name : `${row.name} (${row.code})`;
       params.push(
         display,
@@ -47,10 +47,11 @@ try {
         row.country_code,
         `iata-${String(row.code).toLowerCase()}`,
         row.municipality ? `IATA ${row.code}, ${row.municipality}` : `IATA ${row.code}`,
+        row.aliases || null,
       );
     });
     await client.query(
-      `insert into app.location (name, code, country_code, kind, slug, is_searchable, is_active, source, notes)
+      `insert into app.location (name, code, country_code, kind, slug, is_searchable, is_active, source, notes, search_aliases)
        values ${values.join(',')}
        on conflict (kind, code, country_code) do update
           set name = excluded.name,
@@ -58,6 +59,7 @@ try {
               is_searchable = true,
               is_active = true,
               notes = excluded.notes,
+              search_aliases = excluded.search_aliases,
               updated_at = now()`,
       params,
     );

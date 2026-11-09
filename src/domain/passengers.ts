@@ -24,3 +24,7 @@ export function partyMismatched(
   const declared = declaredParty(passengers);
   return declared.adults !== adults || declared.children !== children;
 }
+
+export function searchedPartySize(adults: number, children: number, infants = 0): number {
+  return Math.max(0, adults) + Math.max(0, children) + Math.max(0, infants);
+}

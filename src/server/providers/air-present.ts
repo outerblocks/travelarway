@@ -64,8 +64,10 @@ function decorateSegment(
       || airlineName(leg.marketingCarrier),
     originName: origin?.name,
     originCountry: countryName(origin?.countryCode),
+    originCountryCode: origin?.countryCode,
     destinationName: destination?.name,
     destinationCountry: countryName(destination?.countryCode),
+    destinationCountryCode: destination?.countryCode,
     equipmentName: aircraftName(leg.equipment),
   };
 }

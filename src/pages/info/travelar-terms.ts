@@ -4,7 +4,7 @@ export const TERMS_LAST_UPDATED = '8 November 2026';
 
 export const TERMS_BODY = `1. About These Terms
 1.1 These Terms and Conditions ("Terms") govern your access to and use of the Travelar website, mobile applications and related services (together, the "Platform"), through which you can search for and book bus, train, ferry and flight tickets, accommodation and experiences in Africa and around the world.
-1.2 The Platform is operated by Incroc Limited, trading as Travelar, a company registered in [country] under number [registration number], with its registered office at [address] ("Travelar", "we", "us" or "our").
+1.2 The Platform is operated by OuterBlocks Limited, trading as Travelar, a company registered in [country] under number [registration number], with its registered office at [address] ("Travelar", "we", "us" or "our").
 1.3 By creating an account, making a Booking or otherwise using the Platform, you agree to be bound by these Terms, our Privacy Policy and our Cookie Policy. If you do not agree, please do not use the Platform.
 1.4 Some countries have mandatory rules that give you rights that these Terms cannot reduce. Where that applies, those rules prevail over these Terms to the extent of any conflict (see section 10).
 
@@ -188,14 +188,15 @@ You may close your account at any time in your account settings or by contacting
 25.7 Third-party rights. Except where stated, only you and Travelar can enforce these Terms. Suppliers may rely on the sections that limit their liability.
 
 26. Governing Law and Jurisdiction
-26.1 These Terms, and any dispute arising from them or from a Booking, are governed by the laws of the country in which Incroc Limited is registered (see section 1.2), and the courts of that country have non-exclusive jurisdiction, subject to 26.2.
+26.1 These Terms, and any dispute arising from them or from a Booking, are governed by the laws of the country in which OuterBlocks Limited is registered (see section 1.2), and the courts of that country have non-exclusive jurisdiction, subject to 26.2.
 26.2 If you are a consumer, you keep the mandatory consumer rights of the country where you live, including any right to bring proceedings in the courts of that country, and nothing in this section removes them.
 26.3 Disputes with a Supplier about the Travel Services are governed by the Supplier's terms and the law that applies to them.
 
 27. Contact Us
-Travelar (operated by Incroc Limited)
+Travelar (operated by OuterBlocks Limited)
 Registered address: [address]
 Customer support: customer@travelaraway.com, +255 714 559 749, available [days and hours, time zone]
+Partners and suppliers: partners@travelarway.com
 Complaints: customer@travelaraway.com
 Privacy and data requests: customer@travelaraway.com
 Data protection officer or local representative, where required: [name and contact details]

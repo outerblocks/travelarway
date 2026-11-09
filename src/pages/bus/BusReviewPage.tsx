@@ -136,7 +136,16 @@ export function BusReviewPage() {
     };
   }, [detail, bookingState.boardingPointId, bookingState.dropOffPointId]);
 
-  if (state === 'loading') return <LoadingState />;
+  if (state === 'loading') {
+    return (
+      <>
+        <SearchSummaryBar>
+          <Link to="/bus/booking" className="btn-ghost text-label">← {tp('checkoutBack')}</Link>
+        </SearchSummaryBar>
+        <LoadingState message={tp('preparingBookingReview')} />
+      </>
+    );
+  }
 
   if (state === 'error') {
     return (

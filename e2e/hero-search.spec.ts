@@ -25,7 +25,7 @@ test('landing page sections fit the viewport and render without React hydration 
   }
   await expect(footer).not.toContainText('Multimodal travel booking for Tanzania and beyond.');
   await expect(footer.getByRole('heading', { name: 'Explore', exact: true })).toHaveCount(0);
-  await expect(footer).toContainText('Operated by Incroc Limited.');
+  await expect(footer).toContainText('Operated by OuterBlocks Limited.');
 
   const pageWidth = await page.evaluate(() => ({
     content: document.documentElement.scrollWidth,

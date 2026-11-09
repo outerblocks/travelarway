@@ -37,3 +37,4 @@ test-results
 
 # Raw OurAirports dump used only to build db/datasets/iata-airports.json
 db/datasets/ourairports-airports.csv
+db/datasets/ourairports-regions.csv

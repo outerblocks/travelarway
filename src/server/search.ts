@@ -4,6 +4,7 @@
  * Server only. Every statement is parameterised; nothing is interpolated from the URL.
  */
 import { query } from '@/server/db';
+import { foldSearchText, matchingCountryCodes } from '@/server/location-search';
 import { quoteBusSegment, type SegmentQuote } from '@/server/quote';
 
 export interface LocationDto {
@@ -46,9 +47,10 @@ export async function listLocations(
   options: { kinds?: string[]; country?: string; limit?: number } = {},
 ): Promise<LocationDto[]> {
   const limit = Math.min(Math.max(options.limit ?? 100, 1), 500);
-  const needle = term?.trim() ?? '';
+  const needle = foldSearchText(term?.trim() ?? '');
   const likeAnywhere = needle ? `%${needle}%` : null;
   const likePrefix = needle ? `${needle}%` : null;
+  const countryHits = needle ? matchingCountryCodes(needle) : [];
   const { rows } = await query<{
     id: string;
     name: string;
@@ -71,11 +73,18 @@ export async function listLocations(
           or lower(l.code) = lower($5)
           or l.code ilike $1
           or l.name ilike $1
+          or coalesce(l.search_aliases, '') ilike $1
+          or ($7::text[] is not null and l.country_code = any($7))
         )
         and ($2::text[] is null or l.kind = any($2))
         and ($3::char(2) is null or l.country_code = $3)
       order by
         (lower(l.code) = lower($5)) desc,
+        (
+          $5::text is not null
+          and (',' || regexp_replace(lower(coalesce(l.search_aliases, '')), ',\\s*', ',', 'g') || ',')
+            like '%,' || $5 || ',%'
+        ) desc,
         (l.kind = 'city') desc,
         (l.kind = 'town') desc,
         (l.name ilike $6) desc,
@@ -89,6 +98,7 @@ export async function listLocations(
       limit,
       needle || null,
       likePrefix,
+      countryHits.length ? countryHits : null,
     ],
   );
 

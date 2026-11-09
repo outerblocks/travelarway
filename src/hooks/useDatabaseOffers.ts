@@ -6,6 +6,8 @@ import { isAbortError, queryFailureStatus, type QueryStatus } from '@/hooks/quer
 import { useOnlineRetry } from '@/hooks/useOnlineRetry';
 import { asPublicAirOffer, type PublicAirOffer } from '@/domain/air-offer';
 import { asPublicStayOffer, type PublicStayOffer } from '@/domain/stay-offer';
+import { asPublicFerrySailing } from '@/domain/ferry-offer';
+import type { FerrySailing } from '@/types';
 
 export type { PublicAirOffer, PublicStayOffer };
 
@@ -23,6 +25,7 @@ export function useDatabaseOffers(mode: string) {
   const [unresolved, setUnresolved] = useState<string[]>([]);
   const [flightOffers, setFlightOffers] = useState<PublicAirOffer[]>([]);
   const [stayOffers, setStayOffers] = useState<PublicStayOffer[]>([]);
+  const [ferrySailings, setFerrySailings] = useState<FerrySailing[]>([]);
   const [bookable, setBookable] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
@@ -32,6 +35,7 @@ export function useDatabaseOffers(mode: string) {
       setUnresolved([]);
       setFlightOffers([]);
       setStayOffers([]);
+      setFerrySailings([]);
       setStatus('ready');
       return;
     }
@@ -71,6 +75,14 @@ export function useDatabaseOffers(mode: string) {
         else setFlightOffers([]);
         if (mode === 'stays') setStayOffers(Array.isArray(body.data) ? body.data.map(asPublicStayOffer) : []);
         else setStayOffers([]);
+        if (mode === 'ferry') {
+          setFerrySailings(Array.isArray(body.data)
+            ? body.data.flatMap((row) => {
+              const sailing = asPublicFerrySailing(row);
+              return sailing ? [sailing] : [];
+            })
+            : []);
+        } else setFerrySailings([]);
         setStatus('ready');
       })
       .catch((error: unknown) => {
@@ -84,5 +96,5 @@ export function useDatabaseOffers(mode: string) {
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
   useOnlineRetry(retry);
 
-  return { status, unresolved, retry, params, from, to, flightOffers, stayOffers, bookable };
+  return { status, unresolved, retry, params, from, to, flightOffers, stayOffers, ferrySailings, bookable };
 }

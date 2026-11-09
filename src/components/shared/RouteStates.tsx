@@ -5,23 +5,22 @@
  */
 export function RoutePending() {
   return (
-    <div className="section-container py-12" role="status" aria-live="polite" aria-label="Loading page">
-      <div className="mx-auto max-w-3xl space-y-5">
-        <div className="h-8 w-56 animate-pulse rounded-md bg-neutral-200" />
-        <div className="h-4 w-80 animate-pulse rounded bg-neutral-200/80" />
-        <div className="space-y-3 pt-4">
+    <div className="section-container py-10" role="status" aria-live="polite" aria-label="Loading page">
+      <div className="mx-auto max-w-3xl space-y-4">
+        <div className="skeleton h-8 w-56" />
+        <div className="skeleton h-4 w-72" />
+        <div className="space-y-3 pt-3">
           {[0, 1, 2].map((row) => (
             <div key={row} className="card flex items-center gap-4 p-5">
-              <div className="h-12 w-12 animate-pulse rounded-lg bg-neutral-200" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3.5 w-2/5 animate-pulse rounded bg-neutral-200" />
-                <div className="h-3 w-1/4 animate-pulse rounded bg-neutral-200/80" />
+              <div className="skeleton h-12 w-12 rounded-lg" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="skeleton h-3.5 w-2/5" />
+                <div className="skeleton h-3 w-1/4" />
               </div>
-              <div className="h-9 w-24 animate-pulse rounded-lg bg-neutral-200" />
+              <div className="skeleton h-9 w-24 rounded-lg" />
             </div>
           ))}
         </div>
-        <p className="pt-2 text-center text-meta text-neutral-500">Loading</p>
       </div>
     </div>
   );

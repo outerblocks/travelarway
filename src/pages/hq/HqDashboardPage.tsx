@@ -1,244 +1,296 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Navigate } from '@/router';
-import { CheckCircle2, CircleSlash, DollarSign, Route as RouteIcon, Ticket, Users } from 'lucide-react';
+import { Pause } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { RoutePending } from '@/components/shared/RouteStates';
-import { useOperations } from '@/hooks/useOperations';
-import { setOperatorApproval, setBookingStatus, type OpsMode } from '@/data/operations';
+import { FINANCE_MODES, type FinanceMode } from '@/domain/finance-modes';
+import { useHimsConsole } from '@/hooks/useHimsConsole';
 
 const nf = (value: number, currency: string) =>
-  currency === 'TZS' ? `TSh ${Math.round(value).toLocaleString()}` : `$${Math.round(value).toLocaleString()}`;
+  currency === 'TZS' ? `TSh ${Math.round(value).toLocaleString()}` : `${currency} ${Math.round(value).toLocaleString()}`;
 
-/**
- * HIMS: Travelar HQ console. It oversees every operator on the network and reads
- * the same operations store the operator consoles write to, so route, fleet,
- * schedule and manifest changes are visible here without a separate pipeline.
- */
+async function postJson(url: string, body: unknown) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error((payload as { error?: string }).error ?? 'request_failed');
+  return payload;
+}
+
 export function HqDashboardPage() {
   const { user, loading } = useAuth();
-  const ops = useOperations();
-  const [mode, setMode] = useState<'all' | OpsMode>('all');
-  const [channel, setChannel] = useState<'all' | 'online' | 'otc'>('all');
+  const [mode, setMode] = useState<FinanceMode>('bus');
+  const [desk, setDesk] = useState<'finance' | 'admin'>('finance');
+  const [section, setSection] = useState<'overview' | 'finance' | 'commission' | 'payouts' | 'audit'>('overview');
+  const hims = useHimsConsole(mode, desk);
 
-  const operators = useMemo(
-    () => ops.operators.filter((operator) => (mode === 'all' ? true : operator.mode === mode)),
-    [ops.operators, mode],
-  );
-
-  const bookings = useMemo(
-    () => ops.bookings
-      .filter((booking) => (mode === 'all' ? true : booking.mode === mode))
-      .filter((booking) => (channel === 'all' ? true : booking.channel === channel))
-      .sort((a, b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime()),
-    [ops.bookings, mode, channel],
-  );
-
-  const confirmed = ops.bookings.filter((booking) => booking.status === 'confirmed');
-  const seatsSold = confirmed.reduce((sum, booking) => sum + booking.passengers, 0);
-  const otc = ops.bookings.filter((booking) => booking.channel === 'otc');
-
-  const revenueByOperator = operators.map((operator) => {
-    const totals = confirmed
-      .filter((booking) => booking.operatorId === operator.id)
-      .reduce<Record<string, number>>((acc, booking) => {
-        acc[booking.currency] = (acc[booking.currency] ?? 0) + booking.amount;
-        return acc;
-      }, {});
-    return { operator, totals };
-  });
-
-  // One frame while the browser session is adopted, then the console or sign-in.
-  if (loading) return <RoutePending />;
+  if (loading || hims.status === 'loading') return <RoutePending />;
   if (!user) return <Navigate to="/operator/hims-signin" replace />;
+  if (hims.status === 'error') {
+    return <div className="p-12 text-center text-sm text-error-600">{hims.error || 'HIMS finance unavailable.'}</div>;
+  }
+
+  const finance = hims.finance as {
+    commercial?: { currency: string; grossMinor: number; travelarMinor: number; operatorNetMinor: number; sales: number }[];
+    payments?: { status: string; currency: string; amountMinor: number; count: number }[];
+    operatorPayables?: { operatorId: string; operatorName: string; currency: string; payableMinor: number }[];
+    unallocated?: { currency: string; amountMinor: number }[];
+    commissionRates?: { id: string; operatorId: string; operatorName: string; rate: number; approvalStatus: string; effectiveFrom: string }[];
+    payouts?: { id: string; status: string; amountMinor: number; currency: string; operatorName: string; holdReason: string | null }[];
+    clickpesaPayout?: string;
+  } | null;
+  const operators = hims.operators as { id: string; name: string; mode: string; status: string; currency: string }[];
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-600">HIMS · Travelar HQ</p>
-            <h1 className="text-xl font-bold text-neutral-900">Network operations</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-600">HIMS · finance control</p>
+            <h1 className="text-xl font-bold text-neutral-900">Mode-isolated ledgers</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <select
-              className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm"
-              value={mode}
-              onChange={(event) => setMode(event.target.value as typeof mode)}
-            >
-              {['all', 'bus', 'ferry'].map((value) => <option key={value} value={value}>{value}</option>)}
+          <div className="flex flex-wrap items-center gap-2">
+            <select className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm" value={mode} onChange={(event) => setMode(event.target.value as FinanceMode)}>
+              {FINANCE_MODES.map((value) => <option key={value} value={value}>{value}</option>)}
             </select>
-            <select
-              className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm"
-              value={channel}
-              onChange={(event) => setChannel(event.target.value as typeof channel)}
-            >
-              {['all', 'online', 'otc'].map((value) => <option key={value} value={value}>{value}</option>)}
+            <select className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm" value={desk} onChange={(event) => setDesk(event.target.value as typeof desk)}>
+              <option value="finance">Finance desk</option>
+              <option value="admin">Admin desk (checker)</option>
             </select>
           </div>
         </div>
+        <nav className="mx-auto flex max-w-7xl gap-4 px-6 pb-3 text-sm">
+          {(['overview', 'finance', 'commission', 'payouts', 'audit'] as const).map((item) => (
+            <button key={item} type="button" className={section === item ? 'font-semibold text-brand-700' : 'text-neutral-500'} onClick={() => setSection(item)}>
+              {item}
+            </button>
+          ))}
+        </nav>
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-6 py-6">
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Kpi icon={Users} label="Operators" value={`${ops.operators.filter((operator) => operator.hqApproved).length}/${ops.operators.length}`} />
-          <Kpi icon={RouteIcon} label="Routes" value={String(ops.routes.length)} />
-          <Kpi icon={Ticket} label="Seats sold" value={String(seatsSold)} />
-          <Kpi icon={DollarSign} label="Counter sales" value={String(otc.length)} />
-        </div>
-
-        <Panel title="Operators" subtitle="Approve or suspend an operator's access to the network">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 text-xs uppercase tracking-wide text-neutral-500">
-                  <th className="px-4 py-2">Operator</th>
-                  <th className="px-4 py-2">Mode</th>
-                  <th className="px-4 py-2">Routes</th>
-                  <th className="px-4 py-2">Departures</th>
-                  <th className="px-4 py-2">Bookings</th>
-                  <th className="px-4 py-2">Revenue</th>
-                  <th className="px-4 py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {revenueByOperator.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-6 text-center text-sm text-neutral-500">No operators are provisioned yet.</td></tr>
-                )}
-                {revenueByOperator.map(({ operator, totals }) => {
-                  const operatorBookings = ops.bookings.filter((booking) => booking.operatorId === operator.id);
-                  return (
-                    <tr key={operator.id} className="border-b border-neutral-100 last:border-0">
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-600 text-[11px] font-bold text-white">
-                            {operator.logo}
-                          </span>
-                          <span>
-                            <span className="block font-semibold text-neutral-900">{operator.name}</span>
-                            <span className="block text-xs text-neutral-500">{operator.contactEmail}</span>
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2 capitalize text-neutral-600">{operator.mode}</td>
-                      <td className="px-4 py-2 text-neutral-600">{ops.routes.filter((route) => route.operatorId === operator.id).length}</td>
-                      <td className="px-4 py-2 text-neutral-600">{ops.schedules.filter((schedule) => schedule.operatorId === operator.id).length}</td>
-                      <td className="px-4 py-2 text-neutral-600">{operatorBookings.length}</td>
-                      <td className="px-4 py-2 text-neutral-700">
-                        {Object.entries(totals).map(([currency, amount]) => (
-                          <span key={currency} className="mr-2">{nf(amount, currency)}</span>
-                        ))}
-                        {Object.keys(totals).length === 0 && '—'}
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          type="button"
-                          onClick={() => setOperatorApproval(operator.id, !operator.hqApproved)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                            operator.hqApproved ? 'bg-success-50 text-success-700' : 'bg-error-50 text-error-600'
-                          }`}
-                        >
-                          {operator.hqApproved ? <CheckCircle2 size={13} /> : <CircleSlash size={13} />}
-                          {operator.hqApproved ? 'Approved' : 'Suspended'}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        {section === 'overview' && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {(hims.overview?.modes ?? []).map((row) => (
+              <button key={row.mode} type="button" className="rounded-lg border border-neutral-200 bg-white p-4 text-left" onClick={() => { setMode(row.mode as FinanceMode); setSection('finance'); }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">{row.mode}</p>
+                <p className="mt-2 text-2xl font-bold text-neutral-900">{row.operators}</p>
+                <p className="text-xs text-neutral-500">operators in this subledger. Open the mode to see money — totals are never blended.</p>
+              </button>
+            ))}
           </div>
-        </Panel>
+        )}
 
-        <Panel title="Network routes" subtitle="Configured in OIMS by each operator">
-          <div className="divide-y divide-neutral-100">
-            {ops.routes.filter((route) => (mode === 'all' ? true : route.mode === mode)).length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-neutral-500">No routes configured yet.</p>
-            )}
-            {ops.routes
-              .filter((route) => (mode === 'all' ? true : route.mode === mode))
-              .map((route) => {
-                const operator = ops.operators.find((candidate) => candidate.id === route.operatorId);
-                return (
-                  <div key={route.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-neutral-900">{route.name}</p>
-                      <p className="text-xs text-neutral-500">
-                        {operator?.name ?? 'Unknown operator'} · {route.stops.length} stops · {route.segmentFares.length} fares
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-neutral-600">
-                      {route.mode}
-                    </span>
-                  </div>
-                );
-              })}
-          </div>
-        </Panel>
-
-        <Panel title="Booking oversight" subtitle={`${bookings.length} records`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 text-xs uppercase tracking-wide text-neutral-500">
-                  <th className="px-4 py-2">Reference</th>
-                  <th className="px-4 py-2">Operator</th>
-                  <th className="px-4 py-2">Route</th>
-                  <th className="px-4 py-2">Customer</th>
-                  <th className="px-4 py-2">Channel</th>
-                  <th className="px-4 py-2">Amount</th>
-                  <th className="px-4 py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.slice(0, 40).map((booking) => (
-                  <tr key={booking.id} className="border-b border-neutral-100 last:border-0">
-                    <td className="px-4 py-2 font-mono text-xs text-neutral-600">{booking.reference}</td>
-                    <td className="px-4 py-2 text-neutral-700">
-                      {ops.operators.find((operator) => operator.id === booking.operatorId)?.name ?? '—'}
-                    </td>
-                    <td className="px-4 py-2 text-neutral-600">{booking.routeLabel}</td>
-                    <td className="px-4 py-2 text-neutral-600">{booking.customerName}</td>
-                    <td className="px-4 py-2">
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                        booking.channel === 'otc' ? 'bg-warning-50 text-warning-700' : 'bg-brand-50 text-brand-700'
-                      }`}>
-                        {booking.channel === 'otc' ? 'OTC' : 'Online'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-neutral-700">{nf(booking.amount, booking.currency)}</td>
-                    <td className="px-4 py-2">
-                      <select
-                        className="rounded-md border border-neutral-200 px-2 py-1 text-xs"
-                        value={booking.status}
-                        onChange={(event) => setBookingStatus(booking.id, event.target.value as typeof booking.status)}
-                      >
-                        {['confirmed', 'pending', 'cancelled', 'refunded'].map((status) => (
-                          <option key={status} value={status}>{status}</option>
-                        ))}
-                      </select>
-                    </td>
-                  </tr>
+        {section === 'finance' && (
+          <div className="space-y-6">
+            <p className="text-xs text-neutral-500">
+              Subledger <strong>{mode}</strong> only. Gross is customer collections; Travelar revenue is the contracted commission; operator net is payable. ClickPesa payouts are not dispatched from this console.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {(finance?.commercial ?? []).map((row) => (
+                <div key={row.currency} className="rounded-lg border border-neutral-200 bg-white p-4">
+                  <p className="text-[11px] font-semibold uppercase text-neutral-500">{row.currency} · {row.sales} sales</p>
+                  <p className="mt-2 text-sm">Gross {nf(row.grossMinor, row.currency)}</p>
+                  <p className="text-sm">Travelar {nf(row.travelarMinor, row.currency)}</p>
+                  <p className="text-sm">Operator net {nf(row.operatorNetMinor, row.currency)}</p>
+                </div>
+              ))}
+              {(finance?.commercial ?? []).length === 0 && (
+                <p className="text-sm text-neutral-500">No recognised sales in this mode yet.</p>
+              )}
+            </div>
+            <Panel title="Payments by status">
+              <ul className="divide-y divide-neutral-100 px-4">
+                {(finance?.payments ?? []).map((row) => (
+                  <li key={`${row.status}-${row.currency}`} className="flex justify-between py-2 text-sm">
+                    <span>{row.status} · {row.count}</span>
+                    <span>{nf(row.amountMinor, row.currency)}</span>
+                  </li>
                 ))}
-                {bookings.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-6 text-center text-sm text-neutral-500">No bookings for this filter.</td></tr>
-                )}
-              </tbody>
-            </table>
+                {(finance?.payments ?? []).length === 0 && <li className="py-3 text-sm text-neutral-500">No payment attempts.</li>}
+              </ul>
+            </Panel>
+            <Panel title="Unallocated collections">
+              <ul className="px-4 py-3 text-sm">
+                {(finance?.unallocated ?? []).map((row) => (
+                  <li key={row.currency}>{nf(row.amountMinor, row.currency)} held until refunded</li>
+                ))}
+                {(finance?.unallocated ?? []).length === 0 && <li className="text-neutral-500">None.</li>}
+              </ul>
+            </Panel>
+            <Panel title="Sale snapshots">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b text-xs uppercase text-neutral-500">
+                      <th className="px-4 py-2">PNR</th>
+                      <th className="px-4 py-2">Operator</th>
+                      <th className="px-4 py-2">Gross</th>
+                      <th className="px-4 py-2">Commission</th>
+                      <th className="px-4 py-2">Operator net</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(hims.movements as { pnr: string; operatorName: string; currency: string; grossMinor: number; travelarMinor: number; operatorNetMinor: number; rate: number }[]).map((row) => (
+                      <tr key={row.pnr} className="border-b border-neutral-100">
+                        <td className="px-4 py-2 font-mono text-xs">{row.pnr}</td>
+                        <td className="px-4 py-2">{row.operatorName}</td>
+                        <td className="px-4 py-2">{nf(row.grossMinor, row.currency)}</td>
+                        <td className="px-4 py-2">{nf(row.travelarMinor, row.currency)} ({Math.round(Number(row.rate) * 10000) / 100}%)</td>
+                        <td className="px-4 py-2">{nf(row.operatorNetMinor, row.currency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Panel>
           </div>
-        </Panel>
+        )}
+
+        {section === 'commission' && (
+          <CommissionPanel mode={mode} desk={desk} operators={operators} rates={finance?.commissionRates ?? []} onSaved={hims.reload} />
+        )}
+
+        {section === 'payouts' && (
+          <PayoutPanel mode={mode} desk={desk} payables={finance?.operatorPayables ?? []} payouts={finance?.payouts ?? []} onSaved={hims.reload} />
+        )}
+
+        {section === 'audit' && (
+          <Panel title="HQ audit" subtitle="Immutable. Not the ledger.">
+            <ul className="divide-y divide-neutral-100 px-4">
+              {(hims.audit as { at: string; actor: string; action: string; objectType: string; mode: string | null }[]).map((row, index) => (
+                <li key={`${row.at}-${index}`} className="py-2 text-sm">
+                  <span className="font-mono text-xs text-neutral-500">{row.at}</span>
+                  {' · '}{row.actor} {row.action} {row.objectType} {row.mode ?? ''}
+                </li>
+              ))}
+              {(hims.audit as unknown[]).length === 0 && <li className="py-3 text-sm text-neutral-500">No HQ finance actions recorded.</li>}
+            </ul>
+          </Panel>
+        )}
       </main>
     </div>
   );
 }
 
-function Kpi({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) {
+function CommissionPanel({
+  mode, desk, operators, rates, onSaved,
+}: {
+  mode: FinanceMode;
+  desk: 'finance' | 'admin';
+  operators: { id: string; name: string; mode: string }[];
+  rates: { id: string; operatorName: string; rate: number; approvalStatus: string; effectiveFrom: string }[];
+  onSaved: () => void;
+}) {
+  const partners = operators.filter((operator) => operator.mode === mode);
+  const [operatorId, setOperatorId] = useState(partners[0]?.id ?? '');
+  const [rate, setRate] = useState('');
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4">
-      <div className="flex items-center gap-2 text-neutral-500">
-        <Icon size={15} />
-        <span className="text-[11px] font-semibold uppercase tracking-wide">{label}</span>
-      </div>
-      <p className="mt-2 text-2xl font-bold text-neutral-900">{value}</p>
+    <div className="space-y-4">
+      <p className="text-xs text-neutral-500">
+        Bus and ferry commission is the rate agreed with that operator. Propose on the finance desk; approve on the admin desk. Existing bookings keep their snapshot.
+      </p>
+      <Panel title="Propose rate">
+        <div className="grid gap-3 p-4 sm:grid-cols-4">
+          <select className="rounded-md border px-3 py-2 text-sm" value={operatorId} onChange={(event) => setOperatorId(event.target.value)}>
+            {partners.map((operator) => <option key={operator.id} value={operator.id}>{operator.name}</option>)}
+          </select>
+          <input className="rounded-md border px-3 py-2 text-sm" value={rate} onChange={(event) => setRate(event.target.value)} placeholder="Agreed share 0–1" />
+          <input className="rounded-md border px-3 py-2 text-sm" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Reason" />
+          <button
+            type="button"
+            className="btn-primary text-xs"
+            disabled={desk !== 'finance'}
+            onClick={() => {
+              setError('');
+              void postJson('/api/hims/commission', {
+                operatorId, mode, rate: Number(rate), effectiveFrom: new Date().toISOString(), reason,
+              }).then(onSaved).catch((caught: Error) => setError(caught.message));
+            }}
+          >
+            Propose
+          </button>
+        </div>
+        {error ? <p className="px-4 pb-3 text-sm text-error-600">{error}</p> : null}
+      </Panel>
+      <Panel title="Agreements">
+        <ul className="divide-y divide-neutral-100 px-4">
+          {rates.map((row) => (
+            <li key={row.id} className="flex items-center justify-between py-2 text-sm">
+              <span>{row.operatorName} · {Math.round(row.rate * 10000) / 100}% · {row.approvalStatus}</span>
+              {row.approvalStatus === 'draft' && desk === 'admin' ? (
+                <button type="button" className="text-xs font-semibold text-brand-700" onClick={() => { void postJson('/api/hims/commission', { action: 'approve', rateId: row.id }).then(onSaved); }}>Approve</button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </Panel>
+    </div>
+  );
+}
+
+function PayoutPanel({
+  mode, desk, payables, payouts, onSaved,
+}: {
+  mode: FinanceMode;
+  desk: 'finance' | 'admin';
+  payables: { operatorId: string; operatorName: string; currency: string; payableMinor: number }[];
+  payouts: { id: string; status: string; amountMinor: number; currency: string; operatorName: string; holdReason: string | null }[];
+  onSaved: () => void;
+}) {
+  const [error, setError] = useState('');
+  return (
+    <div className="space-y-4">
+      <p className="flex items-center gap-2 text-xs text-neutral-500">
+        <Pause size={14} /> Intent records the instruction. It does not call ClickPesa. Accepted is not completed.
+      </p>
+      <Panel title="Operator payables">
+        <ul className="divide-y divide-neutral-100 px-4">
+          {payables.map((row) => (
+            <li key={`${row.operatorId}-${row.currency}`} className="flex items-center justify-between py-2 text-sm">
+              <span>{row.operatorName} · {nf(row.payableMinor, row.currency)}</span>
+              <button
+                type="button"
+                className="text-xs font-semibold text-brand-700"
+                disabled={desk !== 'finance'}
+                onClick={() => {
+                  setError('');
+                  void postJson('/api/hims/payouts', { mode, operatorId: row.operatorId, currency: row.currency })
+                    .then(onSaved)
+                    .catch((caught: Error) => setError(caught.message));
+                }}
+              >
+                Prepare
+              </button>
+            </li>
+          ))}
+          {payables.length === 0 && <li className="py-3 text-sm text-neutral-500">No payable balance in this mode.</li>}
+        </ul>
+        {error ? <p className="px-4 pb-3 text-sm text-error-600">{error}</p> : null}
+      </Panel>
+      <Panel title="Payout batches">
+        <ul className="divide-y divide-neutral-100 px-4">
+          {payouts.map((row) => (
+            <li key={row.id} className="flex items-center justify-between py-2 text-sm">
+              <span>{row.operatorName} · {nf(row.amountMinor, row.currency)} · {row.status}{row.holdReason ? ` (${row.holdReason})` : ''}</span>
+              <span className="flex gap-2">
+                {row.status === 'prepared' && desk === 'admin' ? (
+                  <button type="button" className="text-xs font-semibold text-brand-700" onClick={() => { void postJson('/api/hims/payouts', { action: 'approve', payoutId: row.id }).then(onSaved); }}>Approve</button>
+                ) : null}
+                {row.status === 'approved' ? (
+                  <button type="button" className="text-xs font-semibold text-brand-700" onClick={() => { void postJson('/api/hims/payouts', { action: 'intent', payoutId: row.id }).then(onSaved); }}>Record intent</button>
+                ) : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Panel>
     </div>
   );
 }

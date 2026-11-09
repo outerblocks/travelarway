@@ -18,7 +18,7 @@
 import type pg from 'pg';
 import { query, withTransaction } from '@/server/db';
 import { isUniqueViolation } from '@/server/errors';
-import { recordSale } from '@/server/ledger';
+import { recordSale, recordUnallocatedCollection, reverseSaleJournal } from '@/server/ledger';
 import {
   getPaymentProvider,
   PaymentConfigurationError,
@@ -715,6 +715,7 @@ export async function reversePayment(input: {
         where le.booking_id = $1 and le.reverses is null`,
       [record.booking_id, input.kind === 'reversed' ? 'refunded' : 'voided'],
     );
+    await reverseSaleJournal(client, { bookingId: record.booking_id, kind: input.kind });
 
     await client.query(`update app.booking set status = 'refunded' where id = $1`, [
       record.booking_id,
@@ -1022,6 +1023,29 @@ async function markUnallocated(input: ConfirmPaymentInput, lost: InventoryLostEr
        values ($1, 'payment.unallocated', $2, 'payment-provider')`,
       [lost.bookingId, JSON.stringify({ pnr: lost.pnr, provider: input.provider, orderReference: input.orderReference })],
     );
+    const money = await client.query<{
+      amount_minor: string;
+      currency: string;
+      mode: string;
+      operator_id: string;
+    }>(
+      `select p.amount_minor::text, p.currency, o.mode, o.id as operator_id
+         from app.payment p
+         join app.booking b on b.id = p.booking_id
+         join app.operator o on o.id = b.operator_id
+        where p.provider = $1 and p.order_reference = $2`,
+      [input.provider, input.orderReference],
+    );
+    const row = money.rows[0];
+    if (row) {
+      await recordUnallocatedCollection(client, {
+        orderReference: input.orderReference,
+        mode: row.mode,
+        currency: row.currency,
+        amountMinor: Number(row.amount_minor),
+        operatorId: row.operator_id,
+      });
+    }
   });
 }
 

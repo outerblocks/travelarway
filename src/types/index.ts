@@ -150,6 +150,8 @@ export interface FerryVesselClass {
   availableCapacity: number;
   currency: string;
   description: string;
+  /** False when resident TZS fares were never published. Do not treat 0 as a free fare. */
+  hasResidentFare?: boolean;
 }
 
 export interface FerrySailing {

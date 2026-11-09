@@ -13,6 +13,10 @@ interface PassengerFormProps {
   showGender?: boolean;
   showCountryOfResidence?: boolean;
   showIdentification?: boolean;
+  allowedIdTypes?: IdType[];
+  nameLabel?: string;
+  idNumberLabel?: string;
+  idNumberPlaceholder?: string;
   categoryLabel?: string;
   categoryOptionLabels?: Partial<Record<PassengerCategory, string>>;
   includeInfant?: boolean;
@@ -39,18 +43,26 @@ export function PassengerForm({
   showGender = true,
   showCountryOfResidence = true,
   showIdentification = true,
+  allowedIdTypes,
+  nameLabel,
+  idNumberLabel,
+  idNumberPlaceholder,
   categoryLabel,
   categoryOptionLabels,
   includeInfant = false,
   errors,
 }: PassengerFormProps) {
   const { tp } = useI18n();
-  const idTypeOptions: { value: IdType; label: string }[] = [
+  const idTypeCatalog: { value: IdType; label: string }[] = [
     { value: 'driving_licence', label: tp('drivingLicence') },
     { value: 'national_id', label: tp('nationalId') },
     { value: 'passport', label: tp('passport') },
     { value: 'voter_card', label: tp('voterCard') },
   ];
+  const idTypeOptions = allowedIdTypes?.length
+    ? idTypeCatalog.filter((option) => allowedIdTypes.includes(option.value))
+    : idTypeCatalog;
+  const lockedIdType = idTypeOptions.length === 1 ? idTypeOptions[0] : null;
   const genderOptions: { value: Gender; label: string }[] = [
     { value: 'male', label: tp('male') },
     { value: 'female', label: tp('female') },
@@ -83,7 +95,7 @@ export function PassengerForm({
       <div className="pt-5">
         <div className="grid grid-cols-1 gap-x-5 gap-y-5 @lg:grid-cols-2">
           <div className="@lg:col-span-2">
-            <label htmlFor={`name_${passenger.id}`} className="input-label">{tp('fullNameAsOnId')}<span className="text-error-600 ml-0.5">*</span></label>
+            <label htmlFor={`name_${passenger.id}`} className="input-label">{nameLabel ?? tp('fullNameAsOnId')}<span className="text-error-600 ml-0.5">*</span></label>
             <input id={`name_${passenger.id}`} type="text" className="input-field" value={passenger.fullName} onChange={(e) => update('fullName', e.target.value)} placeholder={tp('enterFullName')} required aria-invalid={Boolean(errors?.name)} autoComplete="name" />
             {errors?.name && <p className="field-error">{errors.name}</p>}
           </div>
@@ -148,11 +160,26 @@ export function PassengerForm({
               </legend>
               <div className="grid grid-cols-1 gap-x-5 gap-y-5 @md:grid-cols-2">
                 <div>
-                  <Select id={`idtype_${passenger.id}`} label={tp('idTypeLabel')} value={passenger.idType || ''} onChange={(v) => update('idType', v as IdType)} options={idTypeOptions} required={requireId} placeholder={tp('selectIdType')} error={errors?.idType} />
+                  {lockedIdType ? (
+                    <>
+                      <label htmlFor={`idtype_${passenger.id}`} className="input-label">{tp('idTypeLabel')}{requireId && <span className="text-error-600 ml-0.5">*</span>}</label>
+                      <input
+                        id={`idtype_${passenger.id}`}
+                        type="text"
+                        className="input-field bg-neutral-100"
+                        value={lockedIdType.label}
+                        readOnly
+                        aria-readonly="true"
+                      />
+                      {errors?.idType && <p className="field-error">{errors.idType}</p>}
+                    </>
+                  ) : (
+                    <Select id={`idtype_${passenger.id}`} label={tp('idTypeLabel')} value={passenger.idType || ''} onChange={(v) => update('idType', v as IdType)} options={idTypeOptions} required={requireId} placeholder={tp('selectIdType')} error={errors?.idType} />
+                  )}
                 </div>
                 <div>
-                  <label htmlFor={`idnum_${passenger.id}`} className="input-label">{tp('idNumberLabel')}{requireId && <span className="text-error-600 ml-0.5">*</span>}</label>
-                  <input id={`idnum_${passenger.id}`} type="text" className="input-field" value={passenger.idNumber || ''} onChange={(e) => update('idNumber', e.target.value)} placeholder={requireId ? tp('enterIdNumber') : tp('optionalLabel')} />
+                  <label htmlFor={`idnum_${passenger.id}`} className="input-label">{idNumberLabel ?? tp('idNumberLabel')}{requireId && <span className="text-error-600 ml-0.5">*</span>}</label>
+                  <input id={`idnum_${passenger.id}`} type="text" className="input-field" value={passenger.idNumber || ''} onChange={(e) => update('idNumber', e.target.value)} placeholder={idNumberPlaceholder ?? (requireId ? tp('enterIdNumber') : tp('optionalLabel'))} />
                   {errors?.idNumber && <p className="field-error">{errors.idNumber}</p>}
                 </div>
                 <div className="@md:col-span-2">

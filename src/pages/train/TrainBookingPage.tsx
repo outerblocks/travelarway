@@ -3,11 +3,13 @@ import { useNavigate, Link } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
+import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
 import { Select } from '@/components/ui/Select';
 import { CoachSeatMap } from '@/components/train/CoachSeatMap';
 import { sgrCarsToTrainCoaches, type SgrCarView } from '@/components/train/coach-geometry';
 import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
 import { formatMoney } from '@/domain/money';
+import { partyMismatched } from '@/domain/passengers';
 import type { PassengerInfo, TrainCoach, TrainSeat } from '@/types';
 
 /**
@@ -275,6 +277,15 @@ export function TrainBookingPage() {
     });
     if (outboundSeats.length < totalPax) nextErrors.seats = tp('trainSeatRequired');
     if (isRoundTrip && returnSeats.length < totalPax) nextErrors.seats = tp('trainSeatRequired');
+    if (Object.keys(nextErrors).length === 0 && partyMismatched(
+      passengers,
+      bookingState.searchParams.adults,
+      bookingState.searchParams.children,
+    )) {
+      nextErrors.party = tp('partyMixMismatch')
+        .replace('{adults}', String(bookingState.searchParams.adults))
+        .replace('{children}', String(bookingState.searchParams.children));
+    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -471,9 +482,18 @@ export function TrainBookingPage() {
             </header>
 
             <div className="space-y-8 px-5 py-5 sm:px-6">
+              <TravelerPartyNote
+                adults={bookingState.searchParams.adults}
+                children={bookingState.searchParams.children}
+              />
               <p className="rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 text-meta text-brand-800">
                 {tp('trainGuestBooking')}
               </p>
+              {errors.party ? (
+                <p role="alert" className="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-meta text-error-700">
+                  {errors.party}
+                </p>
+              ) : null}
 
               {passengers.map((passenger, index) => (
                 <article key={passenger.id} className="passenger-block space-y-4">

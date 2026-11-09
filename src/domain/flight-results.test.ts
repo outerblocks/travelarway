@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { airportLine, arrivesNextDay, iataFromPlace, isNightDeparture, journeyDuration, layoverMinutes, marketingLabel, splitRoundTrip, viaAirports } from '@/domain/flight-results';
+import { airportLine, arrivesNextDay, iataFromPlace, isInternationalAirOffer, isNightDeparture, journeyDuration, layoverMinutes, marketingLabel, splitRoundTrip, viaAirports } from '@/domain/flight-results';
 import type { PublicAirOffer } from '@/domain/air-offer';
 
 function leg(partial: Pick<PublicAirOffer['itinerary'][number], 'carrier' | 'flightNumber' | 'origin' | 'destination' | 'departure' | 'arrival'> & Partial<PublicAirOffer['itinerary'][number]>): PublicAirOffer['itinerary'][number] {
@@ -12,10 +12,12 @@ function leg(partial: Pick<PublicAirOffer['itinerary'][number], 'carrier' | 'fli
     origin: partial.origin,
     originName: partial.originName ?? null,
     originCountry: partial.originCountry ?? null,
+    originCountryCode: partial.originCountryCode ?? null,
     originTerminal: partial.originTerminal ?? null,
     destination: partial.destination,
     destinationName: partial.destinationName ?? null,
     destinationCountry: partial.destinationCountry ?? null,
+    destinationCountryCode: partial.destinationCountryCode ?? null,
     destinationTerminal: partial.destinationTerminal ?? null,
     departure: partial.departure,
     arrival: partial.arrival,
@@ -123,5 +125,30 @@ describe('flight result labels', () => {
     const split = splitRoundTrip([...outbound, ...inbound], iataFromPlace('Julius Nyerere International Airport (DAR)'));
     expect(split.outbound.map((row) => row.flightNumber)).toEqual(['8', '1365']);
     expect(split.inbound.map((row) => row.flightNumber)).toEqual(['1364', '9']);
+  });
+});
+
+describe('international itinerary', () => {
+  it('is international when airport countries differ', () => {
+    expect(isInternationalAirOffer({
+      ...offer,
+      itinerary: [
+        { ...offer.itinerary[0], originCountryCode: 'GB', destinationCountryCode: 'QA' },
+        { ...offer.itinerary[1], originCountryCode: 'QA', destinationCountryCode: 'TZ' },
+      ],
+    })).toBe(true);
+  });
+
+  it('is domestic when every airport is in one country', () => {
+    expect(isInternationalAirOffer({
+      ...offer,
+      itinerary: [
+        { ...offer.itinerary[0], origin: 'JNB', destination: 'CPT', originCountryCode: 'ZA', destinationCountryCode: 'ZA' },
+      ],
+    })).toBe(false);
+  });
+
+  it('requires passport when country codes are missing', () => {
+    expect(isInternationalAirOffer(offer)).toBe(true);
   });
 });

@@ -415,36 +415,8 @@ export function getBusTrips(): BusTrip[] {
 }
 
 export function getFerrySailings(): FerrySailing[] {
-  return state.schedules
-    .filter((schedule) => schedule.mode === 'ferry')
-    .flatMap((schedule) => {
-      const vessel = state.vessels.find((candidate) => candidate.id === schedule.vesselId);
-      const route = state.routes.find((candidate) => candidate.id === schedule.routeId);
-      const operator = operatorById(schedule.operatorId);
-      if (!vessel || !route || !operator) return [];
-
-      const sold = bookedSeats(schedule.id);
-      const classes = vessel.classes.map((fareClass) => ({
-        ...fareClass,
-        availableCapacity: Math.max(0, fareClass.availableCapacity - sold.length),
-      }));
-
-      return [{
-        id: schedule.id,
-        operatorId: operator.id,
-        operatorName: operator.name,
-        operatorLogo: operator.logo,
-        vesselName: vessel.name,
-        departurePort: route.stops[0].name,
-        arrivalPort: route.stops[route.stops.length - 1].name,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        departureDate: schedule.departureDate,
-        arrivalDate: schedule.arrivalDate,
-        duration: schedule.duration,
-        classes,
-      }];
-    });
+  // Passenger ferry inventory is PostgreSQL via /api/offers and /api/ferry/sailings/:id.
+  return [];
 }
 
 export function getBusTrip(id: string | null | undefined): BusTrip | undefined {

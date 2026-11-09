@@ -130,3 +130,31 @@ export function isNightDeparture(value: string): boolean {
   const hour = Number(formatClock(value).slice(0, 2));
   return Number.isFinite(hour) && (hour >= 20 || hour < 6);
 }
+
+/**
+ * True when any airport country on the itinerary differs from another.
+ * ISO codes from OurAirports via the offer decorator; names only as fallback.
+ * Missing countries are treated as international so a domestic ID is not accepted by accident.
+ */
+export function isInternationalAirOffer(offer: PublicAirOffer): boolean {
+  const codes = new Set<string>();
+  const names = new Set<string>();
+  let missingCode = false;
+  for (const leg of offer.itinerary) {
+    const originCode = (leg.originCountryCode ?? '').trim().toUpperCase();
+    const destinationCode = (leg.destinationCountryCode ?? '').trim().toUpperCase();
+    if (/^[A-Z]{2}$/.test(originCode)) codes.add(originCode);
+    else missingCode = true;
+    if (/^[A-Z]{2}$/.test(destinationCode)) codes.add(destinationCode);
+    else missingCode = true;
+    const originName = (leg.originCountry ?? '').trim().toLowerCase();
+    const destinationName = (leg.destinationCountry ?? '').trim().toLowerCase();
+    if (originName) names.add(originName);
+    if (destinationName) names.add(destinationName);
+  }
+  if (codes.size > 1) return true;
+  if (codes.size === 1 && !missingCode) return false;
+  if (names.size > 1) return true;
+  if (names.size === 1 && !missingCode) return false;
+  return true;
+}

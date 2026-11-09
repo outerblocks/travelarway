@@ -6,6 +6,8 @@ import { publicAirFromCanonical } from '@/server/flights';
 import { searchFlightOffers, searchStayOffers } from '@/server/providers/orchestrate';
 import { iataCodeOf, resolveLocation } from '@/server/resolve-location';
 import { LOCAL_COUNTRY_MODES, MODE_LOCATION_KINDS } from '@/server/search';
+import { searchFerrySailings } from '@/server/ferry-results';
+import { todayISO } from '@/utils/format';
 
 /**
  * GET /api/offers?mode=flights|stays|ferry|experiences&from=&to=&date=
@@ -113,6 +115,27 @@ export const Route = createFileRoute('/api/offers')({
                 places,
                 unresolved_places: [],
                 bookable: false,
+              },
+              { headers: { 'cache-control': 'no-store' } },
+            );
+          }
+
+          if (mode === 'ferry' && origin && destination) {
+            const sailDate = date || todayISO();
+            const sailings = await searchFerrySailings({
+              from: origin.id,
+              to: destination.id,
+              date: sailDate,
+            });
+            return Response.json(
+              {
+                data: sailings,
+                count: sailings.length,
+                source: 'database',
+                inventory: 'operator_published',
+                places,
+                unresolved_places: [],
+                bookable: sailings.length > 0,
               },
               { headers: { 'cache-control': 'no-store' } },
             );

@@ -3,7 +3,7 @@ export const COOKIES_EFFECTIVE_DATE = '8 November 2026';
 export const COOKIES_LAST_UPDATED = '8 November 2026';
 
 export const COOKIES_BODY = `1. About This Policy
-This Cookie Policy explains how Travelar, operated by Incroc Limited ("Travelar", "we", "us" or "our"), uses cookies and similar technologies on our website and mobile apps (the "Platform"). It should be read with our Privacy Policy and Terms and Conditions, which explain how we handle personal data more generally.
+This Cookie Policy explains how Travelar, operated by OuterBlocks Limited ("Travelar", "we", "us" or "our"), uses cookies and similar technologies on our website and mobile apps (the "Platform"). It should be read with our Privacy Policy and Terms and Conditions, which explain how we handle personal data more generally.
 
 2. What Cookies and Similar Technologies Are
 Cookies are small text files that a website places on your device. Similar technologies do the same job and include local storage, pixels, tags, software development kits (SDKs) in our apps, and device identifiers such as advertising IDs. We use "cookies" in this policy to cover all of them.
@@ -37,7 +37,7 @@ Some cookie data can identify you, such as an advertising ID or IP address, and 
 We may update this policy when we add or change the cookies we use or when the law changes. We will post the new version with a new "last updated" date and, for material changes that affect your consent, ask for your choice again.
 
 9. Contact Us
-Travelar (operated by Incroc Limited)
+Travelar (operated by OuterBlocks Limited)
 Registered address: [address]
 Email: customer@travelaraway.com
 Phone: +255 714 559 749

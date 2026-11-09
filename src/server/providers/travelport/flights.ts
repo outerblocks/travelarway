@@ -376,7 +376,7 @@ function termsOf(terms: Record<string, unknown> | undefined): {
 } {
   if (!terms) return {};
   const penalties = asRecord(terms.Penalties) ?? asRecord(terms.penalties) ?? {};
-  const baggage = textOf(terms.BaggageAllowance ?? terms.baggage);
+  const baggage = baggageSummaryOf(terms.BaggageAllowance ?? terms.baggage ?? terms.Baggage);
   const refund = textOf(terms.Refund ?? terms.refund ?? penalties.Cancel ?? penalties.Refund ?? terms.Refundability);
   const change = textOf(penalties.Change ?? terms.Change ?? terms.change ?? terms.Modifications);
   return {
@@ -384,6 +384,43 @@ function termsOf(terms: Record<string, unknown> | undefined): {
     refundSummary: refund,
     changeSummary: change,
   };
+}
+
+function baggageSummaryOf(node: unknown): string | undefined {
+  const labelled = textOf(node);
+  if (labelled) return labelled;
+  const row = asRecord(node);
+  if (!row) return undefined;
+  const items = asArray(row.BaggageItem ?? row.baggageItem ?? row.BaggageAllowance ?? row.Allowance);
+  const sources = items.length ? items : [row];
+  const parts = sources.flatMap((item) => {
+    const rec = asRecord(item);
+    if (!rec) {
+      const text = textOf(item);
+      return text ? [text] : [];
+    }
+    const quantity = rec.Quantity ?? rec.quantity ?? rec.PieceCount ?? rec.pieceCount;
+    const type = String(rec.BaggageType ?? rec.baggageType ?? rec.Type ?? rec.type ?? '').trim();
+    const measurements = asArray(rec.Measurement ?? rec.measurement ?? rec.Weight ?? rec.weight);
+    const weights = measurements.map((entry) => {
+      if (typeof entry === 'string' || typeof entry === 'number') return String(entry).trim();
+      const measure = asRecord(entry);
+      if (!measure) return '';
+      const value = measure.value ?? measure.Value ?? measure.weight ?? measure.Weight;
+      const unit = measure.unit ?? measure.Unit ?? measure.uom ?? '';
+      if (value == null || value === '') return '';
+      return `${value}${unit ? String(unit) : ''}`.trim();
+    }).filter(Boolean);
+    const bits = [
+      quantity != null && String(quantity) !== '' ? `${quantity} pc` : '',
+      weights.join(' '),
+      type,
+      textOf(item) ?? '',
+    ].filter(Boolean);
+    return bits.length ? [bits.join(' · ')] : [];
+  });
+  const unique = [...new Set(parts.map((part) => part.trim()).filter(Boolean))];
+  return unique.length ? unique.join('; ') : undefined;
 }
 
 function textOf(node: unknown): string | undefined {

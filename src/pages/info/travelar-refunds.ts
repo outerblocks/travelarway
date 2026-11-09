@@ -3,7 +3,7 @@ export const REFUNDS_EFFECTIVE_DATE = '8 November 2026';
 export const REFUNDS_LAST_UPDATED = '8 November 2026';
 
 export const REFUNDS_BODY = `1. About This Policy
-This policy explains how cancellations, changes and refunds work for Bookings made on Travelar, which is operated by Incroc Limited ("Travelar", "we", "us" or "our"). It applies to bus, train, ferry and flight tickets, stays and experiences, and it is part of our Terms and Conditions. Rights that the law gives you cannot be removed by this policy and apply if they are better for you.
+This policy explains how cancellations, changes and refunds work for Bookings made on Travelar, which is operated by OuterBlocks Limited ("Travelar", "we", "us" or "our"). It applies to bus, train, ferry and flight tickets, stays and experiences, and it is part of our Terms and Conditions. Rights that the law gives you cannot be removed by this policy and apply if they are better for you.
 
 2. The Short Version
 • The Supplier sets the rules. Each airline, bus, rail or ferry operator, property and activity provider decides whether your Booking can be changed or cancelled, and what it costs. The rules are shown before you pay and in your confirmation.
@@ -69,7 +69,7 @@ Depending on where you live, where you travel and who the Supplier is, you may h
 If you are not satisfied, write to customer@travelaraway.com within 30 days of the end of your trip or of discovering the problem, with your booking reference. We will acknowledge within 3 business days and aim to reply fully within 14 days. See our Terms for escalation and dispute resolution.
 
 15. Contact Us
-Travelar (operated by Incroc Limited)
+Travelar (operated by OuterBlocks Limited)
 Registered address: [address]
 Email: customer@travelaraway.com
 Phone: +255 714 559 749

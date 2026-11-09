@@ -369,6 +369,11 @@
   .skeleton {
     @apply animate-pulse rounded-sm bg-neutral-200;
   }
+
+  .search-form[aria-busy="true"] .input-field,
+  .search-form[aria-busy="true"] .search-travelers-trigger {
+    @apply animate-pulse;
+  }
 }
 
 @media (min-width: 640px) {
@@ -394,7 +399,8 @@
   }
 
   .search-form[data-desktop-grid="1280"] .search-trip-type,
-  .search-form[data-desktop-grid="1280"] .search-form-adult-error {
+  .search-form[data-desktop-grid="1280"] .search-form-adult-error,
+  .search-form[data-desktop-grid="1280"] .search-form-status {
     grid-column: 1 / -1;
   }
 
@@ -424,7 +430,8 @@
   }
 
   .search-form[data-desktop-grid="1440"] .search-trip-type,
-  .search-form[data-desktop-grid="1440"] .search-form-adult-error {
+  .search-form[data-desktop-grid="1440"] .search-form-adult-error,
+  .search-form[data-desktop-grid="1440"] .search-form-status {
     grid-column: 1 / -1;
   }
 

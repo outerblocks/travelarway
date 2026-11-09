@@ -135,6 +135,63 @@ describe('Travelport air reference join', () => {
       }],
     });
   });
+
+  it('summarises structured baggage items when Description is absent', () => {
+    const offers = normalizeAirSearch({
+      CatalogProductOfferingsResponse: {
+        CatalogProductOfferings: {
+          CatalogProductOffering: [{
+            id: 'o2',
+            ProductBrandOptions: {
+              flightRefs: ['s1'],
+              ProductBrandOffering: [{
+                ContentSource: 'GDS',
+                Product: [{ productRef: 'p0' }],
+                TermsAndConditions: { termsAndConditionsRef: 't1' },
+                BestCombinablePrice: {
+                  Base: '66',
+                  TotalTaxes: '26.1',
+                  TotalPrice: '92.1',
+                  CurrencyCode: { value: 'GBP', decimalPlace: 2 },
+                },
+              }],
+            },
+          }],
+        },
+        ReferenceList: [
+          {
+            '@type': 'ReferenceListProduct',
+            Product: [{ id: 'p0', FlightSegment: [{ Flight: { FlightRef: 's1' } }] }],
+          },
+          {
+            '@type': 'ReferenceListFlight',
+            Flight: [{
+              id: 's1',
+              carrier: 'QR',
+              number: '718',
+              Departure: { location: 'JRO', date: '2026-12-08', time: '09:00' },
+              Arrival: { location: 'DAR', date: '2026-12-08', time: '10:15' },
+            }],
+          },
+          {
+            '@type': 'ReferenceListTermsAndConditions',
+            TermsAndConditions: [{
+              id: 't1',
+              BaggageAllowance: {
+                BaggageItem: [{
+                  Quantity: 1,
+                  BaggageType: 'Checked',
+                  Measurement: [{ value: 23, unit: 'KG' }],
+                }],
+              },
+            }],
+          },
+        ],
+      },
+    }, meta);
+
+    expect(offers[0]?.baggageSummary).toBe('1 pc · 23KG · Checked');
+  });
 });
 
 const ukPosConfig: TravelportConfig = {

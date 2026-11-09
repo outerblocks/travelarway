@@ -6,10 +6,18 @@ import type { QueryStatus } from '@/hooks/query-status';
  * Page-level loading uses skeleton blocks. Spinners stay inside buttons that are
  * already in flight, so a screen never shows two loading idioms at once.
  */
-export function LoadingState({ message, count = 3 }: { message?: string; count?: number }) {
+export function LoadingState({
+  message,
+  count = 3,
+  inset = false,
+}: {
+  message?: string;
+  count?: number;
+  inset?: boolean;
+}) {
   const { tp } = useI18n();
   return (
-    <div className="section-container py-12" role="status" aria-live="polite">
+    <div className={inset ? 'py-6' : 'section-container py-10'} role="status" aria-live="polite">
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="skeleton h-8 w-56" />
         {Array.from({ length: count }, (_, row) => (

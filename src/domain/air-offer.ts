@@ -7,10 +7,12 @@ export interface PublicAirLeg {
   origin: string;
   originName: string | null;
   originCountry: string | null;
+  originCountryCode: string | null;
   originTerminal: string | null;
   destination: string;
   destinationName: string | null;
   destinationCountry: string | null;
+  destinationCountryCode: string | null;
   destinationTerminal: string | null;
   departure: string;
   arrival: string;
@@ -56,6 +58,12 @@ export function asPublicAirOffer(row: unknown): PublicAirOffer | null {
   };
 }
 
+function isoCountryCode(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const code = value.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
 function moneyOf(value: unknown): number | null {
   if (typeof value !== 'number' && typeof value !== 'string') return null;
   const amount = Number(value);
@@ -77,10 +85,12 @@ function asPublicAirLeg(row: unknown): PublicAirLeg[] {
     origin,
     originName: typeof leg.originName === 'string' ? leg.originName : null,
     originCountry: typeof leg.originCountry === 'string' ? leg.originCountry : null,
+    originCountryCode: isoCountryCode(leg.originCountryCode),
     originTerminal: typeof leg.originTerminal === 'string' ? leg.originTerminal : null,
     destination,
     destinationName: typeof leg.destinationName === 'string' ? leg.destinationName : null,
     destinationCountry: typeof leg.destinationCountry === 'string' ? leg.destinationCountry : null,
+    destinationCountryCode: isoCountryCode(leg.destinationCountryCode),
     destinationTerminal: typeof leg.destinationTerminal === 'string' ? leg.destinationTerminal : null,
     departure: String(leg.departure ?? ''),
     arrival: String(leg.arrival ?? ''),
