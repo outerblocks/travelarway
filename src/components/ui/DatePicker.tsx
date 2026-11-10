@@ -126,7 +126,7 @@ export function DatePicker({
 
       {isOpen && (
         <div
-          className="absolute left-0 top-full z-[200] mt-1 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white p-4 shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)]"
+          className="absolute left-0 top-full z-[200] mt-1 w-[min(20rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] rounded-xl border border-neutral-200 bg-white p-3 shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)] sm:w-80 sm:max-w-[calc(100vw-2rem)] sm:p-4"
           role="dialog"
           aria-label={label}
           onPointerDown={(e) => e.stopPropagation()}
@@ -181,7 +181,7 @@ export function DatePicker({
                   disabled={isDisabled}
                   onClick={() => handleDateClick(day)}
                   className={`
-                    w-9 h-9 rounded-lg text-body transition-colors
+                    min-h-9 min-w-9 w-full h-9 rounded-lg text-body transition-colors
                     ${isSelected ? 'bg-ink text-white font-semibold' : ''}
                     ${!isSelected && isToday ? 'border border-ink text-ink font-semibold' : ''}
                     ${!isSelected && !isToday && !isDisabled ? 'text-neutral-700 hover:bg-brand-50 hover:text-brand-700' : ''}

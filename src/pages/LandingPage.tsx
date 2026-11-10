@@ -90,13 +90,13 @@ export function LandingPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/45" />
         </div>
-        <div className="relative flex min-h-[440px] flex-col overflow-visible pb-6 sm:min-h-[420px] lg:min-h-[380px]">
-          <div className="section-container pt-12 sm:pt-14 lg:pt-16">
+        <div className="relative flex min-h-0 flex-col overflow-visible pb-4 sm:min-h-[420px] sm:pb-6 lg:min-h-[380px]">
+          <div className="section-container pt-8 sm:pt-14 lg:pt-16">
             <HeroHeadline />
           </div>
 
-          <div className="mt-8 flex w-full flex-1 items-end overflow-visible">
-            <div className="section-container w-full overflow-visible pb-2">
+          <div className="mt-5 flex w-full flex-1 items-end overflow-visible sm:mt-8">
+            <div className="section-container w-full min-w-0 overflow-visible pb-2">
               <HeroSearchCard />
             </div>
           </div>

@@ -8,12 +8,39 @@
  *
  * Sources: AWS Regions table; AWS GDPR DPA (Service Terms); PDPA TZ ss.31–32;
  * Kenya ODPC 2026 cross-border guidance (foreign cloud = transfer).
+ *
+ * Runtime (10 Nov 2026): database-backed search and booking run on a Node
+ * origin in the local PII plane (`npm run start`). Cloudflare Workers stay
+ * edge until CLOUDFLARE_EDGE_PII_TRANSFER_RECORDED names the edge as a
+ * recipient. Hyperdrive is not the current path.
  */
 
 export const AWS_CONTROL_PLANE_REGION = 'eu-west-1' as const;
 export const REJECTED_AWS_REGIONS = ['af-south-1'] as const;
 
 export type PiiDataPlane = 'local' | 'aws_ireland';
+export type AppRuntime = 'local_node' | 'cloudflare_worker';
+
+export const PASSENGER_SOR_EDGE_REFUSED =
+  'DATABASE_URL must not be bound on this Cloudflare Worker. Passenger search and booking ' +
+  'run on the local-plane Node origin (npm run start). Hyperdrive stays off until ' +
+  'CLOUDFLARE_EDGE_PII_TRANSFER_RECORDED=true names the edge as a recipient.';
+
+export function detectAppRuntime(): AppRuntime {
+  if (typeof navigator !== 'undefined' && navigator.userAgent === 'Cloudflare-Workers') {
+    return 'cloudflare_worker';
+  }
+  return 'local_node';
+}
+
+export function assertPassengerDatabaseAccess(
+  runtime: AppRuntime,
+  edgeTransferRecorded: boolean,
+): void {
+  if (runtime === 'cloudflare_worker' && !edgeTransferRecorded) {
+    throw new Error(PASSENGER_SOR_EDGE_REFUSED);
+  }
+}
 
 export function assertControlPlaneRegion(region: string): asserts region is typeof AWS_CONTROL_PLANE_REGION {
   if ((REJECTED_AWS_REGIONS as readonly string[]).includes(region)) {

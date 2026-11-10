@@ -62,20 +62,20 @@ export function Footer() {
 
   return (
     <footer className="border-t border-neutral-200 bg-white text-neutral-900">
-      <div className="section-container py-16">
+      <div className="section-container py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:py-12 lg:py-16">
         {/* Link columns */}
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-10 lg:grid-cols-4">
           {sections.map((section) => (
             <div key={section.title}>
               <h3 className="mb-4 text-label font-bold uppercase tracking-wider text-neutral-900">
                 {section.title}
               </h3>
-              <ul className="space-y-2.5">
+              <ul className="space-y-1.5 sm:space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.label}>
                     <Link
                       to={link.to}
-                      className="text-body text-neutral-600 transition-colors hover:text-ink"
+                      className="inline-flex min-h-10 items-center text-body text-neutral-600 transition-colors hover:text-ink sm:min-h-0"
                     >
                       {link.label}
                     </Link>
@@ -87,11 +87,11 @@ export function Footer() {
         </div>
 
         {/* Payment methods */}
-        <div className="mt-14 border-t border-neutral-200 pt-8">
-          <h3 className="mb-4 text-label font-bold uppercase tracking-wider text-neutral-900">
+        <div className="mt-8 border-t border-neutral-200 pt-6 sm:mt-14 sm:pt-8">
+          <h3 className="mb-3 text-label font-bold uppercase tracking-wider text-neutral-900 sm:mb-4">
             {tp('paymentMethodsAvailable')}
           </h3>
-          <ul className="flex flex-wrap items-center gap-2" aria-label={tp('paymentMethodsAvailable')}>
+          <ul className="flex flex-wrap items-center gap-1.5 sm:gap-2" aria-label={tp('paymentMethodsAvailable')}>
             {PAYMENT_METHODS.map(({ name, image }) => (
               <li key={name} className="flex h-10 w-16 items-center justify-center rounded border border-neutral-200 bg-white px-2 py-1.5">
                 <img src={image} alt={name} className="max-h-full max-w-full object-contain" loading="lazy" />
@@ -101,12 +101,12 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 border-t border-neutral-200 pt-6">
-          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="mt-8 border-t border-neutral-200 pt-5 sm:mt-10 sm:pt-6">
+          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
             <p className="text-meta text-neutral-500">
               © {new Date().getFullYear()} Travelar. {tp('operatedBy')}
             </p>
-            <div className="flex items-center gap-3 text-meta text-neutral-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-meta text-neutral-500">
               <span>{tp('languageEnglish')}</span>
               <span className="text-neutral-600">/</span>
               <span>{tp('languageSwahili')}</span>

@@ -10,7 +10,10 @@
 import {
   AWS_CONTROL_PLANE_REGION,
   assertControlPlaneRegion,
+  assertPassengerDatabaseAccess,
   assertPiiPlane,
+  detectAppRuntime,
+  type AppRuntime,
   type PiiDataPlane,
 } from '@/domain/hosting';
 import { config as loadEnv } from 'dotenv';
@@ -54,6 +57,8 @@ export interface ServerConfig {
   /** Always eu-west-1. Cape Town is rejected. */
   awsControlPlaneRegion: typeof AWS_CONTROL_PLANE_REGION;
   piiDataPlane: PiiDataPlane;
+  /** local_node is the passenger SoR. cloudflare_worker is edge until a transfer names it. */
+  appRuntime: AppRuntime;
   /** OIDC issuer. Empty means Keycloak is not live; staff APIs stay 503. */
   keycloakIssuer?: string;
   keycloakAudience?: string;
@@ -113,6 +118,12 @@ export function normaliseDatabaseUrl(raw: string): URL {
 }
 
 export function getServerConfig(): ServerConfig {
+  const appRuntime = detectAppRuntime();
+  assertPassengerDatabaseAccess(
+    appRuntime,
+    process.env.CLOUDFLARE_EDGE_PII_TRANSFER_RECORDED === 'true',
+  );
+
   const rawUrl = process.env.DATABASE_URL;
   if (!rawUrl) {
     throw new Error(
@@ -191,6 +202,7 @@ export function getServerConfig(): ServerConfig {
     clickpesaChecksumSecret,
     awsControlPlaneRegion,
     piiDataPlane,
+    appRuntime,
     keycloakIssuer: issuer || undefined,
     keycloakAudience: audience || undefined,
     keycloakClientId: keycloakClientId || undefined,

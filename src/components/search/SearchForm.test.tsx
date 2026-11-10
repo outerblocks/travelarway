@@ -119,7 +119,7 @@ describe('SearchForm flight trip types', () => {
     const busForm = await renderForm('bus');
     const busSearchForm = busForm.container.querySelector('.search-form');
     const busFieldGrid = busForm.container.querySelector('.search-form .grid');
-    expect(busFieldGrid).toHaveClass('grid-cols-1', 'sm:grid-cols-3');
+    expect(busFieldGrid).toHaveClass('grid-cols-1', 'md:grid-cols-3');
     expect(busSearchForm).toHaveClass('min-[1280px]:grid');
     expect(busSearchForm).toHaveClass('min-[1280px]:items-end');
     expect(busSearchForm).toHaveClass('min-[1280px]:gap-x-4');
@@ -142,7 +142,7 @@ describe('SearchForm flight trip types', () => {
     const stayForm = await renderForm('stays');
     expect(stayForm.container.querySelector('.search-form .grid')).toHaveClass(
       'grid-cols-1',
-      'sm:grid-cols-3',
+      'md:grid-cols-3',
     );
     expect(stayForm.container.querySelector('.search-form')).toHaveClass(
       'min-[1280px]:grid-cols-[repeat(4,minmax(0,1fr))_max-content]',
@@ -151,6 +151,7 @@ describe('SearchForm flight trip types', () => {
 
     const flightForm = await renderForm('flights');
     expect(flightForm.container.querySelector('.search-form')).not.toHaveClass('min-[1280px]:grid');
+    expect(flightForm.container.querySelector('.search-form')).not.toHaveClass('min-h-[26rem]');
   });
 
   it('uses equal-width desktop fields when return dates are added', async () => {

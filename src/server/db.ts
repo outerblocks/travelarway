@@ -1,9 +1,13 @@
 /**
  * PostgreSQL access for server code only.
  *
- * The pool is created lazily on first use and cached for the process. Nothing here may
- * be imported by a component that renders in the browser; server routes and server
- * functions are the only callers.
+ * The pool is created lazily on first use and cached for the process. That matches
+ * the local-plane Node origin (`npm run start`). A Cloudflare Worker must not import
+ * this until a recorded edge transfer exists; Hyperdrive would then use a Client per
+ * request, not this process-wide Pool.
+ *
+ * Nothing here may be imported by a component that renders in the browser; server
+ * routes and server functions are the only callers.
  */
 import pg from 'pg';
 import { getServerConfig } from '@/server/config';

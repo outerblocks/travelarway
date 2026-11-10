@@ -32,11 +32,26 @@ values ('c0000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-0000000
         'Dar es Salaam — Arusha', 'bus', 'fixture')
 on conflict (operator_id, name) do nothing;
 
-insert into app.route_stop (id, route_id, location_id, sequence, offset_minutes, terminal_name) values
-  ('d0000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001', 0,   0, 'Ubungo Terminal'),
-  ('d0000000-0000-4000-8000-000000000002', 'c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000002', 1, 180, 'Morogoro Bus Stand'),
-  ('d0000000-0000-4000-8000-000000000003', 'c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000003', 2, 390, 'Dodoma Central'),
-  ('d0000000-0000-4000-8000-000000000004', 'c0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000004', 3, 690, 'Arusha Terminal')
+-- Location rows may already exist from migrations (same kind/code/country, different
+-- ids). Join on that unique key so route stops never point at a UUID that was skipped.
+insert into app.route_stop (id, route_id, location_id, sequence, offset_minutes, terminal_name)
+select
+  v.id,
+  'c0000000-0000-4000-8000-000000000001',
+  loc.id,
+  v.sequence,
+  v.offset_minutes,
+  v.terminal_name
+from (values
+  ('d0000000-0000-4000-8000-000000000001'::uuid, 0,   0, 'Ubungo Terminal',    'DAR'),
+  ('d0000000-0000-4000-8000-000000000002'::uuid, 1, 180, 'Morogoro Bus Stand', 'MOR'),
+  ('d0000000-0000-4000-8000-000000000003'::uuid, 2, 390, 'Dodoma Central',     'DOM'),
+  ('d0000000-0000-4000-8000-000000000004'::uuid, 3, 690, 'Arusha Terminal',    'ARK')
+) as v(id, sequence, offset_minutes, terminal_name, code)
+join app.location loc
+  on loc.kind = 'city'
+ and loc.country_code = 'TZ'
+ and loc.code = v.code
 on conflict (route_id, sequence) do nothing;
 
 -- Segment fares for every ordered stop pair (fixture pricing, in TZS minor units).
@@ -59,7 +74,7 @@ insert into app.seat_layout (id, family_id, operator_id, name, row_count, lanes,
 values ('e1000000-0000-4000-8000-000000000001', 'e1000000-0000-4000-8000-000000000001',
         'a0000000-0000-4000-8000-000000000001',
         'Coach 2+2', 11, array['A', 'B', 'C', 'D'], 11, 5, 1, 1, 'published', 'private')
-on conflict (operator_id, name) do nothing;
+on conflict (family_id, version) do nothing;
 
 insert into app.vehicle (id, operator_id, registration, model, seat_layout_id)
 values ('e2000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000001',

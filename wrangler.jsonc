@@ -2,8 +2,10 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "travelar",
   // Control plane for AWS resources is eu-west-1 (Ireland), not Cape Town.
-  // This Worker must not bind DATABASE_URL / Hyperdrive until a transfer
-  // instrument names the edge as a recipient. Secrets stay off this file.
+  // Passenger SoR is the local-plane Node origin (npm run start). This Worker
+  // must not bind DATABASE_URL or Hyperdrive until counsel files
+  // CLOUDFLARE_EDGE_PII_TRANSFER_RECORDED and names the edge as a recipient.
+  // Secrets stay off this file.
   "account_id": "e33ce12391e198d262ebd7c2ebd8d352",
   "main": "@tanstack/react-start/server-entry",
   "compatibility_date": "2026-11-08",

@@ -11,6 +11,7 @@
 3. Passenger identity, bookings and Keycloak remain on a **local** data plane (`PII_DATA_PLANE=local`) until counsel records a transfer whose destination is Ireland (`IRELAND_PII_TRANSFER_RECORDED`).
 4. Identity is **self-hosted Keycloak**, not Auth0 public cloud.
 5. Runtime config refuses `AWS_CONTROL_PLANE_REGION=af-south-1`.
+6. Database-backed search and booking run on a **Node origin in the local PII plane** (`npm run start`). Cloudflare Workers remain an edge. Hyperdrive is deferred until `CLOUDFLARE_EDGE_PII_TRANSFER_RECORDED` names the edge as a recipient. Ireland Aurora is a separate, later transfer (`IRELAND_PII_TRANSFER_RECORDED`).
 
 Ireland is an EU Member State. AWS GDPR DPA terms apply when GDPR applies. Ireland is still a cross-border transfer from Tanzania, Kenya, Uganda, Rwanda, Malawi and Ethiopia.
 
@@ -18,4 +19,5 @@ Ireland is an EU Member State. AWS GDPR DPA terms apply when GDPR applies. Irela
 
 - More AWS services and a default-enabled Region versus Cape Town.
 - Every PDPC/ODPC/NCSA/ECA transfer file that names AWS must say Ireland, not South Africa.
-- Cloudflare Workers remain an edge, not the SoR.
+- Cloudflare Workers remain an edge, not the SoR. `npm run deploy` does not make search or booking database-backed.
+- Production hostname for passenger APIs is the Node process on the local plane until a named edge transfer exists.

@@ -29,7 +29,7 @@ export function HeroHeadline() {
   return (
     <h1
       aria-live="polite"
-      className="hero-heading max-w-full text-[1.75rem] font-medium leading-none tracking-[-0.02em] text-white sm:text-[2rem] lg:text-[2.25rem]"
+      className="hero-heading max-w-full text-[1.5rem] font-medium leading-[1.15] tracking-[-0.02em] text-white sm:text-[2rem] sm:leading-none lg:text-[2.25rem]"
     >
       <span key={`${line.key}-${index}`} className={`hero-line ${line.motion}`}>
         {tp(line.key)}

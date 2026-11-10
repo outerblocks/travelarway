@@ -84,8 +84,8 @@ insert into app.seat_layout (id, family_id, operator_id, name, row_count, lanes,
   ('e1000000-0000-4000-8000-000000000002', 'e1000000-0000-4000-8000-000000000002',
    'a0000000-0000-4000-8000-000000000002', 'Coach 2+3', 12, array['A', 'B', 'C', 'D', 'E'], 12, 5, 1, 1, 'published', 'private'),
   ('e1000000-0000-4000-8000-000000000003', 'e1000000-0000-4000-8000-000000000003',
-   'a0000000-0000-4000-8000-000000000003', 'Sleeper Coach 2+2', 9, array['A', 'B', 'C', 'D'], 9, 4, 1, 1, 'published', 'private')
-on conflict (operator_id, name) do nothing;
+   'a0000000-0000-4000-8000-000000000003',    'Sleeper Coach 2+2', 9, array['A', 'B', 'C', 'D'], 9, 4, 1, 1, 'published', 'private')
+on conflict (family_id, version) do nothing;
 
 insert into app.vehicle (id, operator_id, registration, model, seat_layout_id, class_label, service_class, amenities) values
   ('e2000000-0000-4000-8000-000000000002', 'a0000000-0000-4000-8000-000000000002',

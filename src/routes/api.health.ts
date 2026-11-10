@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { detectAppRuntime } from '@/domain/hosting';
 import { checkDatabase, poolHealth } from '@/server/db';
 import { getServerConfig } from '@/server/config';
 
@@ -17,7 +18,11 @@ export const Route = createFileRoute('/api/health')({
           config = getServerConfig();
         } catch (error) {
           return Response.json(
-            { status: 'misconfigured', error: (error as Error).message },
+            {
+              status: 'misconfigured',
+              error: (error as Error).message,
+              hosting: { appRuntime: detectAppRuntime() },
+            },
             { status: 503 },
           );
         }
@@ -27,6 +32,7 @@ export const Route = createFileRoute('/api/health')({
         const publicDbError =
           appEnv === 'production' ? 'unreachable' : database.error;
         const hosting = {
+          appRuntime: config.appRuntime,
           awsControlPlaneRegion: config.awsControlPlaneRegion,
           piiDataPlane: config.piiDataPlane,
           identity: config.keycloakIssuer ? 'keycloak_issuer_set' : 'keycloak_not_configured',

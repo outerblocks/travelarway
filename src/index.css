@@ -327,7 +327,7 @@
   }
 
   .search-form .input-field {
-    @apply min-h-[3.25rem] rounded-xl border-neutral-200 bg-white px-4 py-3 text-sm font-medium shadow-none outline-none;
+    @apply min-h-12 rounded-xl border-neutral-200 bg-white px-4 py-3 text-base font-medium shadow-none outline-none sm:min-h-[3.25rem] sm:text-sm;
   }
 
   .search-form .input-field:hover,
@@ -362,7 +362,74 @@
   }
 
   .search-form .search-submit {
-    @apply min-h-[3.25rem] rounded-xl px-7 font-bold text-white;
+    @apply min-h-12 rounded-xl px-7 font-bold text-white sm:min-h-[3.25rem];
+  }
+
+  .hero-search-tabs {
+    display: flex;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-inline: 0.25rem;
+  }
+
+  .hero-search-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hero-search-tab {
+    position: relative;
+    display: flex;
+    min-height: 2.75rem;
+    min-width: max-content;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 0.875rem;
+    text-align: center;
+    white-space: nowrap;
+    color: #64748b;
+    touch-action: manipulation;
+  }
+
+  .hero-search-tab:hover {
+    color: #1e293b;
+  }
+
+  .hero-search-tab.is-active {
+    color: #0055dd;
+  }
+
+  .hero-search-tab-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .hero-search-tab:last-child {
+    padding-right: 1.125rem;
+  }
+
+  .hero-search-tab-rule {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    background: #0055dd;
+  }
+
+  @media (min-width: 768px) {
+    .hero-search-tab {
+      min-width: 0;
+      flex: 1 1 0;
+      padding: 1rem 0.75rem;
+    }
+
+    .hero-search-tab-label {
+      font-size: 0.8125rem;
+    }
   }
 
   .field-error {
@@ -743,7 +810,7 @@
 
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .search-form .search-travelers-field {
     width: 14rem;
   }

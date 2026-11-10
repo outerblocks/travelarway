@@ -365,7 +365,7 @@ export function SearchForm({ mode }: SearchFormProps) {
   const labels = labelMap[mode];
   const minDate = addDays(todayISO(), 1);
 
-  const formHeight = 'h-auto min-h-[26rem] sm:min-h-[17.5rem] lg:min-h-[12rem]';
+  const formHeight = 'h-auto min-h-0';
   const singleRowDesktopGrid = desktopLayout?.formClass ?? '';
 
   return (
@@ -382,7 +382,7 @@ export function SearchForm({ mode }: SearchFormProps) {
     >
       <div className={`search-form-fields overflow-visible ${isMultiCity ? 'flex-none' : 'min-h-0 flex-1'} pr-0.5 ${placesBusy ? 'pointer-events-none' : ''}`}>
       {supportsReturn && (
-        <div className="search-trip-type mb-4 inline-flex flex-wrap rounded-full border border-neutral-200 bg-white p-1">
+        <div className="search-trip-type mb-4 inline-flex max-w-full flex-nowrap overflow-x-auto rounded-full border border-neutral-200 bg-white p-1">
           {([
             { value: 'oneway', label: tp('oneWay') },
             { value: 'return', label: tp('return') },
@@ -393,7 +393,7 @@ export function SearchForm({ mode }: SearchFormProps) {
               type="button"
               onClick={() => setTripType(opt.value)}
               aria-pressed={tripType === opt.value}
-              className={`rounded-full px-3.5 py-1.5 text-label font-semibold transition-colors ${
+              className={`shrink-0 rounded-full px-3.5 py-2 text-label font-semibold transition-colors ${
                 tripType === opt.value
                   ? 'bg-ink text-white shadow-sm'
                   : 'bg-transparent text-neutral-600 hover:text-ink'
@@ -574,7 +574,7 @@ export function SearchForm({ mode }: SearchFormProps) {
         )}
 
         {mode === 'ferry' && (
-          <div className="col-span-2 min-w-0 lg:col-span-1">
+          <div className="col-span-1 min-w-0 sm:col-span-2 lg:col-span-1">
             <label className="input-label">{tp('residency')}</label>
             <div className="flex h-[3.25rem] items-center gap-1 rounded-xl border border-neutral-200 bg-white p-1">
               <button
@@ -624,7 +624,7 @@ export function SearchForm({ mode }: SearchFormProps) {
       )}
       </div>
 
-      <div className="search-form-bottom mt-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="search-form-bottom mt-4 flex shrink-0 flex-col gap-3 md:flex-row md:items-end md:justify-between md:gap-4">
         <div ref={travelersRef} className={`search-travelers-field relative w-full min-w-0 ${placesBusy ? 'pointer-events-none' : ''}`}>
           <label className="input-label">{tp('travelersLabel')}</label>
           <button
@@ -653,7 +653,7 @@ export function SearchForm({ mode }: SearchFormProps) {
               role="dialog"
               aria-label={tp('travelersLabel')}
               onPointerDown={(e) => e.stopPropagation()}
-              className="absolute left-0 top-full z-[200] mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-neutral-200 bg-white p-5 shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)]"
+              className="absolute inset-x-0 top-full z-[200] mt-2 w-full max-w-[calc(100vw-1.5rem)] rounded-2xl border border-neutral-200 bg-white p-4 shadow-[0_18px_40px_-12px_rgba(0,85,221,0.2)] sm:inset-x-auto sm:left-0 sm:w-80 sm:max-w-[calc(100vw-2rem)] sm:p-5"
             >
               <div className="space-y-4">
                 <PassengerCounter
@@ -710,10 +710,10 @@ export function SearchForm({ mode }: SearchFormProps) {
           )}
         </div>
 
-        <div className="search-form-submit-wrapper flex justify-end">
+        <div className="search-form-submit-wrapper flex w-full justify-stretch md:w-auto md:justify-end">
           <button
             type="submit"
-            className="btn-primary search-submit w-full px-6 py-2.5 sm:w-auto"
+            className="btn-primary search-submit w-full px-6 py-2.5 md:w-auto"
             disabled={placesState === 'failed' || placesBusy}
           >
           
@@ -738,7 +738,7 @@ export function SearchForm({ mode }: SearchFormProps) {
 
       {placesState === 'failed' && (
         <div
-          className="search-form-status mt-3 flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5"
+          className="search-form-status mt-3 flex flex-col items-start gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 sm:flex-row sm:items-center sm:gap-3"
           role="alert"
         >
           <span className="h-8 w-0.5 shrink-0 self-stretch rounded-full bg-accent" aria-hidden="true" />
@@ -759,25 +759,23 @@ export function SearchForm({ mode }: SearchFormProps) {
 function getGridClass(mode: BookingMode, tripType: 'oneway' | 'return' | 'multicity'): string {
   switch (mode) {
     case 'stays':
-      // Three fields: keep them on one row so none is left orphaned beside an empty cell.
-      return 'grid-cols-1 sm:grid-cols-3';
+      // One column on a phone; three equal fields once there is room.
+      return 'grid-cols-1 md:grid-cols-3';
     case 'ferry':
       return tripType === 'return'
-        ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5'
-        : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4';
+        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5'
+        : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
     case 'bus':
     case 'train':
       return tripType === 'return'
-        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
-        : 'grid-cols-1 sm:grid-cols-3';
+        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+        : 'grid-cols-1 md:grid-cols-3';
     case 'flights':
-      // A return flight adds a fifth field; widening the row keeps every tab one row tall
-      // at desktop so the card height stays identical between tabs.
       return tripType === 'return'
-        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-5'
-        : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
+        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5'
+        : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
     case 'experiences':
-      return 'grid-cols-1 sm:grid-cols-2';
+      return 'grid-cols-1 md:grid-cols-2';
     default:
       return 'grid-cols-2';
   }
