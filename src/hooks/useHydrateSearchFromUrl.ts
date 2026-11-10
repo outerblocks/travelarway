@@ -1,15 +1,18 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 
 /**
  * Results pages are shared as URLs. The search card puts location ids on the query
  * string so a refresh still hits the same database rows, not a display-name guess.
+ *
+ * Layout (not paint) so the first results fetch sees the pair. An effect after paint
+ * marked the page ready with an empty list, then filled it — a blink of "no trips".
  */
 export function useHydrateSearchFromUrl() {
   const { bookingState, setSearchParams } = useApp();
   const params = bookingState.searchParams;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (params.extras?.originId || params.origin || typeof window === 'undefined') return;
     const query = new URLSearchParams(window.location.search);
     const from = query.get('from')?.trim();

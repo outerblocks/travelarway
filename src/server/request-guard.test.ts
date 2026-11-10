@@ -61,14 +61,14 @@ describe('isCrossOrigin', () => {
 
 describe('guardMutation', () => {
   it('answers 403 for a cross-site request before counting it against the rate limit', async () => {
-    const refused = guardMutation(post({ origin: 'https://evil.example', host: 'travelar.co.tz' }), 'holds');
+    const refused = await guardMutation(post({ origin: 'https://evil.example', host: 'travelar.co.tz' }), 'holds');
     expect(refused?.status).toBe(403);
     expect(await refused?.json()).toEqual({ error: 'cross_origin_forbidden' });
   });
 
-  it('returns null for an allowed same-origin request', () => {
+  it('returns null for an allowed same-origin request', async () => {
     expect(
-      guardMutation(
+      await guardMutation(
         post({ origin: 'https://travelar.co.tz', host: 'travelar.co.tz', 'x-forwarded-for': '192.0.2.44' }),
         'holds',
       ),
@@ -76,7 +76,7 @@ describe('guardMutation', () => {
   });
 
   it('refuses a non-JSON body on mutations', async () => {
-    const refused = guardMutation(
+    const refused = await guardMutation(
       new Request('https://travelar.co.tz/api/holds', {
         method: 'POST',
         headers: { origin: 'https://travelar.co.tz', host: 'travelar.co.tz', 'content-type': 'text/plain' },
@@ -90,7 +90,7 @@ describe('guardMutation', () => {
   it('requires Origin in production', async () => {
     process.env.APP_ENV = 'production';
     process.env.APP_PUBLIC_ORIGIN = 'https://travelar.co.tz';
-    const refused = guardMutation(post({ host: 'travelar.co.tz' }), 'holds');
+    const refused = await guardMutation(post({ host: 'travelar.co.tz' }), 'holds');
     expect(refused?.status).toBe(403);
     expect(await refused?.json()).toEqual({ error: 'origin_required' });
   });

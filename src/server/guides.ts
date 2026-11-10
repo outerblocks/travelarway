@@ -1,4 +1,5 @@
 import { query } from '@/server/db';
+import { cachedRead } from '@/server/read-cache';
 import type { BookingMode } from '@/types';
 
 export const GUIDE_LOCALES = ['en', 'sw', 'fr'] as const;
@@ -90,6 +91,10 @@ function toSummary(row: GuideRow): PublicGuideSummary | null {
 }
 
 export async function listPublishedGuides(locale: GuideLocale): Promise<PublicGuideSummary[]> {
+  return cachedRead(`guides:${locale}`, 300_000, () => loadPublishedGuides(locale));
+}
+
+async function loadPublishedGuides(locale: GuideLocale): Promise<PublicGuideSummary[]> {
   const result = await query<GuideRow>(
     `select g.slug, g.topic, g.related_mode, g.cover_path, g.researched_at::text as researched_at,
             coalesce(loc.title, en.title) as title,

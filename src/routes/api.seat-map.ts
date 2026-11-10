@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { rateLimit } from '@/server/rate-limit';
 import { getLayoutByFamily, getTripSeatMap } from '@/server/seat-map';
+import { resolveBusSegment } from '@/server/bus-segment';
+import { query } from '@/server/db';
+import { createSearchIntent } from '@/server/search-intent';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -15,7 +18,7 @@ export const Route = createFileRoute('/api/seat-map')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const params = new URL(request.url).searchParams;
@@ -32,8 +35,15 @@ export const Route = createFileRoute('/api/seat-map')({
         }
 
         try {
+          let interval: { fromSeq: number; toSeq: number } | undefined;
+          const fromStopId = params.get('fromStopId')?.trim() ?? '';
+          const toStopId = params.get('toStopId')?.trim() ?? '';
+          if (UUID.test(tripId) && UUID.test(fromStopId) && UUID.test(toStopId)) {
+            const segment = await resolveBusSegment(query, tripId, fromStopId, toStopId);
+            if (segment) interval = { fromSeq: segment.fromSeq, toSeq: segment.toSeq };
+          }
           const seatMap = UUID.test(tripId)
-            ? await getTripSeatMap(tripId)
+            ? await getTripSeatMap(tripId, interval)
             : await getLayoutByFamily(familyId, version);
 
           if (!seatMap) {
@@ -41,9 +51,16 @@ export const Route = createFileRoute('/api/seat-map')({
           }
 
           // Availability changes with every hold, so this is never cached.
+          let searchIntent: string | undefined;
+          try {
+            if (UUID.test(tripId)) searchIntent = createSearchIntent([tripId]);
+          } catch {
+            searchIntent = undefined;
+          }
           return Response.json(
             {
               data: seatMap,
+              searchIntent,
               counts: {
                 seats: seatMap.seats.length,
                 held: seatMap.seats.filter((seat) => seat.status === 'held').length,

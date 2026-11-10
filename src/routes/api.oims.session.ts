@@ -1,38 +1,45 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { guardMutation } from '@/server/request-guard';
-import { query } from '@/server/db';
+import { jsonError, readUuid } from '@/server/oims/http';
 import { oimsCookieHeader, OimsSessionUnavailableError } from '@/server/oims/session';
-import { readUuid } from '@/server/oims/http';
+import { requireAppSession } from '@/server/identity/staff-gate';
+import { hasOimsAssignment } from '@/server/identity/sessions';
+import { OimsForbiddenError } from '@/server/oims/repository';
 
 export const Route = createFileRoute('/api/oims/session')({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
-        const limited = guardMutation(request, 'oims');
+        const limited = await guardMutation(request, 'oims');
         if (limited) return limited;
-        let body: unknown;
         try {
-          body = await request.json();
-        } catch {
-          return Response.json({ error: 'invalid_json' }, { status: 400 });
-        }
-        const operatorId = readUuid((body as { operatorId?: unknown }).operatorId);
-        const mode = (body as { mode?: unknown }).mode;
-        if (!operatorId || (mode !== 'bus' && mode !== 'ferry')) {
-          return Response.json({ error: 'invalid_operator' }, { status: 400 });
-        }
-        const found = await query(`select 1 from app.operator where id = $1 and mode = $2 and status = 'active'`, [operatorId, mode]);
-        if (!found.rowCount) return Response.json({ error: 'operator_not_found' }, { status: 404 });
-        try {
+          const session = await requireAppSession(request);
+          let body: unknown;
+          try {
+            body = await request.json();
+          } catch {
+            return Response.json({ error: 'invalid_json' }, { status: 400 });
+          }
+          const operatorId = readUuid((body as { operatorId?: unknown }).operatorId);
+          const mode = (body as { mode?: unknown }).mode;
+          if (!operatorId || (mode !== 'bus' && mode !== 'ferry')) {
+            return Response.json({ error: 'invalid_operator' }, { status: 400 });
+          }
+          if (!(await hasOimsAssignment(session.userId, operatorId))) {
+            throw new OimsForbiddenError();
+          }
+          const { loadOimsProfile } = await import('@/server/oims/org');
+          const profile = await loadOimsProfile(session.userId, operatorId);
+          if (!profile || profile.mode !== mode) throw new OimsForbiddenError();
           return Response.json(
-            { ok: true, operatorId },
+            { ok: true, operatorId, permissions: profile.permissions, roles: profile.roles, mode: profile.mode },
             { status: 200, headers: { 'cache-control': 'no-store', 'set-cookie': oimsCookieHeader(operatorId) } },
           );
         } catch (error) {
           if (error instanceof OimsSessionUnavailableError) {
             return Response.json({ error: 'identity_provider_required' }, { status: 503 });
           }
-          throw error;
+          return jsonError(error);
         }
       },
     },

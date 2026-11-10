@@ -1,32 +1,24 @@
+import { isAbortError } from '@/hooks/query-status';
+import { TravelarLoader, useRouteWaitHold } from '@/components/shared/TravelarLoader';
+
 /**
  * Route-transition shells. They render outside page code, so they intentionally
- * avoid i18n hooks and show only shape and colour: a skeleton for pending
- * navigation and a recoverable error card for a failed route.
+ * avoid i18n hooks. When the root wait overlay is present, this only holds it
+ * so a second scene cannot mount and blink.
  */
 export function RoutePending() {
-  return (
-    <div className="section-container py-10" role="status" aria-live="polite" aria-label="Loading page">
-      <div className="mx-auto max-w-3xl space-y-4">
-        <div className="skeleton h-8 w-56" />
-        <div className="skeleton h-4 w-72" />
-        <div className="space-y-3 pt-3">
-          {[0, 1, 2].map((row) => (
-            <div key={row} className="card flex items-center gap-4 p-5">
-              <div className="skeleton h-12 w-12 rounded-lg" />
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="skeleton h-3.5 w-2/5" />
-                <div className="skeleton h-3 w-1/4" />
-              </div>
-              <div className="skeleton h-9 w-24 rounded-lg" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  const hosted = useRouteWaitHold();
+  if (hosted) return null;
+  return <TravelarLoader message="Preparing your journey" />;
 }
 
-export function RouteError({ reset }: { reset: () => void }) {
+/**
+ * Shown only when the route itself failed to load or render. In-page search/booking
+ * failures keep their own ErrorState. A cancelled navigation is not a failed page.
+ */
+export function RouteError({ error, reset }: { error?: unknown; reset: () => void }) {
+  if (isAbortError(error)) return <RoutePending />;
+
   return (
     <div className="section-container py-16 text-center">
       <div className="mx-auto max-w-md">

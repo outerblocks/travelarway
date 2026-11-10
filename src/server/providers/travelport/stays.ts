@@ -12,6 +12,14 @@ import type {
 import { travelportConfig, travelportGet, travelportJson } from '@/server/providers/travelport/client';
 import { asArray, asRecord } from '@/server/providers/travelport/errors';
 import { countryName } from '@/server/reference/iata-display';
+import {
+  displayLodgingText,
+  imageSizeRank,
+  lodgingDisplayUrl,
+  looksLikeHumanRoomName,
+  pictureRank,
+  type LodgingPicture,
+} from '@/domain/lodging-images';
 import type { TravelportConfig } from '@/server/travelport/config';
 
 const PRODUCT = 'stays-v11';
@@ -95,7 +103,8 @@ export function buildStaySearchRequest(request: StaySearchRequest, config: Trave
       RoomStayCandidate: Array.from({ length: rooms }, () => candidate),
       SearchBy: searchBy(request),
       returnOnlyAvailablePropertiesInd: true,
-      ImageSize: 'Medium',
+      ImageSize: 'Large',
+      returnAllImagesInd: true,
       recommendedPropertyAmenitiesInd: true,
       ...(currency ? { RequestedCurrency: currency } : {}),
     },
@@ -165,7 +174,7 @@ export function normalizeStaySearch(body: unknown, meta: ProviderOperationMeta):
     const code = String(
       key.propertyCode ?? key.PropertyCode ?? property.id ?? info.id ?? `property_${index}`,
     );
-    const name = String(property.name ?? property.Name ?? property.HotelName ?? '').trim();
+    const name = displayLodgingText(String(property.name ?? property.Name ?? property.HotelName ?? ''));
     if (!name) return [];
     const address = asRecord(property.Address) ?? asRecord(property.HotelAddress);
     const city = displayPlace(textOf(address?.City ?? address?.city));
@@ -177,7 +186,7 @@ export function normalizeStaySearch(body: unknown, meta: ProviderOperationMeta):
     const currency = rate
       ? String(rate.code ?? asRecord(rate.CurrencyCode)?.value ?? rate.currency ?? '')
       : '';
-    const photoUrls = imageUrlsOf(property, MAX_SEARCH_PHOTOS);
+    const photoUrls = imageUrlsOf(property, MAX_SEARCH_PHOTOS, info);
     const amenities = amenitiesOf(property, MAX_SEARCH_AMENITIES);
     const description = descriptionOf(property);
     const starRating = starRatingOf(property);
@@ -220,18 +229,13 @@ function textOf(value: unknown): string {
 }
 
 function displayPlace(value: string): string {
-  if (!value) return '';
-  if (/^[A-Z]{2,3}$/.test(value)) return value;
-  if (value === value.toUpperCase() && /[A-Z]/.test(value) && value.length > 1) {
-    return value.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
-  }
-  return value;
+  return displayLodgingText(value);
 }
 
 function httpsUrl(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   try {
-    const url = new URL(value.trim());
+    const url = new URL(lodgingDisplayUrl(value.trim()));
     if (url.protocol !== 'https:') return null;
     return url.toString();
   } catch {
@@ -239,17 +243,51 @@ function httpsUrl(value: unknown): string | null {
   }
 }
 
-function imageUrlsOf(property: Record<string, unknown>, limit: number): string[] {
-  const ranked = asArray(property.Image).flatMap((raw) => {
+function lodgingPicturesOf(...nodes: Array<Record<string, unknown> | null | undefined>): LodgingPicture[] {
+  const images = nodes.filter((node): node is Record<string, unknown> => Boolean(node)).flatMap((node) => [
+    ...asArray(node.Image),
+    ...asArray(node.Images),
+    ...asArray(asRecord(node.Multimedia)?.Image),
+    ...asArray(asRecord(node.Media)?.Image),
+  ]);
+  const ranked = images.flatMap((raw) => {
     const image = asRecord(raw);
     const href = httpsUrl(image?.value ?? image?.url ?? image?.href);
     if (!href) return [];
     const pictureOf = String(image?.pictureOf ?? '');
-    const rank = pictureOf === 'Exterior' ? 0 : pictureOf === 'GuestRoom' ? 1 : pictureOf === 'Lobby' ? 2 : 9;
-    return [{ href, rank }];
+    const rank = pictureRank(pictureOf);
+    if (rank == null) return [];
+    const width = Number(image?.width);
+    return [{
+      picture: {
+        url: lodgingDisplayUrl(href),
+        pictureOf: String(image?.pictureOf ?? ''),
+        caption: textOf(image?.caption ?? image?.title ?? image?.name),
+      },
+      rank,
+      size: imageSizeRank(
+        typeof image?.imageSize === 'string' ? image.imageSize : undefined,
+        Number.isFinite(width) ? width : undefined,
+      ),
+    }];
   });
-  ranked.sort((left, right) => left.rank - right.rank);
-  return [...new Set(ranked.map((row) => row.href))].slice(0, limit);
+  ranked.sort((left, right) => left.rank - right.rank || right.size - left.size);
+  const unique: LodgingPicture[] = [];
+  const seen = new Set<string>();
+  for (const row of ranked) {
+    if (seen.has(row.picture.url)) continue;
+    seen.add(row.picture.url);
+    unique.push(row.picture);
+  }
+  return unique;
+}
+
+function imageUrlsOf(
+  property: Record<string, unknown>,
+  limit: number,
+  extra?: Record<string, unknown> | null,
+): string[] {
+  return lodgingPicturesOf(property, extra).map((picture) => picture.url).slice(0, limit);
 }
 
 function starRatingOf(property: Record<string, unknown>): number | undefined {
@@ -429,7 +467,13 @@ export function splitPropertyReference(reference: string): StayPropertyCodes | n
 export async function travelportStayDetails(
   codes: StayPropertyCodes,
   meta: ProviderOperationMeta,
-): Promise<AdapterResult<{ photoUrls: string[]; amenities: string[]; description?: string; reviews: Array<{ text: string; author?: string; score?: number; date?: string }> }>> {
+): Promise<AdapterResult<{
+  photoUrls: string[];
+  propertyPictures: LodgingPicture[];
+  amenities: string[];
+  description?: string;
+  reviews: Array<{ text: string; author?: string; score?: number; date?: string }>;
+}>> {
   const config = travelportConfig();
   if (!config) {
     return { outcome: 'unsupported', meta, errorCode: 'travelport_disabled', safeMessage: 'Stay details are not available.' };
@@ -448,7 +492,7 @@ export async function travelportStayDetails(
     throw error;
   }
 
-  const path = `search/propertiesdetail?chainCode=${encodeURIComponent(codes.chainCode)}&propertyCode=${encodeURIComponent(codes.propertyCode)}&ImageSize=Medium`;
+  const path = `search/propertiesdetail?chainCode=${encodeURIComponent(codes.chainCode)}&propertyCode=${encodeURIComponent(codes.propertyCode)}&ImageSize=ExtraLarge`;
   const result = await travelportGet('hotel', path);
   if (result.errors.length || result.httpStatus < 200 || result.httpStatus >= 300) {
     return {
@@ -467,11 +511,13 @@ export async function travelportStayDetails(
     ?? envelope.Property,
   )[0]);
   const rawProperty = asRecord(info?.Property) ?? info ?? {};
+  const propertyPictures = lodgingPicturesOf(rawProperty, info);
   return {
     outcome: 'success',
     meta,
     data: {
-      photoUrls: imageUrlsOf(rawProperty, MAX_DETAIL_PHOTOS),
+      photoUrls: propertyPictures.map((picture) => picture.url).slice(0, MAX_DETAIL_PHOTOS),
+      propertyPictures,
       amenities: amenitiesOf(rawProperty, MAX_DETAIL_AMENITIES),
       description: property?.description ?? descriptionOf(rawProperty),
       reviews: guestReviewsOf(rawProperty),
@@ -592,10 +638,14 @@ export function normalizeStayAvailability(body: unknown): CanonicalStayRoom[] {
     const product = firstProduct(offering);
     const roomType = asRecord(product?.RoomType);
     const characteristics = asRecord(roomType?.RoomCharacteristics);
-    const name = textOf(roomType?.Description)
-      || textOf(characteristics?.shortRoomDescription)
-      || textOf(product?.bookingCode);
+    const name = lodgingRoomName(
+      textOf(roomType?.Description),
+      textOf(characteristics?.shortRoomDescription),
+      textOf(roomType?.Name ?? roomType?.name),
+      textOf(product?.bookingCode),
+    );
     if (!id || !name) continue;
+    const photos = lodgingPicturesOf(offering, product, roomType, characteristics).map((picture) => picture.url).slice(0, 8);
     const price = asRecord(offering.Price);
     const amount = Number(price?.TotalPrice ?? price?.value);
     const currency = textOf(asRecord(price?.CurrencyCode)?.value ?? price?.currencyCode ?? price?.code);
@@ -610,6 +660,7 @@ export function normalizeStayAvailability(body: unknown): CanonicalStayRoom[] {
     rooms.push({
       providerOfferingId: id,
       name,
+      photoUrls: photos.length ? photos : undefined,
       description: textOf(characteristics?.viewDescription) || undefined,
       board: board || undefined,
       cancellation: textOf(penalty?.Description) || undefined,
@@ -627,6 +678,14 @@ export function normalizeStayAvailability(body: unknown): CanonicalStayRoom[] {
     if (right.totalAmount == null) return -1;
     return left.totalAmount - right.totalAmount;
   });
+}
+
+function lodgingRoomName(...candidates: string[]): string {
+  for (const candidate of candidates) {
+    const text = displayLodgingText(candidate);
+    if (looksLikeHumanRoomName(text)) return text;
+  }
+  return 'Guest room';
 }
 
 function firstProduct(offering: Record<string, unknown>): Record<string, unknown> | null {

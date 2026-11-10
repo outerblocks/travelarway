@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from '@tanstack/react-router';
-import { Link, useNavigate } from '@/router';
-import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
 import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
-import { ErrorState, LoadingState, QueryFeedback, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState, QueryFeedback } from '@/components/shared/States';
 import { partyMismatched } from '@/domain/passengers';
 import { roomFromOffer } from '@/domain/stay-offer';
 import { formatMoney } from '@/domain/money';
@@ -86,14 +85,7 @@ export function StaysBookingPage() {
     <QueryFeedback
       status={status}
       errorMessage={tp('unableLoadStays')}
-      loading={(
-        <>
-          <SearchSummaryBar>
-            <Link to="/stays/detail" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
-          </SearchSummaryBar>
-          <LoadingState count={2} message={tp('loadingStayDetails')} />
-        </>
-      )}
+      loading={<LoadingState count={2} message={tp('loadingStayDetails')} />}
     >
       {!offer ? (
         <ErrorState message={tp('propertyNotFound')} onRetry={() => navigate('/stays/results')} />
@@ -101,14 +93,9 @@ export function StaysBookingPage() {
         <ErrorState message={tp('roomNotFound')} onRetry={() => navigate(`/stays/detail?offer=${encodeURIComponent(offerId)}`)} />
       ) : (
         <>
-          <SearchSummaryBar>
-            <Link to={`/stays/detail?offer=${encodeURIComponent(offer.id)}`} className="btn-ghost text-label">
-              <ArrowLeft size={16} /> {tp('checkoutBack')}
-            </Link>
-            <span className="text-body font-medium text-neutral-900">{offer.name}</span>
-          </SearchSummaryBar>
           <div className="section-container py-6">
             <h1 className="text-page font-bold text-neutral-900">{tp('guestInformation')}</h1>
+            <p className="mt-1 text-body text-neutral-700">{offer.name}</p>
             <p className="mt-2 max-w-2xl text-body text-neutral-600">{tp('stayGuestIntro')}</p>
             <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="space-y-4">
@@ -144,7 +131,7 @@ export function StaysBookingPage() {
                   </p>
                 ) : null}
                 {room.totalPrice != null && room.currency ? (
-                  <p className="mt-4 text-listing font-semibold tabular-nums text-brand-800">
+                  <p className="mt-4 text-listing font-semibold tabular-nums text-neutral-900">
                     {formatMoney(room.totalPrice, room.currency)}
                   </p>
                 ) : null}

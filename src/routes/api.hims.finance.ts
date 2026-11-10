@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { jsonError, requireHq } from '@/server/hims/http';
+import { requireHqPermission } from '@/server/identity/staff-gate';
+import { jsonError } from '@/server/hims/http';
 import { loadModeFinance, loadMovements } from '@/server/hims/repository';
 import { isFinanceMode } from '@/domain/finance-modes';
 
@@ -8,7 +9,7 @@ export const Route = createFileRoute('/api/hims/finance')({
     handlers: {
       GET: async ({ request }: { request: Request }) => {
         try {
-          requireHq(request);
+          await requireHqPermission(request, 'hq.finance.view');
           const url = new URL(request.url);
           const mode = url.searchParams.get('mode') ?? '';
           if (!isFinanceMode(mode)) {

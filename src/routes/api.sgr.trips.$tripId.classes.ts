@@ -12,7 +12,7 @@ export const Route = createFileRoute('/api/sgr/trips/$tripId/classes')({
        *   GET /api/sgr/trips/:tripId/classes?from=0&to=2
        */
       GET: async ({ params, request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const url = new URL(request.url);

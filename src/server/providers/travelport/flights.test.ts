@@ -49,6 +49,47 @@ describe('Travelport air reference join', () => {
       flightNumber: '718',
       marketingCarrier: 'PW',
     });
+    expect(offers[0]?.itinerary[0]?.operatingCarrier).toBeUndefined();
+  });
+
+  it('keeps Hahn Air as the ticketed carrier until an operating airline is present', () => {
+    const offers = normalizeAirSearch({
+      CatalogProductOfferingsResponse: {
+        CatalogProductOfferings: {
+          CatalogProductOffering: [{
+            id: 'oH1',
+            contentSource: 'GDS',
+            productRef: [{ value: 'pH1' }],
+            BestCombinablePrice: {
+              TotalPrice: '92.1',
+              CurrencyCode: { value: 'GBP' },
+            },
+          }],
+        },
+        ReferenceList: [
+          {
+            '@type': 'ReferenceListProduct',
+            Product: [{ id: 'pH1', flightRefs: ['sH1'], cabin: 'Y' }],
+          },
+          {
+            '@type': 'ReferenceListFlight',
+            Flight: [{
+              id: 'sH1',
+              carrier: 'H1',
+              number: '1956',
+              Departure: { location: 'JRO', date: '2026-12-08', time: '09:00' },
+              Arrival: { location: 'DAR', date: '2026-12-08', time: '10:15' },
+            }],
+          },
+        ],
+      },
+    }, meta);
+    expect(offers[0]?.cabinClass).toBe('Economy');
+    expect(offers[0]?.itinerary[0]).toMatchObject({
+      marketingCarrier: 'H1',
+      flightNumber: '1956',
+    });
+    expect(offers[0]?.itinerary[0]?.operatingCarrier).toBeUndefined();
   });
 
   it('joins ProductBrandOptions flightRefs from the live TripServices envelope', () => {

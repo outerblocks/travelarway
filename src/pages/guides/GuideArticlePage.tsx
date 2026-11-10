@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { Link, useNavigate } from '@/router';
 import { ArrowLeft } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { usePublishedGuide } from '@/hooks/usePublishedGuides';
 import { formatGuideDate } from '@/pages/guides/GuidesNewsBoard';
+import { GuideArticleJsonLd } from '@/components/shared/SeoJsonLd';
 import { LoadingState, QueryFeedback } from '@/components/shared/States';
 import { GUIDE_TOPIC_KEYS } from '@/pages/guides/guide-topic';
 
@@ -12,6 +14,11 @@ export function GuideArticlePage({ slug }: { slug: string }) {
   const { setActiveMode } = useApp();
   const navigate = useNavigate();
   const { status, guide, retry } = usePublishedGuide(slug, lang);
+
+  useEffect(() => {
+    if (!guide) return;
+    document.title = guide.title.includes('Travelar') ? guide.title : `${guide.title} | Travelar`;
+  }, [guide]);
 
   if (status === 'loading' || status === 'error' || status === 'offline') {
     return (
@@ -39,6 +46,13 @@ export function GuideArticlePage({ slug }: { slug: string }) {
 
   return (
     <article className="bg-background py-10 sm:py-14">
+      <GuideArticleJsonLd
+        pathname={`/guides/${slug}`}
+        title={guide.title}
+        description={guide.excerpt}
+        image={guide.coverPath}
+        datePublished={guide.researchedAt}
+      />
       <div className="section-container max-w-3xl">
         <Link to="/guides" className="guides-headline inline-flex min-h-10 items-center gap-2 text-label font-semibold">
           <ArrowLeft size={16} /> {tp('backToGuides')}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate } from '@/router';
 import { Clock, XCircle, CheckCircle2, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouteWaitHold } from '@/components/shared/TravelarLoader';
 import { useApp } from '@/context/AppContext';
 import { useI18n, type Language, type TranslationKey } from '@/context/I18nContext';
 import { MODE_ICON_MAP } from '@/components/ui/ModeIcons';
@@ -73,9 +74,10 @@ export function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<TripStatus | 'all'>('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bookingsExpanded, setBookingsExpanded] = useState(true);
+  const hostedWait = useRouteWaitHold(loading);
 
   if (loading) {
-    return <div className="p-12 text-center" role="status">{t('loadingAccount')}</div>;
+    return hostedWait ? null : <div className="p-12 text-center" role="status">{t('loadingAccount')}</div>;
   }
 
   if (!user) {
@@ -112,7 +114,7 @@ export function DashboardPage() {
     .reduce((sum, trip) => sum + trip.amount, 0);
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-white">
       {/* Top bar */}
       <div className="bg-white border-b border-neutral-200">
         <div className="section-container">

@@ -126,8 +126,8 @@ const PAYOUT_STATUS: Record<string, PayoutStatus> = {
 
 export class PaymentConfigurationError extends Error {}
 export class PaymentNotEnabledError extends Error {
-  constructor() {
-    super('live_payments_disabled');
+  constructor(public readonly reason: string = 'live_payments_disabled') {
+    super(reason);
   }
 }
 

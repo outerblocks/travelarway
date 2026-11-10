@@ -147,17 +147,61 @@ export async function getLayoutByFamily(
  * Layout plus live state for one departure. Held and booked are distinguished because the
  * UI needs to know a seat is temporarily blocked versus sold for good.
  */
-export async function getTripSeatMap(tripId: string): Promise<SeatMap | null> {
-  const trip = await query<{ seat_layout_id: string | null }>(
-    `select v.seat_layout_id
+type QueryFn = typeof query;
+
+function execQuery<T extends import('pg').QueryResultRow>(
+  client: { query: QueryFn } | QueryFn,
+  text: string,
+  values: unknown[] = [],
+) {
+  if (typeof client === 'function') return client<T>(text, values);
+  return client.query<T>(text, values);
+}
+
+export async function layoutIdForTrip(
+  client: { query: QueryFn } | QueryFn,
+  tripId: string,
+): Promise<string | null> {
+  const trip = await execQuery<{ seat_layout_id: string | null }>(client,
+    `select coalesce(t.seat_layout_id, v.seat_layout_id) as seat_layout_id
        from app.trip t
        left join app.vehicle v on v.id = t.vehicle_id
       where t.id = $1`,
     [tripId],
   );
-  if (trip.rowCount === 0) return null;
+  return trip.rows[0]?.seat_layout_id ?? null;
+}
 
-  const layoutId = trip.rows[0].seat_layout_id;
+export async function resolveSeatsForTrip(
+  client: { query: QueryFn } | QueryFn,
+  tripId: string,
+  labels: string[],
+): Promise<{ id: string; label: string }[]> {
+  const layoutId = await layoutIdForTrip(client, tripId);
+  if (!layoutId) throw new Error('invalid_layout');
+  const wanted = [...new Set(labels.map((label) => label.trim().toUpperCase()).filter(Boolean))];
+  const found = await execQuery<{ id: string; label: string }>(
+    client,
+    `select id, label from app.seat_layout_seat
+      where layout_id = $1 and upper(label) = any($2::text[])`,
+    [layoutId, wanted],
+  );
+  if (found.rowCount !== wanted.length) throw new Error('invalid_seats');
+  const byLabel = new Map(found.rows.map((row) => [row.label.toUpperCase(), row]));
+  return wanted.map((label) => {
+    const seat = byLabel.get(label);
+    if (!seat) throw new Error('invalid_seats');
+    return { id: seat.id, label: seat.label };
+  });
+}
+
+export async function getTripSeatMap(
+  tripId: string,
+  interval?: { fromSeq: number; toSeq: number },
+): Promise<SeatMap | null> {
+  const layoutId = await layoutIdForTrip(query, tripId);
+  const exists = await query(`select 1 from app.trip where id = $1`, [tripId]);
+  if (exists.rowCount === 0) return null;
   if (!layoutId) return null;
 
   const { rows } = await query<LayoutRow>(
@@ -166,6 +210,9 @@ export async function getTripSeatMap(tripId: string): Promise<SeatMap | null> {
   );
   if (rows.length === 0) return null;
   const layout = toLayout(rows[0]);
+
+  const fromSeq = interval?.fromSeq ?? Number.NEGATIVE_INFINITY;
+  const toSeq = interval?.toSeq ?? Number.POSITIVE_INFINITY;
 
   const [cells, seats] = await Promise.all([
     readCells(layout.id),
@@ -193,15 +240,17 @@ export async function getTripSeatMap(tripId: string): Promise<SeatMap | null> {
          left join app.seat_class sc on sc.id = s.seat_class_id
          left join (
            select distinct seat_no from app.booking_passenger
-            where trip_id = $1 and status = 'active' and seat_no is not null
+            where trip_id = $1 and status in ('pending', 'active') and seat_no is not null
+              and from_seq < $4 and to_seq > $3
          ) bp on bp.seat_no = s.label
          left join (
            select distinct seat_no from app.seat_hold
             where trip_id = $1 and status = 'active' and expires_at > now()
+              and from_seq < $4 and to_seq > $3
          ) h on h.seat_no = s.label
         where s.layout_id = $2
         order by s.deck, s.row, s.col`,
-      [tripId, layout.id],
+      [tripId, layout.id, Number.isFinite(fromSeq) ? fromSeq : -1_000_000, Number.isFinite(toSeq) ? toSeq : 1_000_000],
     ),
   ]);
 

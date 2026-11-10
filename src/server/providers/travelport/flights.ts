@@ -11,6 +11,7 @@ import type {
 } from '@/server/providers/types';
 import { travelportConfig, travelportJson } from '@/server/providers/travelport/client';
 import { asArray, asRecord } from '@/server/providers/travelport/errors';
+import { airlineName, cabinLabel, isKnownAirlineName } from '@/server/reference/iata-display';
 import type { TravelportConfig } from '@/server/travelport/config';
 
 const PRODUCT = 'flights-v11';
@@ -270,7 +271,7 @@ function productFlightRefs(product: Record<string, unknown> | undefined): string
 function segmentFromFlight(flight: Record<string, unknown> | undefined): CanonicalAirSegment | null {
   if (!flight) return null;
   const marketing = carrierOf(flight.carrier ?? flight.MarketingAirline ?? flight.marketingCarrier);
-  const operating = carrierOf(flight.OperatingAirline ?? flight.operatingCarrier ?? flight.carrier);
+  const operating = carrierOf(flight.OperatingAirline ?? flight.operatingCarrier);
   const number = String(flight.number ?? flight.flightNumber ?? asRecord(flight.number)?.value ?? '');
   const origin = codeOf(flight.Departure ?? flight.departure) || String(flight.origin ?? '');
   const destination = codeOf(flight.Arrival ?? flight.arrival) || String(flight.destination ?? '');
@@ -283,8 +284,8 @@ function segmentFromFlight(flight: Record<string, unknown> | undefined): Canonic
   return {
     marketingCarrier: marketing.code,
     marketingCarrierName: marketing.name,
-    operatingCarrier: operating.code || marketing.code,
-    operatingCarrierName: operating.name || marketing.name,
+    operatingCarrier: operating.code || undefined,
+    operatingCarrierName: operating.name || undefined,
     flightNumber: number,
     originCode: origin,
     originTerminal: originTerminal || undefined,
@@ -359,13 +360,14 @@ function cabinOf(product: Record<string, unknown> | undefined): string | undefin
   const passenger = asRecord(asArray(product?.PassengerFlight)[0]);
   const flightProduct = asRecord(asArray(passenger?.FlightProduct)[0]);
   const fromPassenger = flightProduct ? String(flightProduct.cabin ?? asRecord(flightProduct.Cabin)?.value ?? '') : '';
-  return fromProduct || fromPassenger || undefined;
+  return cabinLabel(fromProduct || fromPassenger || undefined);
 }
 
 function fareBrandOf(brand: Record<string, unknown> | undefined, cabin?: string): string | undefined {
   if (!brand) return undefined;
   const name = String(brand.name ?? brand.BrandName ?? brand.id ?? '').trim();
   if (!name || (cabin && name.toLowerCase() === cabin.toLowerCase())) return undefined;
+  if (isKnownAirlineName(name) || airlineName(name)) return undefined;
   return name;
 }
 

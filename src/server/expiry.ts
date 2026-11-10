@@ -12,6 +12,7 @@
  */
 import { query, withTransaction } from '@/server/db';
 import type pg from 'pg';
+import { releaseFerryCapacity } from '@/server/sailing-inventory';
 
 export interface ExpirySummary {
   expired: number;
@@ -77,7 +78,9 @@ async function expireRows(client: pg.PoolClient, bookingIds: string[]): Promise<
     [bookingIds],
   );
 
-  // Pending passengers were never sold; cancelling them keeps ux_seat_sold_once honest.
+  await releaseFerryCapacity(client, bookingIds);
+
+  // Pending passengers were never sold; cancelling them keeps interval exclusion honest.
   await client.query(
     `update app.booking_passenger set status = 'cancelled'
       where booking_id = any($1::uuid[]) and status = 'pending'`,

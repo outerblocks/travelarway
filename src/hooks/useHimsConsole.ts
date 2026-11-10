@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FinanceMode } from '@/domain/finance-modes';
+import { stayReadyDuringRefetch } from '@/hooks/query-status';
 
 export function useHimsConsole(mode: FinanceMode, desk: 'finance' | 'admin') {
   const [overview, setOverview] = useState<{ modes: { mode: string; operators: number }[] } | null>(null);
@@ -7,6 +8,7 @@ export function useHimsConsole(mode: FinanceMode, desk: 'finance' | 'admin') {
   const [movements, setMovements] = useState<unknown[]>([]);
   const [operators, setOperators] = useState<unknown[]>([]);
   const [audit, setAudit] = useState<unknown[]>([]);
+  const [invites, setInvites] = useState<unknown[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState('');
   const [tick, setTick] = useState(0);
@@ -15,7 +17,7 @@ export function useHimsConsole(mode: FinanceMode, desk: 'finance' | 'admin') {
 
   useEffect(() => {
     let cancelled = false;
-    setStatus('loading');
+    setStatus((current) => stayReadyDuringRefetch(current, 'loading', 'ready', overview !== null));
     void fetch('/api/hims/session', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -23,12 +25,13 @@ export function useHimsConsole(mode: FinanceMode, desk: 'finance' | 'admin') {
       body: JSON.stringify({ desk }),
     }).then(async (session) => {
       if (!session.ok) throw new Error('session_unavailable');
-      const [overviewRes, financeRes, moveRes, opsRes, auditRes] = await Promise.all([
+      const [overviewRes, financeRes, moveRes, opsRes, auditRes, inviteRes] = await Promise.all([
         fetch('/api/hims/overview', { credentials: 'same-origin' }),
         fetch(`/api/hims/finance?mode=${mode}`, { credentials: 'same-origin' }),
         fetch(`/api/hims/finance?mode=${mode}&view=movements`, { credentials: 'same-origin' }),
         fetch('/api/hims/operators', { credentials: 'same-origin' }),
         fetch(`/api/hims/audit?mode=${mode}`, { credentials: 'same-origin' }),
+        fetch('/api/hims/invites', { credentials: 'same-origin' }),
       ]);
       if (![overviewRes, financeRes, moveRes, opsRes, auditRes].every((row) => row.ok)) {
         throw new Error('workspace_unavailable');
@@ -38,12 +41,14 @@ export function useHimsConsole(mode: FinanceMode, desk: 'finance' | 'admin') {
       const moveBody = await moveRes.json();
       const opsBody = await opsRes.json();
       const auditBody = await auditRes.json();
+      const inviteBody = inviteRes.ok ? await inviteRes.json() as { data?: unknown[] } : { data: [] };
       if (cancelled) return;
       setOverview(overviewBody);
       setFinance(financeBody);
       setMovements(moveBody.data ?? []);
       setOperators(opsBody.data ?? []);
       setAudit(auditBody.data ?? []);
+      setInvites(inviteBody.data ?? []);
       setStatus('ready');
       setError('');
     }).catch((caught: Error) => {
@@ -57,5 +62,5 @@ export function useHimsConsole(mode: FinanceMode, desk: 'finance' | 'admin') {
     };
   }, [mode, desk, tick]);
 
-  return { overview, finance, movements, operators, audit, status, error, reload };
+  return { overview, finance, movements, operators, audit, invites, status, error, reload };
 }

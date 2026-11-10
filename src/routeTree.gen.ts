@@ -22,12 +22,15 @@ import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as HqRouteImport } from './routes/hq'
 import { Route as ManageBookingRouteImport } from './routes/manage-booking'
+import { Route as ManifestDotwebmanifestRouteImport } from './routes/manifest[.]webmanifest'
 import { Route as ParcelsRouteImport } from './routes/parcels'
 import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ApiBookingStatusRouteImport } from './routes/api.booking-status'
 import { Route as ApiBookingsRouteImport } from './routes/api.bookings'
@@ -35,6 +38,7 @@ import { Route as ApiGuidesRouteImport } from './routes/api.guides'
 import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as ApiHoldsRouteImport } from './routes/api.holds'
 import { Route as ApiLocationsRouteImport } from './routes/api.locations'
+import { Route as ApiMarketsRouteImport } from './routes/api.markets'
 import { Route as ApiOffersRouteImport } from './routes/api.offers'
 import { Route as ApiSeatMapRouteImport } from './routes/api.seat-map'
 import { Route as ApiTripDetailRouteImport } from './routes/api.trip-detail'
@@ -54,10 +58,25 @@ import { Route as FlightsResultsRouteImport } from './routes/flights.results'
 import { Route as FlightsReviewRouteImport } from './routes/flights.review'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesSlugRouteImport } from './routes/guides.$slug'
+import { Route as HqIndexRouteImport } from './routes/hq.index'
+import { Route as HqAdminRouteImport } from './routes/hq.admin'
+import { Route as HqCommercialRouteImport } from './routes/hq.commercial'
+import { Route as HqComplianceRouteImport } from './routes/hq.compliance'
+import { Route as HqCxRouteImport } from './routes/hq.cx'
+import { Route as HqFinanceRouteImport } from './routes/hq.finance'
+import { Route as HqOperationsRouteImport } from './routes/hq.operations'
+import { Route as HqPeopleRouteImport } from './routes/hq.people'
+import { Route as HqProductRouteImport } from './routes/hq.product'
+import { Route as HqRevenueRouteImport } from './routes/hq.revenue'
+import { Route as HqRiskRouteImport } from './routes/hq.risk'
+import { Route as HqSupplyRouteImport } from './routes/hq.supply'
+import { Route as HqWorkRouteImport } from './routes/hq.work'
+import { Route as InviteAcceptRouteImport } from './routes/invite.accept'
 import { Route as OperatorBusRouteImport } from './routes/operator.bus'
 import { Route as OperatorFerryRouteImport } from './routes/operator.ferry'
 import { Route as OperatorHimsSigninRouteImport } from './routes/operator.hims-signin'
 import { Route as OperatorOimsSigninRouteImport } from './routes/operator.oims-signin'
+import { Route as OperatorSettingsRouteImport } from './routes/operator.settings'
 import { Route as StaysBookingRouteImport } from './routes/stays.booking'
 import { Route as StaysDetailRouteImport } from './routes/stays.detail'
 import { Route as StaysResultsRouteImport } from './routes/stays.results'
@@ -65,23 +84,43 @@ import { Route as StaysReviewRouteImport } from './routes/stays.review'
 import { Route as TrainBookingRouteImport } from './routes/train.booking'
 import { Route as TrainResultsRouteImport } from './routes/train.results'
 import { Route as TrainReviewRouteImport } from './routes/train.review'
+import { Route as ApiAuthCallbackRouteImport } from './routes/api.auth.callback'
+import { Route as ApiAuthInviteRouteImport } from './routes/api.auth.invite'
+import { Route as ApiAuthLoginRouteImport } from './routes/api.auth.login'
+import { Route as ApiAuthLogoutRouteImport } from './routes/api.auth.logout'
+import { Route as ApiAuthPasswordRouteImport } from './routes/api.auth.password'
+import { Route as ApiAuthRegisterRouteImport } from './routes/api.auth.register'
 import { Route as ApiAuthSessionRouteImport } from './routes/api.auth.session'
 import { Route as ApiBusResultsRouteImport } from './routes/api.bus.results'
 import { Route as ApiGuidesSlugRouteImport } from './routes/api.guides.$slug'
+import { Route as ApiHimsApprovalsRouteImport } from './routes/api.hims.approvals'
 import { Route as ApiHimsAuditRouteImport } from './routes/api.hims.audit'
+import { Route as ApiHimsBookingRouteImport } from './routes/api.hims.booking'
+import { Route as ApiHimsBootstrapRouteImport } from './routes/api.hims.bootstrap'
+import { Route as ApiHimsCasesRouteImport } from './routes/api.hims.cases'
 import { Route as ApiHimsCommissionRouteImport } from './routes/api.hims.commission'
+import { Route as ApiHimsComplianceRouteImport } from './routes/api.hims.compliance'
 import { Route as ApiHimsFinanceRouteImport } from './routes/api.hims.finance'
+import { Route as ApiHimsInvitesRouteImport } from './routes/api.hims.invites'
+import { Route as ApiHimsMeRouteImport } from './routes/api.hims.me'
 import { Route as ApiHimsOperatorsRouteImport } from './routes/api.hims.operators'
+import { Route as ApiHimsOrgRouteImport } from './routes/api.hims.org'
 import { Route as ApiHimsOverviewRouteImport } from './routes/api.hims.overview'
 import { Route as ApiHimsPayoutsRouteImport } from './routes/api.hims.payouts'
 import { Route as ApiHimsSessionRouteImport } from './routes/api.hims.session'
+import { Route as ApiHimsTowerRouteImport } from './routes/api.hims.tower'
+import { Route as ApiInternalOutboxRouteImport } from './routes/api.internal.outbox'
 import { Route as ApiInternalSweepRouteImport } from './routes/api.internal.sweep'
 import { Route as ApiOimsComplianceRouteImport } from './routes/api.oims.compliance'
+import { Route as ApiOimsFinanceRouteImport } from './routes/api.oims.finance'
 import { Route as ApiOimsFleetRouteImport } from './routes/api.oims.fleet'
+import { Route as ApiOimsLayoutsRouteImport } from './routes/api.oims.layouts'
 import { Route as ApiOimsOperatorsRouteImport } from './routes/api.oims.operators'
+import { Route as ApiOimsOtcRouteImport } from './routes/api.oims.otc'
 import { Route as ApiOimsRoutesRouteImport } from './routes/api.oims.routes'
 import { Route as ApiOimsSchedulesRouteImport } from './routes/api.oims.schedules'
 import { Route as ApiOimsSessionRouteImport } from './routes/api.oims.session'
+import { Route as ApiOimsStaffRouteImport } from './routes/api.oims.staff'
 import { Route as ApiOimsWorkspaceRouteImport } from './routes/api.oims.workspace'
 import { Route as ApiPaymentsCallbackRouteImport } from './routes/api.payments.callback'
 import { Route as ApiPaymentsClickpesaRouteImport } from './routes/api.payments.clickpesa'
@@ -90,8 +129,11 @@ import { Route as ApiPaymentsStartRouteImport } from './routes/api.payments.star
 import { Route as ApiSgrHoldsRouteImport } from './routes/api.sgr.holds'
 import { Route as ApiSgrLayoutsRouteImport } from './routes/api.sgr.layouts'
 import { Route as ApiSgrServicesRouteImport } from './routes/api.sgr.services'
+import { Route as HqAdminRolesRouteImport } from './routes/hq.admin.roles'
+import { Route as ApiAuthPasswordChangeRouteImport } from './routes/api.auth.password.change'
 import { Route as ApiFerrySailingsIdRouteImport } from './routes/api.ferry.sailings.$id'
 import { Route as ApiFlightsOffersIdRouteImport } from './routes/api.flights.offers.$id'
+import { Route as ApiHimsOperatorsIdRouteImport } from './routes/api.hims.operators.$id'
 import { Route as ApiOimsManifestsTripIdRouteImport } from './routes/api.oims.manifests.$tripId'
 import { Route as ApiStaysOffersIdRouteImport } from './routes/api.stays.offers.$id'
 import { Route as ApiSgrTripsTripIdClassesRouteImport } from './routes/api.sgr.trips.$tripId.classes'
@@ -163,6 +205,11 @@ const ManageBookingRoute = ManageBookingRouteImport.update({
   path: '/manage-booking',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManifestDotwebmanifestRoute = ManifestDotwebmanifestRouteImport.update({
+  id: '/manifest.webmanifest',
+  path: '/manifest.webmanifest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ParcelsRoute = ParcelsRouteImport.update({
   id: '/parcels',
   path: '/parcels',
@@ -188,9 +235,19 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SigninRoute = SigninRouteImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -226,6 +283,11 @@ const ApiHoldsRoute = ApiHoldsRouteImport.update({
 const ApiLocationsRoute = ApiLocationsRouteImport.update({
   id: '/api/locations',
   path: '/api/locations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMarketsRoute = ApiMarketsRouteImport.update({
+  id: '/api/markets',
+  path: '/api/markets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOffersRoute = ApiOffersRouteImport.update({
@@ -323,6 +385,76 @@ const GuidesSlugRoute = GuidesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => GuidesRoute,
 } as any)
+const HqIndexRoute = HqIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqAdminRoute = HqAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqCommercialRoute = HqCommercialRouteImport.update({
+  id: '/commercial',
+  path: '/commercial',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqComplianceRoute = HqComplianceRouteImport.update({
+  id: '/compliance',
+  path: '/compliance',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqCxRoute = HqCxRouteImport.update({
+  id: '/cx',
+  path: '/cx',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqFinanceRoute = HqFinanceRouteImport.update({
+  id: '/finance',
+  path: '/finance',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqOperationsRoute = HqOperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqPeopleRoute = HqPeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqProductRoute = HqProductRouteImport.update({
+  id: '/product',
+  path: '/product',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqRevenueRoute = HqRevenueRouteImport.update({
+  id: '/revenue',
+  path: '/revenue',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqRiskRoute = HqRiskRouteImport.update({
+  id: '/risk',
+  path: '/risk',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqSupplyRoute = HqSupplyRouteImport.update({
+  id: '/supply',
+  path: '/supply',
+  getParentRoute: () => HqRoute,
+} as any)
+const HqWorkRoute = HqWorkRouteImport.update({
+  id: '/work',
+  path: '/work',
+  getParentRoute: () => HqRoute,
+} as any)
+const InviteAcceptRoute = InviteAcceptRouteImport.update({
+  id: '/invite/accept',
+  path: '/invite/accept',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperatorBusRoute = OperatorBusRouteImport.update({
   id: '/operator/bus',
   path: '/operator/bus',
@@ -341,6 +473,11 @@ const OperatorHimsSigninRoute = OperatorHimsSigninRouteImport.update({
 const OperatorOimsSigninRoute = OperatorOimsSigninRouteImport.update({
   id: '/operator/oims-signin',
   path: '/operator/oims-signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperatorSettingsRoute = OperatorSettingsRouteImport.update({
+  id: '/operator/settings',
+  path: '/operator/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaysBookingRoute = StaysBookingRouteImport.update({
@@ -378,6 +515,36 @@ const TrainReviewRoute = TrainReviewRouteImport.update({
   path: '/train/review',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthCallbackRoute = ApiAuthCallbackRouteImport.update({
+  id: '/api/auth/callback',
+  path: '/api/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthInviteRoute = ApiAuthInviteRouteImport.update({
+  id: '/api/auth/invite',
+  path: '/api/auth/invite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
+  id: '/api/auth/login',
+  path: '/api/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthLogoutRoute = ApiAuthLogoutRouteImport.update({
+  id: '/api/auth/logout',
+  path: '/api/auth/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthPasswordRoute = ApiAuthPasswordRouteImport.update({
+  id: '/api/auth/password',
+  path: '/api/auth/password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthRegisterRoute = ApiAuthRegisterRouteImport.update({
+  id: '/api/auth/register',
+  path: '/api/auth/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
   id: '/api/auth/session',
   path: '/api/auth/session',
@@ -393,9 +560,29 @@ const ApiGuidesSlugRoute = ApiGuidesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ApiGuidesRoute,
 } as any)
+const ApiHimsApprovalsRoute = ApiHimsApprovalsRouteImport.update({
+  id: '/api/hims/approvals',
+  path: '/api/hims/approvals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHimsAuditRoute = ApiHimsAuditRouteImport.update({
   id: '/api/hims/audit',
   path: '/api/hims/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsBookingRoute = ApiHimsBookingRouteImport.update({
+  id: '/api/hims/booking',
+  path: '/api/hims/booking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsBootstrapRoute = ApiHimsBootstrapRouteImport.update({
+  id: '/api/hims/bootstrap',
+  path: '/api/hims/bootstrap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsCasesRoute = ApiHimsCasesRouteImport.update({
+  id: '/api/hims/cases',
+  path: '/api/hims/cases',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHimsCommissionRoute = ApiHimsCommissionRouteImport.update({
@@ -403,14 +590,34 @@ const ApiHimsCommissionRoute = ApiHimsCommissionRouteImport.update({
   path: '/api/hims/commission',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHimsComplianceRoute = ApiHimsComplianceRouteImport.update({
+  id: '/api/hims/compliance',
+  path: '/api/hims/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHimsFinanceRoute = ApiHimsFinanceRouteImport.update({
   id: '/api/hims/finance',
   path: '/api/hims/finance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHimsInvitesRoute = ApiHimsInvitesRouteImport.update({
+  id: '/api/hims/invites',
+  path: '/api/hims/invites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsMeRoute = ApiHimsMeRouteImport.update({
+  id: '/api/hims/me',
+  path: '/api/hims/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHimsOperatorsRoute = ApiHimsOperatorsRouteImport.update({
   id: '/api/hims/operators',
   path: '/api/hims/operators',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsOrgRoute = ApiHimsOrgRouteImport.update({
+  id: '/api/hims/org',
+  path: '/api/hims/org',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHimsOverviewRoute = ApiHimsOverviewRouteImport.update({
@@ -428,6 +635,16 @@ const ApiHimsSessionRoute = ApiHimsSessionRouteImport.update({
   path: '/api/hims/session',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHimsTowerRoute = ApiHimsTowerRouteImport.update({
+  id: '/api/hims/tower',
+  path: '/api/hims/tower',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInternalOutboxRoute = ApiInternalOutboxRouteImport.update({
+  id: '/api/internal/outbox',
+  path: '/api/internal/outbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiInternalSweepRoute = ApiInternalSweepRouteImport.update({
   id: '/api/internal/sweep',
   path: '/api/internal/sweep',
@@ -438,14 +655,29 @@ const ApiOimsComplianceRoute = ApiOimsComplianceRouteImport.update({
   path: '/api/oims/compliance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOimsFinanceRoute = ApiOimsFinanceRouteImport.update({
+  id: '/api/oims/finance',
+  path: '/api/oims/finance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOimsFleetRoute = ApiOimsFleetRouteImport.update({
   id: '/api/oims/fleet',
   path: '/api/oims/fleet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOimsLayoutsRoute = ApiOimsLayoutsRouteImport.update({
+  id: '/api/oims/layouts',
+  path: '/api/oims/layouts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOimsOperatorsRoute = ApiOimsOperatorsRouteImport.update({
   id: '/api/oims/operators',
   path: '/api/oims/operators',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsOtcRoute = ApiOimsOtcRouteImport.update({
+  id: '/api/oims/otc',
+  path: '/api/oims/otc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOimsRoutesRoute = ApiOimsRoutesRouteImport.update({
@@ -461,6 +693,11 @@ const ApiOimsSchedulesRoute = ApiOimsSchedulesRouteImport.update({
 const ApiOimsSessionRoute = ApiOimsSessionRouteImport.update({
   id: '/api/oims/session',
   path: '/api/oims/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOimsStaffRoute = ApiOimsStaffRouteImport.update({
+  id: '/api/oims/staff',
+  path: '/api/oims/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOimsWorkspaceRoute = ApiOimsWorkspaceRouteImport.update({
@@ -503,6 +740,16 @@ const ApiSgrServicesRoute = ApiSgrServicesRouteImport.update({
   path: '/api/sgr/services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HqAdminRolesRoute = HqAdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => HqAdminRoute,
+} as any)
+const ApiAuthPasswordChangeRoute = ApiAuthPasswordChangeRouteImport.update({
+  id: '/change',
+  path: '/change',
+  getParentRoute: () => ApiAuthPasswordRoute,
+} as any)
 const ApiFerrySailingsIdRoute = ApiFerrySailingsIdRouteImport.update({
   id: '/api/ferry/sailings/$id',
   path: '/api/ferry/sailings/$id',
@@ -512,6 +759,11 @@ const ApiFlightsOffersIdRoute = ApiFlightsOffersIdRouteImport.update({
   id: '/api/flights/offers/$id',
   path: '/api/flights/offers/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHimsOperatorsIdRoute = ApiHimsOperatorsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiHimsOperatorsRoute,
 } as any)
 const ApiOimsManifestsTripIdRoute = ApiOimsManifestsTripIdRouteImport.update({
   id: '/api/oims/manifests/$tripId',
@@ -553,14 +805,17 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
-  '/hq': typeof HqRoute
+  '/hq': typeof HqRouteWithChildren
   '/manage-booking': typeof ManageBookingRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/parcels': typeof ParcelsRoute
   '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/api/booking-status': typeof ApiBookingStatusRoute
   '/api/bookings': typeof ApiBookingsRoute
@@ -568,6 +823,7 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/holds': typeof ApiHoldsRoute
   '/api/locations': typeof ApiLocationsRoute
+  '/api/markets': typeof ApiMarketsRoute
   '/api/offers': typeof ApiOffersRoute
   '/api/seat-map': typeof ApiSeatMapRoute
   '/api/trip-detail': typeof ApiTripDetailRoute
@@ -586,10 +842,24 @@ export interface FileRoutesByFullPath {
   '/flights/results': typeof FlightsResultsRoute
   '/flights/review': typeof FlightsReviewRoute
   '/guides/$slug': typeof GuidesSlugRoute
+  '/hq/admin': typeof HqAdminRouteWithChildren
+  '/hq/commercial': typeof HqCommercialRoute
+  '/hq/compliance': typeof HqComplianceRoute
+  '/hq/cx': typeof HqCxRoute
+  '/hq/finance': typeof HqFinanceRoute
+  '/hq/operations': typeof HqOperationsRoute
+  '/hq/people': typeof HqPeopleRoute
+  '/hq/product': typeof HqProductRoute
+  '/hq/revenue': typeof HqRevenueRoute
+  '/hq/risk': typeof HqRiskRoute
+  '/hq/supply': typeof HqSupplyRoute
+  '/hq/work': typeof HqWorkRoute
+  '/invite/accept': typeof InviteAcceptRoute
   '/operator/bus': typeof OperatorBusRoute
   '/operator/ferry': typeof OperatorFerryRoute
   '/operator/hims-signin': typeof OperatorHimsSigninRoute
   '/operator/oims-signin': typeof OperatorOimsSigninRoute
+  '/operator/settings': typeof OperatorSettingsRoute
   '/stays/booking': typeof StaysBookingRoute
   '/stays/detail': typeof StaysDetailRoute
   '/stays/results': typeof StaysResultsRoute
@@ -598,23 +868,44 @@ export interface FileRoutesByFullPath {
   '/train/results': typeof TrainResultsRoute
   '/train/review': typeof TrainReviewRoute
   '/guides/': typeof GuidesIndexRoute
+  '/hq/': typeof HqIndexRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/invite': typeof ApiAuthInviteRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/password': typeof ApiAuthPasswordRouteWithChildren
+  '/api/auth/register': typeof ApiAuthRegisterRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/bus/results': typeof ApiBusResultsRoute
   '/api/guides/$slug': typeof ApiGuidesSlugRoute
+  '/api/hims/approvals': typeof ApiHimsApprovalsRoute
   '/api/hims/audit': typeof ApiHimsAuditRoute
+  '/api/hims/booking': typeof ApiHimsBookingRoute
+  '/api/hims/bootstrap': typeof ApiHimsBootstrapRoute
+  '/api/hims/cases': typeof ApiHimsCasesRoute
   '/api/hims/commission': typeof ApiHimsCommissionRoute
+  '/api/hims/compliance': typeof ApiHimsComplianceRoute
   '/api/hims/finance': typeof ApiHimsFinanceRoute
-  '/api/hims/operators': typeof ApiHimsOperatorsRoute
+  '/api/hims/invites': typeof ApiHimsInvitesRoute
+  '/api/hims/me': typeof ApiHimsMeRoute
+  '/api/hims/operators': typeof ApiHimsOperatorsRouteWithChildren
+  '/api/hims/org': typeof ApiHimsOrgRoute
   '/api/hims/overview': typeof ApiHimsOverviewRoute
   '/api/hims/payouts': typeof ApiHimsPayoutsRoute
   '/api/hims/session': typeof ApiHimsSessionRoute
+  '/api/hims/tower': typeof ApiHimsTowerRoute
+  '/api/internal/outbox': typeof ApiInternalOutboxRoute
   '/api/internal/sweep': typeof ApiInternalSweepRoute
   '/api/oims/compliance': typeof ApiOimsComplianceRoute
+  '/api/oims/finance': typeof ApiOimsFinanceRoute
   '/api/oims/fleet': typeof ApiOimsFleetRoute
+  '/api/oims/layouts': typeof ApiOimsLayoutsRoute
   '/api/oims/operators': typeof ApiOimsOperatorsRoute
+  '/api/oims/otc': typeof ApiOimsOtcRoute
   '/api/oims/routes': typeof ApiOimsRoutesRoute
   '/api/oims/schedules': typeof ApiOimsSchedulesRoute
   '/api/oims/session': typeof ApiOimsSessionRoute
+  '/api/oims/staff': typeof ApiOimsStaffRoute
   '/api/oims/workspace': typeof ApiOimsWorkspaceRoute
   '/api/payments/callback': typeof ApiPaymentsCallbackRoute
   '/api/payments/clickpesa': typeof ApiPaymentsClickpesaRoute
@@ -623,8 +914,11 @@ export interface FileRoutesByFullPath {
   '/api/sgr/holds': typeof ApiSgrHoldsRoute
   '/api/sgr/layouts': typeof ApiSgrLayoutsRoute
   '/api/sgr/services': typeof ApiSgrServicesRoute
+  '/hq/admin/roles': typeof HqAdminRolesRoute
+  '/api/auth/password/change': typeof ApiAuthPasswordChangeRoute
   '/api/ferry/sailings/$id': typeof ApiFerrySailingsIdRoute
   '/api/flights/offers/$id': typeof ApiFlightsOffersIdRoute
+  '/api/hims/operators/$id': typeof ApiHimsOperatorsIdRoute
   '/api/oims/manifests/$tripId': typeof ApiOimsManifestsTripIdRoute
   '/api/stays/offers/$id': typeof ApiStaysOffersIdRoute
   '/api/sgr/trips/$tripId/classes': typeof ApiSgrTripsTripIdClassesRouteWithChildren
@@ -642,14 +936,16 @@ export interface FileRoutesByTo {
   '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRoute
   '/help': typeof HelpRoute
-  '/hq': typeof HqRoute
   '/manage-booking': typeof ManageBookingRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/parcels': typeof ParcelsRoute
   '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/api/booking-status': typeof ApiBookingStatusRoute
   '/api/bookings': typeof ApiBookingsRoute
@@ -657,6 +953,7 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/holds': typeof ApiHoldsRoute
   '/api/locations': typeof ApiLocationsRoute
+  '/api/markets': typeof ApiMarketsRoute
   '/api/offers': typeof ApiOffersRoute
   '/api/seat-map': typeof ApiSeatMapRoute
   '/api/trip-detail': typeof ApiTripDetailRoute
@@ -675,10 +972,24 @@ export interface FileRoutesByTo {
   '/flights/results': typeof FlightsResultsRoute
   '/flights/review': typeof FlightsReviewRoute
   '/guides/$slug': typeof GuidesSlugRoute
+  '/hq/admin': typeof HqAdminRouteWithChildren
+  '/hq/commercial': typeof HqCommercialRoute
+  '/hq/compliance': typeof HqComplianceRoute
+  '/hq/cx': typeof HqCxRoute
+  '/hq/finance': typeof HqFinanceRoute
+  '/hq/operations': typeof HqOperationsRoute
+  '/hq/people': typeof HqPeopleRoute
+  '/hq/product': typeof HqProductRoute
+  '/hq/revenue': typeof HqRevenueRoute
+  '/hq/risk': typeof HqRiskRoute
+  '/hq/supply': typeof HqSupplyRoute
+  '/hq/work': typeof HqWorkRoute
+  '/invite/accept': typeof InviteAcceptRoute
   '/operator/bus': typeof OperatorBusRoute
   '/operator/ferry': typeof OperatorFerryRoute
   '/operator/hims-signin': typeof OperatorHimsSigninRoute
   '/operator/oims-signin': typeof OperatorOimsSigninRoute
+  '/operator/settings': typeof OperatorSettingsRoute
   '/stays/booking': typeof StaysBookingRoute
   '/stays/detail': typeof StaysDetailRoute
   '/stays/results': typeof StaysResultsRoute
@@ -687,23 +998,44 @@ export interface FileRoutesByTo {
   '/train/results': typeof TrainResultsRoute
   '/train/review': typeof TrainReviewRoute
   '/guides': typeof GuidesIndexRoute
+  '/hq': typeof HqIndexRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/invite': typeof ApiAuthInviteRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/password': typeof ApiAuthPasswordRouteWithChildren
+  '/api/auth/register': typeof ApiAuthRegisterRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/bus/results': typeof ApiBusResultsRoute
   '/api/guides/$slug': typeof ApiGuidesSlugRoute
+  '/api/hims/approvals': typeof ApiHimsApprovalsRoute
   '/api/hims/audit': typeof ApiHimsAuditRoute
+  '/api/hims/booking': typeof ApiHimsBookingRoute
+  '/api/hims/bootstrap': typeof ApiHimsBootstrapRoute
+  '/api/hims/cases': typeof ApiHimsCasesRoute
   '/api/hims/commission': typeof ApiHimsCommissionRoute
+  '/api/hims/compliance': typeof ApiHimsComplianceRoute
   '/api/hims/finance': typeof ApiHimsFinanceRoute
-  '/api/hims/operators': typeof ApiHimsOperatorsRoute
+  '/api/hims/invites': typeof ApiHimsInvitesRoute
+  '/api/hims/me': typeof ApiHimsMeRoute
+  '/api/hims/operators': typeof ApiHimsOperatorsRouteWithChildren
+  '/api/hims/org': typeof ApiHimsOrgRoute
   '/api/hims/overview': typeof ApiHimsOverviewRoute
   '/api/hims/payouts': typeof ApiHimsPayoutsRoute
   '/api/hims/session': typeof ApiHimsSessionRoute
+  '/api/hims/tower': typeof ApiHimsTowerRoute
+  '/api/internal/outbox': typeof ApiInternalOutboxRoute
   '/api/internal/sweep': typeof ApiInternalSweepRoute
   '/api/oims/compliance': typeof ApiOimsComplianceRoute
+  '/api/oims/finance': typeof ApiOimsFinanceRoute
   '/api/oims/fleet': typeof ApiOimsFleetRoute
+  '/api/oims/layouts': typeof ApiOimsLayoutsRoute
   '/api/oims/operators': typeof ApiOimsOperatorsRoute
+  '/api/oims/otc': typeof ApiOimsOtcRoute
   '/api/oims/routes': typeof ApiOimsRoutesRoute
   '/api/oims/schedules': typeof ApiOimsSchedulesRoute
   '/api/oims/session': typeof ApiOimsSessionRoute
+  '/api/oims/staff': typeof ApiOimsStaffRoute
   '/api/oims/workspace': typeof ApiOimsWorkspaceRoute
   '/api/payments/callback': typeof ApiPaymentsCallbackRoute
   '/api/payments/clickpesa': typeof ApiPaymentsClickpesaRoute
@@ -712,8 +1044,11 @@ export interface FileRoutesByTo {
   '/api/sgr/holds': typeof ApiSgrHoldsRoute
   '/api/sgr/layouts': typeof ApiSgrLayoutsRoute
   '/api/sgr/services': typeof ApiSgrServicesRoute
+  '/hq/admin/roles': typeof HqAdminRolesRoute
+  '/api/auth/password/change': typeof ApiAuthPasswordChangeRoute
   '/api/ferry/sailings/$id': typeof ApiFerrySailingsIdRoute
   '/api/flights/offers/$id': typeof ApiFlightsOffersIdRoute
+  '/api/hims/operators/$id': typeof ApiHimsOperatorsIdRoute
   '/api/oims/manifests/$tripId': typeof ApiOimsManifestsTripIdRoute
   '/api/stays/offers/$id': typeof ApiStaysOffersIdRoute
   '/api/sgr/trips/$tripId/classes': typeof ApiSgrTripsTripIdClassesRouteWithChildren
@@ -733,14 +1068,17 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
-  '/hq': typeof HqRoute
+  '/hq': typeof HqRouteWithChildren
   '/manage-booking': typeof ManageBookingRoute
+  '/manifest.webmanifest': typeof ManifestDotwebmanifestRoute
   '/parcels': typeof ParcelsRoute
   '/partners': typeof PartnersRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/register': typeof RegisterRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/signin': typeof SigninRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/api/booking-status': typeof ApiBookingStatusRoute
   '/api/bookings': typeof ApiBookingsRoute
@@ -748,6 +1086,7 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/holds': typeof ApiHoldsRoute
   '/api/locations': typeof ApiLocationsRoute
+  '/api/markets': typeof ApiMarketsRoute
   '/api/offers': typeof ApiOffersRoute
   '/api/seat-map': typeof ApiSeatMapRoute
   '/api/trip-detail': typeof ApiTripDetailRoute
@@ -766,10 +1105,24 @@ export interface FileRoutesById {
   '/flights/results': typeof FlightsResultsRoute
   '/flights/review': typeof FlightsReviewRoute
   '/guides/$slug': typeof GuidesSlugRoute
+  '/hq/admin': typeof HqAdminRouteWithChildren
+  '/hq/commercial': typeof HqCommercialRoute
+  '/hq/compliance': typeof HqComplianceRoute
+  '/hq/cx': typeof HqCxRoute
+  '/hq/finance': typeof HqFinanceRoute
+  '/hq/operations': typeof HqOperationsRoute
+  '/hq/people': typeof HqPeopleRoute
+  '/hq/product': typeof HqProductRoute
+  '/hq/revenue': typeof HqRevenueRoute
+  '/hq/risk': typeof HqRiskRoute
+  '/hq/supply': typeof HqSupplyRoute
+  '/hq/work': typeof HqWorkRoute
+  '/invite/accept': typeof InviteAcceptRoute
   '/operator/bus': typeof OperatorBusRoute
   '/operator/ferry': typeof OperatorFerryRoute
   '/operator/hims-signin': typeof OperatorHimsSigninRoute
   '/operator/oims-signin': typeof OperatorOimsSigninRoute
+  '/operator/settings': typeof OperatorSettingsRoute
   '/stays/booking': typeof StaysBookingRoute
   '/stays/detail': typeof StaysDetailRoute
   '/stays/results': typeof StaysResultsRoute
@@ -778,23 +1131,44 @@ export interface FileRoutesById {
   '/train/results': typeof TrainResultsRoute
   '/train/review': typeof TrainReviewRoute
   '/guides/': typeof GuidesIndexRoute
+  '/hq/': typeof HqIndexRoute
+  '/api/auth/callback': typeof ApiAuthCallbackRoute
+  '/api/auth/invite': typeof ApiAuthInviteRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/password': typeof ApiAuthPasswordRouteWithChildren
+  '/api/auth/register': typeof ApiAuthRegisterRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/bus/results': typeof ApiBusResultsRoute
   '/api/guides/$slug': typeof ApiGuidesSlugRoute
+  '/api/hims/approvals': typeof ApiHimsApprovalsRoute
   '/api/hims/audit': typeof ApiHimsAuditRoute
+  '/api/hims/booking': typeof ApiHimsBookingRoute
+  '/api/hims/bootstrap': typeof ApiHimsBootstrapRoute
+  '/api/hims/cases': typeof ApiHimsCasesRoute
   '/api/hims/commission': typeof ApiHimsCommissionRoute
+  '/api/hims/compliance': typeof ApiHimsComplianceRoute
   '/api/hims/finance': typeof ApiHimsFinanceRoute
-  '/api/hims/operators': typeof ApiHimsOperatorsRoute
+  '/api/hims/invites': typeof ApiHimsInvitesRoute
+  '/api/hims/me': typeof ApiHimsMeRoute
+  '/api/hims/operators': typeof ApiHimsOperatorsRouteWithChildren
+  '/api/hims/org': typeof ApiHimsOrgRoute
   '/api/hims/overview': typeof ApiHimsOverviewRoute
   '/api/hims/payouts': typeof ApiHimsPayoutsRoute
   '/api/hims/session': typeof ApiHimsSessionRoute
+  '/api/hims/tower': typeof ApiHimsTowerRoute
+  '/api/internal/outbox': typeof ApiInternalOutboxRoute
   '/api/internal/sweep': typeof ApiInternalSweepRoute
   '/api/oims/compliance': typeof ApiOimsComplianceRoute
+  '/api/oims/finance': typeof ApiOimsFinanceRoute
   '/api/oims/fleet': typeof ApiOimsFleetRoute
+  '/api/oims/layouts': typeof ApiOimsLayoutsRoute
   '/api/oims/operators': typeof ApiOimsOperatorsRoute
+  '/api/oims/otc': typeof ApiOimsOtcRoute
   '/api/oims/routes': typeof ApiOimsRoutesRoute
   '/api/oims/schedules': typeof ApiOimsSchedulesRoute
   '/api/oims/session': typeof ApiOimsSessionRoute
+  '/api/oims/staff': typeof ApiOimsStaffRoute
   '/api/oims/workspace': typeof ApiOimsWorkspaceRoute
   '/api/payments/callback': typeof ApiPaymentsCallbackRoute
   '/api/payments/clickpesa': typeof ApiPaymentsClickpesaRoute
@@ -803,8 +1177,11 @@ export interface FileRoutesById {
   '/api/sgr/holds': typeof ApiSgrHoldsRoute
   '/api/sgr/layouts': typeof ApiSgrLayoutsRoute
   '/api/sgr/services': typeof ApiSgrServicesRoute
+  '/hq/admin/roles': typeof HqAdminRolesRoute
+  '/api/auth/password/change': typeof ApiAuthPasswordChangeRoute
   '/api/ferry/sailings/$id': typeof ApiFerrySailingsIdRoute
   '/api/flights/offers/$id': typeof ApiFlightsOffersIdRoute
+  '/api/hims/operators/$id': typeof ApiHimsOperatorsIdRoute
   '/api/oims/manifests/$tripId': typeof ApiOimsManifestsTripIdRoute
   '/api/stays/offers/$id': typeof ApiStaysOffersIdRoute
   '/api/sgr/trips/$tripId/classes': typeof ApiSgrTripsTripIdClassesRouteWithChildren
@@ -827,12 +1204,15 @@ export interface FileRouteTypes {
     | '/help'
     | '/hq'
     | '/manage-booking'
+    | '/manifest.webmanifest'
     | '/parcels'
     | '/partners'
     | '/privacy'
     | '/refunds'
     | '/register'
+    | '/robots.txt'
     | '/signin'
+    | '/sitemap.xml'
     | '/terms'
     | '/api/booking-status'
     | '/api/bookings'
@@ -840,6 +1220,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/holds'
     | '/api/locations'
+    | '/api/markets'
     | '/api/offers'
     | '/api/seat-map'
     | '/api/trip-detail'
@@ -858,10 +1239,24 @@ export interface FileRouteTypes {
     | '/flights/results'
     | '/flights/review'
     | '/guides/$slug'
+    | '/hq/admin'
+    | '/hq/commercial'
+    | '/hq/compliance'
+    | '/hq/cx'
+    | '/hq/finance'
+    | '/hq/operations'
+    | '/hq/people'
+    | '/hq/product'
+    | '/hq/revenue'
+    | '/hq/risk'
+    | '/hq/supply'
+    | '/hq/work'
+    | '/invite/accept'
     | '/operator/bus'
     | '/operator/ferry'
     | '/operator/hims-signin'
     | '/operator/oims-signin'
+    | '/operator/settings'
     | '/stays/booking'
     | '/stays/detail'
     | '/stays/results'
@@ -870,23 +1265,44 @@ export interface FileRouteTypes {
     | '/train/results'
     | '/train/review'
     | '/guides/'
+    | '/hq/'
+    | '/api/auth/callback'
+    | '/api/auth/invite'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/password'
+    | '/api/auth/register'
     | '/api/auth/session'
     | '/api/bus/results'
     | '/api/guides/$slug'
+    | '/api/hims/approvals'
     | '/api/hims/audit'
+    | '/api/hims/booking'
+    | '/api/hims/bootstrap'
+    | '/api/hims/cases'
     | '/api/hims/commission'
+    | '/api/hims/compliance'
     | '/api/hims/finance'
+    | '/api/hims/invites'
+    | '/api/hims/me'
     | '/api/hims/operators'
+    | '/api/hims/org'
     | '/api/hims/overview'
     | '/api/hims/payouts'
     | '/api/hims/session'
+    | '/api/hims/tower'
+    | '/api/internal/outbox'
     | '/api/internal/sweep'
     | '/api/oims/compliance'
+    | '/api/oims/finance'
     | '/api/oims/fleet'
+    | '/api/oims/layouts'
     | '/api/oims/operators'
+    | '/api/oims/otc'
     | '/api/oims/routes'
     | '/api/oims/schedules'
     | '/api/oims/session'
+    | '/api/oims/staff'
     | '/api/oims/workspace'
     | '/api/payments/callback'
     | '/api/payments/clickpesa'
@@ -895,8 +1311,11 @@ export interface FileRouteTypes {
     | '/api/sgr/holds'
     | '/api/sgr/layouts'
     | '/api/sgr/services'
+    | '/hq/admin/roles'
+    | '/api/auth/password/change'
     | '/api/ferry/sailings/$id'
     | '/api/flights/offers/$id'
+    | '/api/hims/operators/$id'
     | '/api/oims/manifests/$tripId'
     | '/api/stays/offers/$id'
     | '/api/sgr/trips/$tripId/classes'
@@ -914,14 +1333,16 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/dashboard'
     | '/help'
-    | '/hq'
     | '/manage-booking'
+    | '/manifest.webmanifest'
     | '/parcels'
     | '/partners'
     | '/privacy'
     | '/refunds'
     | '/register'
+    | '/robots.txt'
     | '/signin'
+    | '/sitemap.xml'
     | '/terms'
     | '/api/booking-status'
     | '/api/bookings'
@@ -929,6 +1350,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/holds'
     | '/api/locations'
+    | '/api/markets'
     | '/api/offers'
     | '/api/seat-map'
     | '/api/trip-detail'
@@ -947,10 +1369,24 @@ export interface FileRouteTypes {
     | '/flights/results'
     | '/flights/review'
     | '/guides/$slug'
+    | '/hq/admin'
+    | '/hq/commercial'
+    | '/hq/compliance'
+    | '/hq/cx'
+    | '/hq/finance'
+    | '/hq/operations'
+    | '/hq/people'
+    | '/hq/product'
+    | '/hq/revenue'
+    | '/hq/risk'
+    | '/hq/supply'
+    | '/hq/work'
+    | '/invite/accept'
     | '/operator/bus'
     | '/operator/ferry'
     | '/operator/hims-signin'
     | '/operator/oims-signin'
+    | '/operator/settings'
     | '/stays/booking'
     | '/stays/detail'
     | '/stays/results'
@@ -959,23 +1395,44 @@ export interface FileRouteTypes {
     | '/train/results'
     | '/train/review'
     | '/guides'
+    | '/hq'
+    | '/api/auth/callback'
+    | '/api/auth/invite'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/password'
+    | '/api/auth/register'
     | '/api/auth/session'
     | '/api/bus/results'
     | '/api/guides/$slug'
+    | '/api/hims/approvals'
     | '/api/hims/audit'
+    | '/api/hims/booking'
+    | '/api/hims/bootstrap'
+    | '/api/hims/cases'
     | '/api/hims/commission'
+    | '/api/hims/compliance'
     | '/api/hims/finance'
+    | '/api/hims/invites'
+    | '/api/hims/me'
     | '/api/hims/operators'
+    | '/api/hims/org'
     | '/api/hims/overview'
     | '/api/hims/payouts'
     | '/api/hims/session'
+    | '/api/hims/tower'
+    | '/api/internal/outbox'
     | '/api/internal/sweep'
     | '/api/oims/compliance'
+    | '/api/oims/finance'
     | '/api/oims/fleet'
+    | '/api/oims/layouts'
     | '/api/oims/operators'
+    | '/api/oims/otc'
     | '/api/oims/routes'
     | '/api/oims/schedules'
     | '/api/oims/session'
+    | '/api/oims/staff'
     | '/api/oims/workspace'
     | '/api/payments/callback'
     | '/api/payments/clickpesa'
@@ -984,8 +1441,11 @@ export interface FileRouteTypes {
     | '/api/sgr/holds'
     | '/api/sgr/layouts'
     | '/api/sgr/services'
+    | '/hq/admin/roles'
+    | '/api/auth/password/change'
     | '/api/ferry/sailings/$id'
     | '/api/flights/offers/$id'
+    | '/api/hims/operators/$id'
     | '/api/oims/manifests/$tripId'
     | '/api/stays/offers/$id'
     | '/api/sgr/trips/$tripId/classes'
@@ -1006,12 +1466,15 @@ export interface FileRouteTypes {
     | '/help'
     | '/hq'
     | '/manage-booking'
+    | '/manifest.webmanifest'
     | '/parcels'
     | '/partners'
     | '/privacy'
     | '/refunds'
     | '/register'
+    | '/robots.txt'
     | '/signin'
+    | '/sitemap.xml'
     | '/terms'
     | '/api/booking-status'
     | '/api/bookings'
@@ -1019,6 +1482,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/holds'
     | '/api/locations'
+    | '/api/markets'
     | '/api/offers'
     | '/api/seat-map'
     | '/api/trip-detail'
@@ -1037,10 +1501,24 @@ export interface FileRouteTypes {
     | '/flights/results'
     | '/flights/review'
     | '/guides/$slug'
+    | '/hq/admin'
+    | '/hq/commercial'
+    | '/hq/compliance'
+    | '/hq/cx'
+    | '/hq/finance'
+    | '/hq/operations'
+    | '/hq/people'
+    | '/hq/product'
+    | '/hq/revenue'
+    | '/hq/risk'
+    | '/hq/supply'
+    | '/hq/work'
+    | '/invite/accept'
     | '/operator/bus'
     | '/operator/ferry'
     | '/operator/hims-signin'
     | '/operator/oims-signin'
+    | '/operator/settings'
     | '/stays/booking'
     | '/stays/detail'
     | '/stays/results'
@@ -1049,23 +1527,44 @@ export interface FileRouteTypes {
     | '/train/results'
     | '/train/review'
     | '/guides/'
+    | '/hq/'
+    | '/api/auth/callback'
+    | '/api/auth/invite'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/password'
+    | '/api/auth/register'
     | '/api/auth/session'
     | '/api/bus/results'
     | '/api/guides/$slug'
+    | '/api/hims/approvals'
     | '/api/hims/audit'
+    | '/api/hims/booking'
+    | '/api/hims/bootstrap'
+    | '/api/hims/cases'
     | '/api/hims/commission'
+    | '/api/hims/compliance'
     | '/api/hims/finance'
+    | '/api/hims/invites'
+    | '/api/hims/me'
     | '/api/hims/operators'
+    | '/api/hims/org'
     | '/api/hims/overview'
     | '/api/hims/payouts'
     | '/api/hims/session'
+    | '/api/hims/tower'
+    | '/api/internal/outbox'
     | '/api/internal/sweep'
     | '/api/oims/compliance'
+    | '/api/oims/finance'
     | '/api/oims/fleet'
+    | '/api/oims/layouts'
     | '/api/oims/operators'
+    | '/api/oims/otc'
     | '/api/oims/routes'
     | '/api/oims/schedules'
     | '/api/oims/session'
+    | '/api/oims/staff'
     | '/api/oims/workspace'
     | '/api/payments/callback'
     | '/api/payments/clickpesa'
@@ -1074,8 +1573,11 @@ export interface FileRouteTypes {
     | '/api/sgr/holds'
     | '/api/sgr/layouts'
     | '/api/sgr/services'
+    | '/hq/admin/roles'
+    | '/api/auth/password/change'
     | '/api/ferry/sailings/$id'
     | '/api/flights/offers/$id'
+    | '/api/hims/operators/$id'
     | '/api/oims/manifests/$tripId'
     | '/api/stays/offers/$id'
     | '/api/sgr/trips/$tripId/classes'
@@ -1095,14 +1597,17 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   GuidesRoute: typeof GuidesRouteWithChildren
   HelpRoute: typeof HelpRoute
-  HqRoute: typeof HqRoute
+  HqRoute: typeof HqRouteWithChildren
   ManageBookingRoute: typeof ManageBookingRoute
+  ManifestDotwebmanifestRoute: typeof ManifestDotwebmanifestRoute
   ParcelsRoute: typeof ParcelsRoute
   PartnersRoute: typeof PartnersRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundsRoute: typeof RefundsRoute
   RegisterRoute: typeof RegisterRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SigninRoute: typeof SigninRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApiBookingStatusRoute: typeof ApiBookingStatusRoute
   ApiBookingsRoute: typeof ApiBookingsRoute
@@ -1110,6 +1615,7 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiHoldsRoute: typeof ApiHoldsRoute
   ApiLocationsRoute: typeof ApiLocationsRoute
+  ApiMarketsRoute: typeof ApiMarketsRoute
   ApiOffersRoute: typeof ApiOffersRoute
   ApiSeatMapRoute: typeof ApiSeatMapRoute
   ApiTripDetailRoute: typeof ApiTripDetailRoute
@@ -1127,10 +1633,12 @@ export interface RootRouteChildren {
   FlightsBookingRoute: typeof FlightsBookingRoute
   FlightsResultsRoute: typeof FlightsResultsRoute
   FlightsReviewRoute: typeof FlightsReviewRoute
+  InviteAcceptRoute: typeof InviteAcceptRoute
   OperatorBusRoute: typeof OperatorBusRoute
   OperatorFerryRoute: typeof OperatorFerryRoute
   OperatorHimsSigninRoute: typeof OperatorHimsSigninRoute
   OperatorOimsSigninRoute: typeof OperatorOimsSigninRoute
+  OperatorSettingsRoute: typeof OperatorSettingsRoute
   StaysBookingRoute: typeof StaysBookingRoute
   StaysDetailRoute: typeof StaysDetailRoute
   StaysResultsRoute: typeof StaysResultsRoute
@@ -1138,22 +1646,42 @@ export interface RootRouteChildren {
   TrainBookingRoute: typeof TrainBookingRoute
   TrainResultsRoute: typeof TrainResultsRoute
   TrainReviewRoute: typeof TrainReviewRoute
+  ApiAuthCallbackRoute: typeof ApiAuthCallbackRoute
+  ApiAuthInviteRoute: typeof ApiAuthInviteRoute
+  ApiAuthLoginRoute: typeof ApiAuthLoginRoute
+  ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
+  ApiAuthPasswordRoute: typeof ApiAuthPasswordRouteWithChildren
+  ApiAuthRegisterRoute: typeof ApiAuthRegisterRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiBusResultsRoute: typeof ApiBusResultsRoute
+  ApiHimsApprovalsRoute: typeof ApiHimsApprovalsRoute
   ApiHimsAuditRoute: typeof ApiHimsAuditRoute
+  ApiHimsBookingRoute: typeof ApiHimsBookingRoute
+  ApiHimsBootstrapRoute: typeof ApiHimsBootstrapRoute
+  ApiHimsCasesRoute: typeof ApiHimsCasesRoute
   ApiHimsCommissionRoute: typeof ApiHimsCommissionRoute
+  ApiHimsComplianceRoute: typeof ApiHimsComplianceRoute
   ApiHimsFinanceRoute: typeof ApiHimsFinanceRoute
-  ApiHimsOperatorsRoute: typeof ApiHimsOperatorsRoute
+  ApiHimsInvitesRoute: typeof ApiHimsInvitesRoute
+  ApiHimsMeRoute: typeof ApiHimsMeRoute
+  ApiHimsOperatorsRoute: typeof ApiHimsOperatorsRouteWithChildren
+  ApiHimsOrgRoute: typeof ApiHimsOrgRoute
   ApiHimsOverviewRoute: typeof ApiHimsOverviewRoute
   ApiHimsPayoutsRoute: typeof ApiHimsPayoutsRoute
   ApiHimsSessionRoute: typeof ApiHimsSessionRoute
+  ApiHimsTowerRoute: typeof ApiHimsTowerRoute
+  ApiInternalOutboxRoute: typeof ApiInternalOutboxRoute
   ApiInternalSweepRoute: typeof ApiInternalSweepRoute
   ApiOimsComplianceRoute: typeof ApiOimsComplianceRoute
+  ApiOimsFinanceRoute: typeof ApiOimsFinanceRoute
   ApiOimsFleetRoute: typeof ApiOimsFleetRoute
+  ApiOimsLayoutsRoute: typeof ApiOimsLayoutsRoute
   ApiOimsOperatorsRoute: typeof ApiOimsOperatorsRoute
+  ApiOimsOtcRoute: typeof ApiOimsOtcRoute
   ApiOimsRoutesRoute: typeof ApiOimsRoutesRoute
   ApiOimsSchedulesRoute: typeof ApiOimsSchedulesRoute
   ApiOimsSessionRoute: typeof ApiOimsSessionRoute
+  ApiOimsStaffRoute: typeof ApiOimsStaffRoute
   ApiOimsWorkspaceRoute: typeof ApiOimsWorkspaceRoute
   ApiPaymentsCallbackRoute: typeof ApiPaymentsCallbackRoute
   ApiPaymentsClickpesaRoute: typeof ApiPaymentsClickpesaRoute
@@ -1263,6 +1791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManageBookingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manifest.webmanifest': {
+      id: '/manifest.webmanifest'
+      path: '/manifest.webmanifest'
+      fullPath: '/manifest.webmanifest'
+      preLoaderRoute: typeof ManifestDotwebmanifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/parcels': {
       id: '/parcels'
       path: '/parcels'
@@ -1298,11 +1833,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signin': {
       id: '/signin'
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -1352,6 +1901,13 @@ declare module '@tanstack/react-router' {
       path: '/api/locations'
       fullPath: '/api/locations'
       preLoaderRoute: typeof ApiLocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/markets': {
+      id: '/api/markets'
+      path: '/api/markets'
+      fullPath: '/api/markets'
+      preLoaderRoute: typeof ApiMarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/offers': {
@@ -1487,6 +2043,104 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesSlugRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/hq/': {
+      id: '/hq/'
+      path: '/'
+      fullPath: '/hq/'
+      preLoaderRoute: typeof HqIndexRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/admin': {
+      id: '/hq/admin'
+      path: '/admin'
+      fullPath: '/hq/admin'
+      preLoaderRoute: typeof HqAdminRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/commercial': {
+      id: '/hq/commercial'
+      path: '/commercial'
+      fullPath: '/hq/commercial'
+      preLoaderRoute: typeof HqCommercialRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/compliance': {
+      id: '/hq/compliance'
+      path: '/compliance'
+      fullPath: '/hq/compliance'
+      preLoaderRoute: typeof HqComplianceRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/cx': {
+      id: '/hq/cx'
+      path: '/cx'
+      fullPath: '/hq/cx'
+      preLoaderRoute: typeof HqCxRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/finance': {
+      id: '/hq/finance'
+      path: '/finance'
+      fullPath: '/hq/finance'
+      preLoaderRoute: typeof HqFinanceRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/operations': {
+      id: '/hq/operations'
+      path: '/operations'
+      fullPath: '/hq/operations'
+      preLoaderRoute: typeof HqOperationsRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/people': {
+      id: '/hq/people'
+      path: '/people'
+      fullPath: '/hq/people'
+      preLoaderRoute: typeof HqPeopleRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/product': {
+      id: '/hq/product'
+      path: '/product'
+      fullPath: '/hq/product'
+      preLoaderRoute: typeof HqProductRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/revenue': {
+      id: '/hq/revenue'
+      path: '/revenue'
+      fullPath: '/hq/revenue'
+      preLoaderRoute: typeof HqRevenueRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/risk': {
+      id: '/hq/risk'
+      path: '/risk'
+      fullPath: '/hq/risk'
+      preLoaderRoute: typeof HqRiskRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/supply': {
+      id: '/hq/supply'
+      path: '/supply'
+      fullPath: '/hq/supply'
+      preLoaderRoute: typeof HqSupplyRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/hq/work': {
+      id: '/hq/work'
+      path: '/work'
+      fullPath: '/hq/work'
+      preLoaderRoute: typeof HqWorkRouteImport
+      parentRoute: typeof HqRoute
+    }
+    '/invite/accept': {
+      id: '/invite/accept'
+      path: '/invite/accept'
+      fullPath: '/invite/accept'
+      preLoaderRoute: typeof InviteAcceptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operator/bus': {
       id: '/operator/bus'
       path: '/operator/bus'
@@ -1513,6 +2167,13 @@ declare module '@tanstack/react-router' {
       path: '/operator/oims-signin'
       fullPath: '/operator/oims-signin'
       preLoaderRoute: typeof OperatorOimsSigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operator/settings': {
+      id: '/operator/settings'
+      path: '/operator/settings'
+      fullPath: '/operator/settings'
+      preLoaderRoute: typeof OperatorSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stays/booking': {
@@ -1564,6 +2225,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/callback': {
+      id: '/api/auth/callback'
+      path: '/api/auth/callback'
+      fullPath: '/api/auth/callback'
+      preLoaderRoute: typeof ApiAuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/invite': {
+      id: '/api/auth/invite'
+      path: '/api/auth/invite'
+      fullPath: '/api/auth/invite'
+      preLoaderRoute: typeof ApiAuthInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/login': {
+      id: '/api/auth/login'
+      path: '/api/auth/login'
+      fullPath: '/api/auth/login'
+      preLoaderRoute: typeof ApiAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/logout': {
+      id: '/api/auth/logout'
+      path: '/api/auth/logout'
+      fullPath: '/api/auth/logout'
+      preLoaderRoute: typeof ApiAuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/password': {
+      id: '/api/auth/password'
+      path: '/api/auth/password'
+      fullPath: '/api/auth/password'
+      preLoaderRoute: typeof ApiAuthPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/register': {
+      id: '/api/auth/register'
+      path: '/api/auth/register'
+      fullPath: '/api/auth/register'
+      preLoaderRoute: typeof ApiAuthRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/session': {
       id: '/api/auth/session'
       path: '/api/auth/session'
@@ -1585,11 +2288,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGuidesSlugRouteImport
       parentRoute: typeof ApiGuidesRoute
     }
+    '/api/hims/approvals': {
+      id: '/api/hims/approvals'
+      path: '/api/hims/approvals'
+      fullPath: '/api/hims/approvals'
+      preLoaderRoute: typeof ApiHimsApprovalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/hims/audit': {
       id: '/api/hims/audit'
       path: '/api/hims/audit'
       fullPath: '/api/hims/audit'
       preLoaderRoute: typeof ApiHimsAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/booking': {
+      id: '/api/hims/booking'
+      path: '/api/hims/booking'
+      fullPath: '/api/hims/booking'
+      preLoaderRoute: typeof ApiHimsBookingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/bootstrap': {
+      id: '/api/hims/bootstrap'
+      path: '/api/hims/bootstrap'
+      fullPath: '/api/hims/bootstrap'
+      preLoaderRoute: typeof ApiHimsBootstrapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/cases': {
+      id: '/api/hims/cases'
+      path: '/api/hims/cases'
+      fullPath: '/api/hims/cases'
+      preLoaderRoute: typeof ApiHimsCasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/hims/commission': {
@@ -1599,6 +2330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHimsCommissionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/hims/compliance': {
+      id: '/api/hims/compliance'
+      path: '/api/hims/compliance'
+      fullPath: '/api/hims/compliance'
+      preLoaderRoute: typeof ApiHimsComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/hims/finance': {
       id: '/api/hims/finance'
       path: '/api/hims/finance'
@@ -1606,11 +2344,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHimsFinanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/hims/invites': {
+      id: '/api/hims/invites'
+      path: '/api/hims/invites'
+      fullPath: '/api/hims/invites'
+      preLoaderRoute: typeof ApiHimsInvitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/me': {
+      id: '/api/hims/me'
+      path: '/api/hims/me'
+      fullPath: '/api/hims/me'
+      preLoaderRoute: typeof ApiHimsMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/hims/operators': {
       id: '/api/hims/operators'
       path: '/api/hims/operators'
       fullPath: '/api/hims/operators'
       preLoaderRoute: typeof ApiHimsOperatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/org': {
+      id: '/api/hims/org'
+      path: '/api/hims/org'
+      fullPath: '/api/hims/org'
+      preLoaderRoute: typeof ApiHimsOrgRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/hims/overview': {
@@ -1634,6 +2393,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHimsSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/hims/tower': {
+      id: '/api/hims/tower'
+      path: '/api/hims/tower'
+      fullPath: '/api/hims/tower'
+      preLoaderRoute: typeof ApiHimsTowerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/outbox': {
+      id: '/api/internal/outbox'
+      path: '/api/internal/outbox'
+      fullPath: '/api/internal/outbox'
+      preLoaderRoute: typeof ApiInternalOutboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/internal/sweep': {
       id: '/api/internal/sweep'
       path: '/api/internal/sweep'
@@ -1648,6 +2421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOimsComplianceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/oims/finance': {
+      id: '/api/oims/finance'
+      path: '/api/oims/finance'
+      fullPath: '/api/oims/finance'
+      preLoaderRoute: typeof ApiOimsFinanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/oims/fleet': {
       id: '/api/oims/fleet'
       path: '/api/oims/fleet'
@@ -1655,11 +2435,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOimsFleetRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/oims/layouts': {
+      id: '/api/oims/layouts'
+      path: '/api/oims/layouts'
+      fullPath: '/api/oims/layouts'
+      preLoaderRoute: typeof ApiOimsLayoutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/oims/operators': {
       id: '/api/oims/operators'
       path: '/api/oims/operators'
       fullPath: '/api/oims/operators'
       preLoaderRoute: typeof ApiOimsOperatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/otc': {
+      id: '/api/oims/otc'
+      path: '/api/oims/otc'
+      fullPath: '/api/oims/otc'
+      preLoaderRoute: typeof ApiOimsOtcRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/oims/routes': {
@@ -1681,6 +2475,13 @@ declare module '@tanstack/react-router' {
       path: '/api/oims/session'
       fullPath: '/api/oims/session'
       preLoaderRoute: typeof ApiOimsSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oims/staff': {
+      id: '/api/oims/staff'
+      path: '/api/oims/staff'
+      fullPath: '/api/oims/staff'
+      preLoaderRoute: typeof ApiOimsStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/oims/workspace': {
@@ -1739,6 +2540,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSgrServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hq/admin/roles': {
+      id: '/hq/admin/roles'
+      path: '/roles'
+      fullPath: '/hq/admin/roles'
+      preLoaderRoute: typeof HqAdminRolesRouteImport
+      parentRoute: typeof HqAdminRoute
+    }
+    '/api/auth/password/change': {
+      id: '/api/auth/password/change'
+      path: '/change'
+      fullPath: '/api/auth/password/change'
+      preLoaderRoute: typeof ApiAuthPasswordChangeRouteImport
+      parentRoute: typeof ApiAuthPasswordRoute
+    }
     '/api/ferry/sailings/$id': {
       id: '/api/ferry/sailings/$id'
       path: '/api/ferry/sailings/$id'
@@ -1752,6 +2567,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/flights/offers/$id'
       preLoaderRoute: typeof ApiFlightsOffersIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/hims/operators/$id': {
+      id: '/api/hims/operators/$id'
+      path: '/$id'
+      fullPath: '/api/hims/operators/$id'
+      preLoaderRoute: typeof ApiHimsOperatorsIdRouteImport
+      parentRoute: typeof ApiHimsOperatorsRoute
     }
     '/api/oims/manifests/$tripId': {
       id: '/api/oims/manifests/$tripId'
@@ -1804,6 +2626,51 @@ const GuidesRouteChildren: GuidesRouteChildren = {
 const GuidesRouteWithChildren =
   GuidesRoute._addFileChildren(GuidesRouteChildren)
 
+interface HqAdminRouteChildren {
+  HqAdminRolesRoute: typeof HqAdminRolesRoute
+}
+
+const HqAdminRouteChildren: HqAdminRouteChildren = {
+  HqAdminRolesRoute: HqAdminRolesRoute,
+}
+
+const HqAdminRouteWithChildren =
+  HqAdminRoute._addFileChildren(HqAdminRouteChildren)
+
+interface HqRouteChildren {
+  HqAdminRoute: typeof HqAdminRouteWithChildren
+  HqCommercialRoute: typeof HqCommercialRoute
+  HqComplianceRoute: typeof HqComplianceRoute
+  HqCxRoute: typeof HqCxRoute
+  HqFinanceRoute: typeof HqFinanceRoute
+  HqOperationsRoute: typeof HqOperationsRoute
+  HqPeopleRoute: typeof HqPeopleRoute
+  HqProductRoute: typeof HqProductRoute
+  HqRevenueRoute: typeof HqRevenueRoute
+  HqRiskRoute: typeof HqRiskRoute
+  HqSupplyRoute: typeof HqSupplyRoute
+  HqWorkRoute: typeof HqWorkRoute
+  HqIndexRoute: typeof HqIndexRoute
+}
+
+const HqRouteChildren: HqRouteChildren = {
+  HqAdminRoute: HqAdminRouteWithChildren,
+  HqCommercialRoute: HqCommercialRoute,
+  HqComplianceRoute: HqComplianceRoute,
+  HqCxRoute: HqCxRoute,
+  HqFinanceRoute: HqFinanceRoute,
+  HqOperationsRoute: HqOperationsRoute,
+  HqPeopleRoute: HqPeopleRoute,
+  HqProductRoute: HqProductRoute,
+  HqRevenueRoute: HqRevenueRoute,
+  HqRiskRoute: HqRiskRoute,
+  HqSupplyRoute: HqSupplyRoute,
+  HqWorkRoute: HqWorkRoute,
+  HqIndexRoute: HqIndexRoute,
+}
+
+const HqRouteWithChildren = HqRoute._addFileChildren(HqRouteChildren)
+
 interface ApiGuidesRouteChildren {
   ApiGuidesSlugRoute: typeof ApiGuidesSlugRoute
 }
@@ -1815,6 +2682,29 @@ const ApiGuidesRouteChildren: ApiGuidesRouteChildren = {
 const ApiGuidesRouteWithChildren = ApiGuidesRoute._addFileChildren(
   ApiGuidesRouteChildren,
 )
+
+interface ApiAuthPasswordRouteChildren {
+  ApiAuthPasswordChangeRoute: typeof ApiAuthPasswordChangeRoute
+}
+
+const ApiAuthPasswordRouteChildren: ApiAuthPasswordRouteChildren = {
+  ApiAuthPasswordChangeRoute: ApiAuthPasswordChangeRoute,
+}
+
+const ApiAuthPasswordRouteWithChildren = ApiAuthPasswordRoute._addFileChildren(
+  ApiAuthPasswordRouteChildren,
+)
+
+interface ApiHimsOperatorsRouteChildren {
+  ApiHimsOperatorsIdRoute: typeof ApiHimsOperatorsIdRoute
+}
+
+const ApiHimsOperatorsRouteChildren: ApiHimsOperatorsRouteChildren = {
+  ApiHimsOperatorsIdRoute: ApiHimsOperatorsIdRoute,
+}
+
+const ApiHimsOperatorsRouteWithChildren =
+  ApiHimsOperatorsRoute._addFileChildren(ApiHimsOperatorsRouteChildren)
 
 interface ApiSgrTripsTripIdClassesRouteChildren {
   ApiSgrTripsTripIdClassesClassCodeCarsRoute: typeof ApiSgrTripsTripIdClassesClassCodeCarsRoute
@@ -1843,14 +2733,17 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   GuidesRoute: GuidesRouteWithChildren,
   HelpRoute: HelpRoute,
-  HqRoute: HqRoute,
+  HqRoute: HqRouteWithChildren,
   ManageBookingRoute: ManageBookingRoute,
+  ManifestDotwebmanifestRoute: ManifestDotwebmanifestRoute,
   ParcelsRoute: ParcelsRoute,
   PartnersRoute: PartnersRoute,
   PrivacyRoute: PrivacyRoute,
   RefundsRoute: RefundsRoute,
   RegisterRoute: RegisterRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SigninRoute: SigninRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApiBookingStatusRoute: ApiBookingStatusRoute,
   ApiBookingsRoute: ApiBookingsRoute,
@@ -1858,6 +2751,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiHoldsRoute: ApiHoldsRoute,
   ApiLocationsRoute: ApiLocationsRoute,
+  ApiMarketsRoute: ApiMarketsRoute,
   ApiOffersRoute: ApiOffersRoute,
   ApiSeatMapRoute: ApiSeatMapRoute,
   ApiTripDetailRoute: ApiTripDetailRoute,
@@ -1875,10 +2769,12 @@ const rootRouteChildren: RootRouteChildren = {
   FlightsBookingRoute: FlightsBookingRoute,
   FlightsResultsRoute: FlightsResultsRoute,
   FlightsReviewRoute: FlightsReviewRoute,
+  InviteAcceptRoute: InviteAcceptRoute,
   OperatorBusRoute: OperatorBusRoute,
   OperatorFerryRoute: OperatorFerryRoute,
   OperatorHimsSigninRoute: OperatorHimsSigninRoute,
   OperatorOimsSigninRoute: OperatorOimsSigninRoute,
+  OperatorSettingsRoute: OperatorSettingsRoute,
   StaysBookingRoute: StaysBookingRoute,
   StaysDetailRoute: StaysDetailRoute,
   StaysResultsRoute: StaysResultsRoute,
@@ -1886,22 +2782,42 @@ const rootRouteChildren: RootRouteChildren = {
   TrainBookingRoute: TrainBookingRoute,
   TrainResultsRoute: TrainResultsRoute,
   TrainReviewRoute: TrainReviewRoute,
+  ApiAuthCallbackRoute: ApiAuthCallbackRoute,
+  ApiAuthInviteRoute: ApiAuthInviteRoute,
+  ApiAuthLoginRoute: ApiAuthLoginRoute,
+  ApiAuthLogoutRoute: ApiAuthLogoutRoute,
+  ApiAuthPasswordRoute: ApiAuthPasswordRouteWithChildren,
+  ApiAuthRegisterRoute: ApiAuthRegisterRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiBusResultsRoute: ApiBusResultsRoute,
+  ApiHimsApprovalsRoute: ApiHimsApprovalsRoute,
   ApiHimsAuditRoute: ApiHimsAuditRoute,
+  ApiHimsBookingRoute: ApiHimsBookingRoute,
+  ApiHimsBootstrapRoute: ApiHimsBootstrapRoute,
+  ApiHimsCasesRoute: ApiHimsCasesRoute,
   ApiHimsCommissionRoute: ApiHimsCommissionRoute,
+  ApiHimsComplianceRoute: ApiHimsComplianceRoute,
   ApiHimsFinanceRoute: ApiHimsFinanceRoute,
-  ApiHimsOperatorsRoute: ApiHimsOperatorsRoute,
+  ApiHimsInvitesRoute: ApiHimsInvitesRoute,
+  ApiHimsMeRoute: ApiHimsMeRoute,
+  ApiHimsOperatorsRoute: ApiHimsOperatorsRouteWithChildren,
+  ApiHimsOrgRoute: ApiHimsOrgRoute,
   ApiHimsOverviewRoute: ApiHimsOverviewRoute,
   ApiHimsPayoutsRoute: ApiHimsPayoutsRoute,
   ApiHimsSessionRoute: ApiHimsSessionRoute,
+  ApiHimsTowerRoute: ApiHimsTowerRoute,
+  ApiInternalOutboxRoute: ApiInternalOutboxRoute,
   ApiInternalSweepRoute: ApiInternalSweepRoute,
   ApiOimsComplianceRoute: ApiOimsComplianceRoute,
+  ApiOimsFinanceRoute: ApiOimsFinanceRoute,
   ApiOimsFleetRoute: ApiOimsFleetRoute,
+  ApiOimsLayoutsRoute: ApiOimsLayoutsRoute,
   ApiOimsOperatorsRoute: ApiOimsOperatorsRoute,
+  ApiOimsOtcRoute: ApiOimsOtcRoute,
   ApiOimsRoutesRoute: ApiOimsRoutesRoute,
   ApiOimsSchedulesRoute: ApiOimsSchedulesRoute,
   ApiOimsSessionRoute: ApiOimsSessionRoute,
+  ApiOimsStaffRoute: ApiOimsStaffRoute,
   ApiOimsWorkspaceRoute: ApiOimsWorkspaceRoute,
   ApiPaymentsCallbackRoute: ApiPaymentsCallbackRoute,
   ApiPaymentsClickpesaRoute: ApiPaymentsClickpesaRoute,

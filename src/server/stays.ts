@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { asPublicStayOffer, type PublicStayOffer, type PublicStayRoom } from '@/domain/stay-offer';
+import { lodgingPhotoUrls, photosForStayRoom, type LodgingPicture } from '@/domain/lodging-images';
 import { query } from '@/server/db';
 import {
   splitPropertyReference,
@@ -24,18 +25,20 @@ export async function getStayOfferDetail(id: string): Promise<PublicStayOffer | 
   let amenities = row.offer.amenities as string[];
   let description = row.offer.description as string | null;
   let reviews = row.offer.reviews;
+  let propertyPictures: LodgingPicture[] = [];
 
   if (codes) {
     const details = await travelportStayDetails(codes, meta).catch(() => null);
     if (details?.outcome === 'success' && details.data) {
       if (details.data.photoUrls.length) photoUrls = details.data.photoUrls;
+      propertyPictures = details.data.propertyPictures;
       if (details.data.amenities.length) amenities = details.data.amenities;
       if (details.data.description) description = details.data.description;
       if (details.data.reviews.length) reviews = details.data.reviews;
     }
   }
 
-  const rooms = await roomsForOffer(row, codes, meta);
+  const rooms = await roomsForOffer(row, codes, meta, propertyPictures);
   return asPublicStayOffer({
     ...row.offer,
     photoUrls,
@@ -50,6 +53,7 @@ async function roomsForOffer(
   row: StayOfferRow,
   codes: { chainCode: string; propertyCode: string } | null,
   meta: { providerId: string; productId: string; correlationId: string },
+  propertyPictures: LodgingPicture[],
 ): Promise<PublicStayRoom[]> {
   if (codes && row.checkIn && row.checkOut) {
     const availability = await travelportStayAvailability({
@@ -66,6 +70,11 @@ async function roomsForOffer(
       return availability.data.map((room) => ({
         id: room.providerOfferingId,
         name: room.name,
+        photoUrls: photosForStayRoom(
+          room.name,
+          (room.photoUrls ?? []).map((url) => ({ url, pictureOf: 'GuestRoom', caption: '' })),
+          propertyPictures,
+        ),
         description: room.description ?? null,
         board: room.board ?? null,
         cancellation: room.cancellation ?? null,
@@ -81,6 +90,7 @@ async function roomsForOffer(
     return [{
       id: 'search-rate',
       name: row.offer.name as string,
+      photoUrls: lodgingPhotoUrls(Array.isArray(row.offer.photoUrls) ? row.offer.photoUrls.filter((url): url is string => typeof url === 'string') : []),
       description: null,
       board: null,
       cancellation: null,

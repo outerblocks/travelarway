@@ -7,7 +7,7 @@ describe('refuseStaffUntilIdentityConfigured', () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({
       error: 'staff_identity_not_configured',
-      detail: 'Operator and HQ APIs stay closed until the identity provider is live.',
+      detail: 'Operator and HQ APIs stay closed until Keycloak is live and tokens are validated.',
     });
   });
 });

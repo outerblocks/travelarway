@@ -45,6 +45,43 @@ describe('publicationBlocks', () => {
     })).toEqual([]);
   });
 
+  it('does not require LATRA on a Kenya-only route', () => {
+    expect(publicationBlocks({
+      operator: {
+        ...bus,
+        latraLicenceNumber: null,
+        electronicTicketingRegistered: false,
+        licences: [{ countryCode: 'KE', regulatorCode: 'NTSA', licenceNumber: 'NTSA-1', validTo: '2027-01-01' }],
+      },
+      stopCount: 2,
+      fareCount: 1,
+      vesselClassCapacityTotal: null,
+      stopCountryCodes: ['KE'],
+    })).toEqual([]);
+  });
+
+  it('requires NTSA and LATRA on Nairobi–Dar', () => {
+    const blocks = publicationBlocks({
+      operator: bus,
+      stopCount: 2,
+      fareCount: 1,
+      vesselClassCapacityTotal: null,
+      stopCountryCodes: ['KE', 'TZ'],
+    });
+    expect(blocks).toContain('ntsa_licence_required');
+    expect(blocks).not.toContain('latra_licence_required');
+  });
+
+  it('refuses Ethiopia until the regulator is mapped', () => {
+    expect(publicationBlocks({
+      operator: bus,
+      stopCount: 2,
+      fareCount: 1,
+      vesselClassCapacityTotal: null,
+      stopCountryCodes: ['ET'],
+    })).toContain('bus_regulator_unmapped:ET');
+  });
+
   it('blocks an expired licence', () => {
     expect(publicationBlocks({
       operator: { ...bus, licenceValidTo: '2020-01-01' },

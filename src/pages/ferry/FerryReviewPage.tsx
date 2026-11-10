@@ -1,9 +1,9 @@
-import { useNavigate, Link } from '@/router';
-import { ArrowLeft, Pencil, Check } from 'lucide-react';
+import { useNavigate } from '@/router';
+import { Pencil, Check } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { useFerrySailing } from '@/hooks/useFerrySailing';
-import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState } from '@/components/shared/States';
 import { formatDate } from '@/utils/format';
 import { formatMoney } from '@/domain/money';
 import { quoteFerrySailing } from '@/domain/pricing';
@@ -18,7 +18,7 @@ export function FerryReviewPage() {
 
   const { sailing, status } = useFerrySailing(sailingId);
 
-  if (status === 'loading') return <LoadingState />;
+  if (status === 'loading' && !sailing) return <LoadingState />;
   if (!sailing) return (
     <ErrorState message={tp('unableLoadBookingReview')} onRetry={() => navigate('/ferry/results')} />
   );
@@ -58,11 +58,6 @@ export function FerryReviewPage() {
 
   return (
     <>
-      <SearchSummaryBar>
-        <Link to="/ferry/booking" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
-        <span className="text-body font-medium text-neutral-900">{tp('ferryBookingReview')}</span>
-      </SearchSummaryBar>
-
       <div className="section-container py-6">
         <h1 className="text-page font-bold text-neutral-900 mb-6">{tp('reviewYourBooking')}</h1>
 
@@ -130,7 +125,7 @@ export function FerryReviewPage() {
               <div className="border-t border-neutral-200 pt-4">
                 <div className="flex justify-between">
                   <span className="text-listing font-bold text-neutral-900">{tp('checkoutTotal')}</span>
-                  <span className="text-listing font-bold text-brand-600">
+                  <span className="text-listing font-bold text-neutral-900">
                     {formatMoney(quote.total, quote.currency)}
                   </span>
                 </div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { destinationToken, originToken } from '@/domain/search-tokens';
 import { useHydrateSearchFromUrl } from '@/hooks/useHydrateSearchFromUrl';
-import { isAbortError, queryFailureStatus, type QueryStatus } from '@/hooks/query-status';
+import { isAbortError, queryFailureStatus, stayReadyDuringRefetch, type QueryStatus } from '@/hooks/query-status';
 import { useOnlineRetry } from '@/hooks/useOnlineRetry';
 import { asPublicAirOffer, type PublicAirOffer } from '@/domain/air-offer';
 import { asPublicStayOffer, type PublicStayOffer } from '@/domain/stay-offer';
@@ -41,7 +41,14 @@ export function useDatabaseOffers(mode: string) {
     }
 
     const controller = new AbortController();
-    setStatus('loading');
+    setStatus((current) =>
+      stayReadyDuringRefetch(
+        current,
+        'loading',
+        'ready',
+        flightOffers.length > 0 || stayOffers.length > 0 || ferrySailings.length > 0,
+      ),
+    );
     const search = new URLSearchParams({ mode, from });
     if (to) search.set('to', to);
     if (params.date) search.set('date', params.date);

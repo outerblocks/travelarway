@@ -1,6 +1,9 @@
+import { lodgingPhotoUrls } from '@/domain/lodging-images';
+
 export interface PublicStayRoom {
   id: string;
   name: string;
+  photoUrls: string[];
   description: string | null;
   board: string | null;
   cancellation: string | null;
@@ -35,7 +38,9 @@ export interface PublicStayOffer {
 
 export function asPublicStayOffer(row: unknown): PublicStayOffer {
   const offer = row && typeof row === 'object' ? row as Record<string, unknown> : {};
-  const photos = Array.isArray(offer.photoUrls) ? offer.photoUrls.filter((url): url is string => typeof url === 'string' && url.startsWith('https://')) : [];
+  const photos = Array.isArray(offer.photoUrls)
+    ? lodgingPhotoUrls(offer.photoUrls.filter((url): url is string => typeof url === 'string'))
+    : [];
   const amenities = Array.isArray(offer.amenities) ? offer.amenities.filter((name): name is string => typeof name === 'string') : [];
   const rooms = Array.isArray(offer.rooms) ? offer.rooms.flatMap(asPublicStayRoom) : [];
   const reviews = Array.isArray(offer.reviews) ? offer.reviews.flatMap(asPublicStayReview) : [];
@@ -80,6 +85,7 @@ function asPublicStayRoom(row: unknown): PublicStayRoom[] {
   return [{
     id,
     name,
+    photoUrls: lodgingPhotoUrls(Array.isArray(room.photoUrls) ? room.photoUrls.filter((url): url is string => typeof url === 'string') : []),
     description: typeof room.description === 'string' ? room.description : null,
     board: typeof room.board === 'string' ? room.board : null,
     cancellation: typeof room.cancellation === 'string' ? room.cancellation : null,

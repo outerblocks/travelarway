@@ -161,10 +161,7 @@ async function classesForTrips(tripIds: string[]): Promise<Map<string, FerryClas
             vc.adult_fare_minor::text, vc.child_fare_minor::text,
             vc.resident_adult_minor::text, vc.resident_child_minor::text,
             vc.currency,
-            (select count(*)::text from app.booking_passenger bp
-              where bp.trip_id = si.trip_id
-                and bp.vessel_class_id = vc.id
-                and bp.status = 'active') as sold
+            si.sold_count::text as sold
        from app.sailing_inventory si
        join app.vessel_class vc on vc.id = si.vessel_class_id
       where si.trip_id = any($1::uuid[])`,

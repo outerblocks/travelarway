@@ -52,7 +52,6 @@ export function HimsSignInPage() {
       setError(authError);
       return;
     }
-    // Keep the submitting state until unmount so the label never flips back mid-navigation.
     leaving.current = true;
     navigate(CONSOLE_PATH, { replace: true });
   };

@@ -5,8 +5,10 @@ import {
   InvalidMethodError,
   startPayment,
 } from '@/server/payments';
+import { PaymentNotEnabledError } from '@/server/payments/clickpesa';
 import { readBookingAccessToken } from '@/server/booking-access';
 import { isUuid } from '@/domain/input-validation';
+import { refuseIfPurchasesPaused } from '@/server/purchases';
 
 /**
  * POST /api/payments/start
@@ -24,8 +26,10 @@ export const Route = createFileRoute('/api/payments/start')({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
-        const limited = guardMutation(request, 'payments');
+        const limited = await guardMutation(request, 'payments');
         if (limited) return limited;
+        const paused = refuseIfPurchasesPaused();
+        if (paused) return paused;
 
         let body: unknown;
         try {
@@ -77,6 +81,12 @@ export const Route = createFileRoute('/api/payments/start')({
         } catch (error) {
           if (error instanceof InvalidMethodError) {
             return Response.json({ error: 'invalid_payment_method' }, { status: 400 });
+          }
+          if (error instanceof PaymentNotEnabledError) {
+            return Response.json(
+              { error: 'not_enabled', reason: error.reason },
+              { status: 502, headers: { 'cache-control': 'no-store' } },
+            );
           }
           if (error instanceof BookingNotPayableError) {
             return Response.json(

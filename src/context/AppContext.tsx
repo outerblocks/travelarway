@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import type { BookingMode, MarketConfig, SearchParams, PassengerInfo } from '@/types';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import type { BookingMode, MarketConfig, PaymentMethod, SearchParams, PassengerInfo } from '@/types';
 import { MARKETS } from '@/data/locations';
 
 interface BookingState {
@@ -78,11 +78,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [market, setMarketState] = useState<MarketConfig>(defaultMarket);
   const [activeMode, setActiveMode] = useState<BookingMode>('bus');
   const [bookingState, setBookingState] = useState<BookingState>(defaultBookingState('bus'));
+  const liveMarkets = useRef<Record<string, Pick<MarketConfig, 'posLicensed' | 'paymentMethods'>>>({});
+
+  const applyMarket = useCallback((countryCode: string): MarketConfig | undefined => {
+    const base = MARKETS[countryCode];
+    if (!base) return undefined;
+    const live = liveMarkets.current[countryCode];
+    return live ? { ...base, ...live } : base;
+  }, []);
 
   const setMarket = useCallback((countryCode: string) => {
-    const m = MARKETS[countryCode];
-    if (m) setMarketState(m);
-  }, []);
+    const next = applyMarket(countryCode);
+    if (next) setMarketState(next);
+  }, [applyMarket]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/markets', { credentials: 'same-origin' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { data?: Array<{
+        countryCode: string;
+        posLicensed: boolean;
+        paymentMethods: PaymentMethod[];
+      }> } | null) => {
+        if (cancelled || !body?.data) return;
+        for (const row of body.data) {
+          liveMarkets.current[row.countryCode] = {
+            posLicensed: row.posLicensed,
+            paymentMethods: row.paymentMethods,
+          };
+        }
+        setMarketState((prev) => applyMarket(prev.countryCode) ?? prev);
+      })
+      .catch(() => {
+        /* Static MARKETS remain the bootstrap until the catalogue loads. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [applyMarket]);
 
   const setSearchParams = useCallback((params: SearchParams) => {
     // `mode` is part of the booking, not just of the query: the ticket header and

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Link } from '@/router';
+import { useNavigate } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
@@ -7,10 +7,11 @@ import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
 import { Select } from '@/components/ui/Select';
 import { CoachSeatMap } from '@/components/train/CoachSeatMap';
 import { sgrCarsToTrainCoaches, type SgrCarView } from '@/components/train/coach-geometry';
-import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState } from '@/components/shared/States';
 import { formatMoney } from '@/domain/money';
 import { partyMismatched } from '@/domain/passengers';
 import type { PassengerInfo, TrainCoach, TrainSeat } from '@/types';
+import { readStoredSearchIntent, rememberSearchIntent } from '@/utils/search-intent';
 
 /**
  * SGR seat selection and passenger details.
@@ -62,8 +63,8 @@ function useSgrClassCars(
       return;
     }
     let cancelled = false;
-    setLoading(true);
     setError('none');
+    setLoading(cars.length === 0);
     (async () => {
       try {
         const response = await fetch(
@@ -80,7 +81,8 @@ function useSgrClassCars(
           setCars([]);
           return;
         }
-        const payload = (await response.json()) as { cars?: SgrCarView[] };
+        const payload = (await response.json()) as { cars?: SgrCarView[]; searchIntent?: string };
+        rememberSearchIntent(payload.searchIntent);
         setCars(payload.cars ?? []);
       } catch {
         if (!cancelled) {
@@ -295,7 +297,10 @@ export function TrainBookingPage() {
     const seats = seatIds.map(seatKeyOf).filter(Boolean) as { coachNo: number; seatNumber: number }[];
     const response = await fetch('/api/sgr/holds', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'x-search-intent': readStoredSearchIntent(),
+      },
       body: JSON.stringify({
         tripId: legTripId,
         holdKey: holdKeyFor(legTripId, legFrom, legTo, seatIds),
@@ -384,15 +389,8 @@ export function TrainBookingPage() {
     );
   }
 
-  if (loading) {
-    return (
-      <>
-        <SearchSummaryBar>
-          <Link to="/train/results" className="btn-ghost text-label">← {tp('backToResults')}</Link>
-        </SearchSummaryBar>
-        <LoadingState message={tp('loadingTrainDetails')} />
-      </>
-    );
+  if (loading && outbound.cars.length === 0) {
+    return <LoadingState message={tp('loadingTrainDetails')} />;
   }
 
   if (loadError === 'trip') {
@@ -409,14 +407,10 @@ export function TrainBookingPage() {
 
   return (
     <>
-      <SearchSummaryBar>
-        <Link to="/train/results" className="btn-ghost text-label">← {tp('backToResults')}</Link>
-        <span className="text-body font-medium text-neutral-900">
-          {bookingState.searchParams.origin} → {bookingState.searchParams.destination} · {seatClassCode}
-        </span>
-      </SearchSummaryBar>
-
       <div className="section-container py-6">
+        <p className="mb-4 text-body text-neutral-500">
+          {bookingState.searchParams.origin} → {bookingState.searchParams.destination} · {seatClassCode}
+        </p>
         <nav aria-label={tp('trainBookingProgress')} className="mb-6">
           <ol className="flex flex-wrap items-center gap-2 text-meta sm:gap-4">
             {[tp('trainJourneyStep'), tp('trainPassengerStep'), tp('trainReviewStep')].map((step, index) => (
@@ -618,7 +612,7 @@ export function TrainBookingPage() {
               <div className="flex w-full items-center justify-between gap-5 sm:w-auto sm:justify-end">
                 <div className="text-left sm:text-right">
                   <p className="text-meta text-neutral-500">{tp('checkoutTotal')}</p>
-                  <p className="text-listing font-bold text-brand-600">
+                  <p className="text-listing font-bold text-neutral-900">
                     {quote && (!isRoundTrip || returnQuote.quote) ? formatMoney(total, currency) : '—'}
                   </p>
                 </div>

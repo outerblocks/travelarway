@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, Link } from '@/router';
-import { Wifi, Zap, Snowflake, Droplets, type LucideIcon } from 'lucide-react';
+import { useNavigate } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
+import { amenityCaption, normalizeAmenityKey } from '@/domain/amenities';
+import { AmenityIcon } from '@/components/shared/AmenityIcon';
 import { ScheduleStrip } from '@/components/results/ScheduleStrip';
-import { EmptyResults, ErrorState, LoadingState, OfflineState, SearchSummaryBar } from '@/components/shared/States';
-import { isAbortError, queryFailureStatus, type QueryStatus } from '@/hooks/query-status';
+import { EmptyResults, ErrorState, LoadingState, OfflineState } from '@/components/shared/States';
+import { isAbortError, queryFailureStatus, stayReadyDuringRefetch, type QueryStatus } from '@/hooks/query-status';
 import { useOnlineRetry } from '@/hooks/useOnlineRetry';
 import { originToken, destinationToken } from '@/domain/search-tokens';
 import { useHydrateSearchFromUrl } from '@/hooks/useHydrateSearchFromUrl';
 import { formatCurrency, formatDate, todayISO } from '@/utils/format';
+import { rememberSearchIntent } from '@/utils/search-intent';
 
 /**
  * Client contract for /api/bus/results.
@@ -48,14 +50,6 @@ interface BusResult {
 }
 
 
-/** Amenity keys are operator-declared; unknown keys render as text, never as a guess. */
-const AMENITY_ICONS: Record<string, LucideIcon> = {
-  wifi: Wifi,
-  charging: Zap,
-  aircon: Snowflake,
-  toilet: Droplets,
-};
-
 /**
  * The regulated category, spelled for a traveller rather than for a database.
  * Keys are the LATRA Regulation 22 values; anything else renders nothing rather
@@ -70,7 +64,7 @@ const SERVICE_CLASS_LABELS: Record<string, string> = {
 export function BusResultsPage() {
   const navigate = useNavigate();
   const { bookingState, setSelectedServiceId, setSearchParams } = useApp();
-  const { tp } = useI18n();
+  const { tp, lang } = useI18n();
   const params = bookingState.searchParams;
   useHydrateSearchFromUrl();
   const from = originToken(params);
@@ -89,7 +83,7 @@ export function BusResultsPage() {
     }
 
     const controller = new AbortController();
-    setStatus('loading');
+    setStatus((current) => stayReadyDuringRefetch(current, 'loading', 'ready', trips.length > 0));
 
     const search = new URLSearchParams({
       from,
@@ -102,9 +96,10 @@ export function BusResultsPage() {
     fetch(`/api/bus/results?${search.toString()}`, { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error(`search failed: ${response.status}`);
-        return response.json() as Promise<{ data: BusResult[] }>;
+        return response.json() as Promise<{ data: BusResult[]; searchIntent?: string }>;
       })
       .then((body) => {
+        rememberSearchIntent(body.searchIntent);
         setTrips(body.data ?? []);
         setStatus('ready');
       })
@@ -148,16 +143,6 @@ export function BusResultsPage() {
 
   return (
     <>
-      <SearchSummaryBar>
-        <Link to="/" className="btn-ghost text-label">← {tp('modifySearch')}</Link>
-        <span className="hidden text-body font-medium text-neutral-900 sm:inline">{originName} → {destName}</span>
-        <span className="text-body text-neutral-500">
-          {params.date ? formatDate(params.date) : ''}
-          {params.returnDate ? ` · ${tp('return')} ${formatDate(params.returnDate)}` : ''}
-          {' · '}{tp('passengerCount').replace('{count}', String(passengerCount)).replace('{plural}', passengerCount === 1 ? '' : 's')}
-        </span>
-      </SearchSummaryBar>
-
       <main className="section-container py-7">
         <div className="mb-5">
           <h1 className="text-page font-bold tracking-tight text-neutral-900">
@@ -165,6 +150,7 @@ export function BusResultsPage() {
           </h1>
           <p className="mt-1 text-body text-neutral-500">
             {params.date ? formatDate(params.date) : tp('selectTravelDate')}
+            {params.returnDate ? ` · ${tp('return')} ${formatDate(params.returnDate)}` : ''}
             {' · '}{tp('passengerCount').replace('{count}', String(passengerCount)).replace('{plural}', passengerCount === 1 ? '' : 's')}
             {status === 'ready' && ` · ${tp('busCount').replace('{count}', String(trips.length))}`}
           </p>
@@ -191,18 +177,30 @@ export function BusResultsPage() {
 
               return (
                 <article key={trip.id} className="offer-row">
-                  <div className="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:gap-8 lg:px-5">
-                    <div className="flex min-w-0 items-center gap-3 lg:w-[13.5rem] lg:shrink-0">
+                  <div className="flex flex-col gap-5 px-5 py-5 lg:flex-row lg:items-center lg:gap-10">
+                    <div className="flex min-w-0 items-start gap-3 lg:w-[17.5rem] lg:shrink-0">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-ink text-body font-semibold text-white">
                         {trip.operatorInitials}
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-body font-semibold text-neutral-900">{trip.operatorName}</p>
-                        <p className="truncate text-meta text-neutral-600">
-                          {[trip.classLabel, SERVICE_CLASS_LABELS[trip.serviceClass ?? ''] ?? null, trip.vehicleModel, trip.registrationNumber]
-                            .filter(Boolean)
-                            .join(', ')}
-                        </p>
+                        {trip.classLabel ? (
+                          <p className="text-meta text-neutral-700">{trip.classLabel}</p>
+                        ) : SERVICE_CLASS_LABELS[trip.serviceClass ?? ''] ? (
+                          <p className="text-meta text-neutral-700">{SERVICE_CLASS_LABELS[trip.serviceClass ?? '']}</p>
+                        ) : null}
+                        {trip.vehicleModel ? (
+                          <p className="text-meta text-neutral-600">
+                            <span className="text-neutral-500">{tp('busModel')} </span>
+                            {trip.vehicleModel}
+                          </p>
+                        ) : null}
+                        {trip.registrationNumber ? (
+                          <p className="text-meta tabular-nums text-neutral-600">
+                            <span className="text-neutral-500">{tp('registrationNo')} </span>
+                            {trip.registrationNumber}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
 
@@ -216,9 +214,9 @@ export function BusResultsPage() {
                       nextDay={trip.arrivalNextDay}
                     />
 
-                    <div className="flex items-center justify-between gap-4 border-t border-neutral-200 pt-3 lg:w-40 lg:shrink-0 lg:flex-col lg:items-end lg:border-t-0 lg:pt-0">
+                    <div className="offer-fare flex items-center justify-between gap-4 lg:w-44 lg:shrink-0 lg:flex-col lg:items-end">
                       <div className="lg:text-right">
-                        <p className="whitespace-nowrap text-listing font-semibold tabular-nums text-brand-800">
+                        <p className="whitespace-nowrap text-listing font-semibold tabular-nums text-neutral-900">
                           {formatCurrency(trip.segmentFare, trip.currency, 'TSh')}
                         </p>
                         <p className="text-meta text-neutral-500">{tp('perSeat')}</p>
@@ -240,13 +238,14 @@ export function BusResultsPage() {
                   </div>
 
                   {trip.amenities.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-neutral-200 px-4 py-2 lg:px-5">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-neutral-200 px-5 py-2">
                       {trip.amenities.map((amenity) => {
-                        const Icon = AMENITY_ICONS[amenity];
+                        const key = normalizeAmenityKey(amenity);
+                        const caption = amenityCaption(key, lang);
                         return (
-                          <span key={amenity} className="inline-flex items-center gap-1 text-meta text-neutral-600">
-                            {Icon ? <Icon size={13} /> : null}
-                            {amenity}
+                          <span key={amenity} className="inline-flex items-center gap-1.5 text-meta text-neutral-600" title={caption}>
+                            <AmenityIcon amenity={key} />
+                            {caption}
                           </span>
                         );
                       })}

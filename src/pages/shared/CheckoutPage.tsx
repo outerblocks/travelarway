@@ -517,6 +517,9 @@ export function CheckoutPage() {
               <div className="px-4 py-4 sm:px-6 sm:py-5">
                 <fieldset disabled={isProcessing}>
                   <legend className="text-listing font-bold text-neutral-900">{tp('checkoutPaymentMethod')}</legend>
+                  {market.paymentMethods.length === 0 ? (
+                    <p className="mt-3 text-body text-neutral-600">{tp('checkoutPosNotLicensed')}</p>
+                  ) : null}
                   <div className="mt-3 divide-y divide-neutral-200 border-y border-neutral-200">
                     {market.paymentMethods.includes('mobile_money') && (
                       <MethodOption
@@ -543,7 +546,7 @@ export function CheckoutPage() {
                   </div>
                 </fieldset>
 
-                {paymentMethod === 'mobile_money' && (
+                {market.paymentMethods.includes('mobile_money') && paymentMethod === 'mobile_money' && (
                   <div className="mt-6">
                     <span className="input-label">{tp('checkoutMobileMoneyProvider')}</span>
                     {!mobileProvider && (
@@ -600,7 +603,7 @@ export function CheckoutPage() {
                   </div>
                 )}
 
-                {paymentMethod === 'card' && (
+                {market.paymentMethods.includes('card') && paymentMethod === 'card' && (
                   <div className="mt-6">
                     <p className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-label text-neutral-700">
                       {tp('checkoutCardHostedNotice')}
@@ -659,10 +662,13 @@ export function CheckoutPage() {
                       disabled={
                         !isPayableMode ||
                         totalAmount === null ||
+                        market.paymentMethods.length === 0 ||
                         (paymentMethod === 'mobile_money' && (!mobileProvider || !phoneNumber.trim()))
                       }
                     >
-                      {!isPayableMode ? tp('comingSoon') : tp('checkoutPayAmount').replace(
+                      {!isPayableMode || market.paymentMethods.length === 0
+                        ? tp('comingSoon')
+                        : tp('checkoutPayAmount').replace(
                         '{amount}',
                         totalAmount === null ? '' : formatMoney(totalAmount, currency),
                       )}

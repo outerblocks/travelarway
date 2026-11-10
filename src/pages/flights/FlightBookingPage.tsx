@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from '@tanstack/react-router';
-import { Link, useNavigate } from '@/router';
-import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { FlightCheckoutSteps } from '@/components/flights/FlightCheckoutSteps';
 import { FlightFareFacts } from '@/components/flights/FlightFareFacts';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
 import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
-import { ErrorState, LoadingState, QueryFeedback, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState, QueryFeedback } from '@/components/shared/States';
 import { flightIdentityPolicy } from '@/domain/flight-identity';
 import { partyMismatched } from '@/domain/passengers';
-import { flightNumbers, iataFromPlace, isInternationalAirOffer, marketingLabel, splitRoundTrip } from '@/domain/flight-results';
+import { AirlineLogo } from '@/components/flights/AirlineLogo';
+import { cabinLine, displayAirline, flightNumbers, iataFromPlace, isInternationalAirOffer, marketingLabel, splitRoundTrip } from '@/domain/flight-results';
 import { formatDate } from '@/utils/format';
 import type { PassengerInfo } from '@/types';
 import { offerIdFromSearch } from '@/pages/stays/stay-offer-id';
@@ -113,25 +113,15 @@ export function FlightBookingPage() {
     <QueryFeedback
       status={status}
       errorMessage={tp('unableLoadFlights')}
-      loading={(
-        <>
-          <SearchSummaryBar>
-            <Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
-          </SearchSummaryBar>
-          <LoadingState count={2} message={tp('loadingFlightDetails')} />
-        </>
-      )}
+      loading={<LoadingState count={2} message={tp('loadingFlightDetails')} />}
     >
       {!offer ? (
         <ErrorState message={tp('flightNotFound')} onRetry={() => navigate('/flights/results')} />
       ) : (
         <>
-          <SearchSummaryBar>
-            <Link to="/flights/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
-            <span className="text-body font-medium text-neutral-900">{marketingLabel(offer)}</span>
-          </SearchSummaryBar>
           <div className="section-container py-6">
             <h1 className="text-page font-bold text-neutral-900">{tp('flightBookingTitle')}</h1>
+            <p className="mt-1 text-body text-neutral-700">{marketingLabel(offer)}</p>
             <p className="mt-2 max-w-2xl text-body text-neutral-600">{tp('flightGuestIntro')}</p>
             <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="space-y-4">
@@ -168,8 +158,21 @@ export function FlightBookingPage() {
               </div>
               <aside className="h-fit border border-neutral-300 bg-white p-5">
                 <h2 className="text-listing font-semibold text-neutral-900">{tp('flightSummary')}</h2>
-                <p className="mt-3 text-body font-medium text-neutral-900">{marketingLabel(offer)}</p>
-                <p className="mt-1 text-meta text-neutral-600">{flightNumbers(offer)}</p>
+                <div className="mt-3 flex items-start gap-3">
+                  {offer.itinerary[0] ? (
+                    <AirlineLogo
+                      code={displayAirline(offer.itinerary[0]).code}
+                      fallbackCode={offer.itinerary[0].carrier}
+                      name={marketingLabel(offer)}
+                      size="sm"
+                    />
+                  ) : null}
+                  <div className="min-w-0">
+                    <p className="text-body font-medium text-neutral-900">{marketingLabel(offer)}</p>
+                    <p className="mt-1 text-meta text-neutral-600">{flightNumbers(offer)}</p>
+                    {cabinLine(offer) ? <p className="mt-1 text-meta text-neutral-600">{cabinLine(offer)}</p> : null}
+                  </div>
+                </div>
                 {params.date ? (
                   <p className="mt-2 text-meta text-neutral-600">
                     {tp('flightOutbound')}: {formatDate(params.date)}

@@ -25,6 +25,8 @@ export const COUNTRIES: Country[] = [
 
 export const ALL_MODES: BookingMode[] = ['bus', 'ferry', 'flights', 'train', 'stays', 'experiences'];
 
+const CATALOG_MODES: BookingMode[] = ['bus', 'ferry', 'flights', 'train', 'stays', 'experiences'];
+
 export const MARKETS: Record<string, MarketConfig> = {
   TZ: {
     countryCode: 'TZ',
@@ -32,9 +34,10 @@ export const MARKETS: Record<string, MarketConfig> = {
     currency: 'TZS',
     currencySymbol: 'TSh',
     languages: ['en', 'sw'],
-    availableModes: ['bus', 'ferry', 'flights', 'train', 'stays', 'experiences'],
+    availableModes: CATALOG_MODES,
     paymentMethods: ['mobile_money', 'card'],
     mobileMoneyProviders: ['M-Pesa', 'Tigo Pesa', 'Airtel Money', 'Halopesa'],
+    posLicensed: true,
   },
   KE: {
     countryCode: 'KE',
@@ -42,9 +45,43 @@ export const MARKETS: Record<string, MarketConfig> = {
     currency: 'KES',
     currencySymbol: 'KSh',
     languages: ['en', 'sw'],
-    availableModes: ['bus', 'ferry', 'flights', 'train', 'stays', 'experiences'],
-    paymentMethods: ['mobile_money', 'card'],
+    availableModes: CATALOG_MODES,
+    paymentMethods: [],
     mobileMoneyProviders: ['M-Pesa', 'Airtel Money', 'T-Kash'],
+    posLicensed: false,
+  },
+  UG: {
+    countryCode: 'UG',
+    countryName: 'Uganda',
+    currency: 'UGX',
+    currencySymbol: 'USh',
+    languages: ['en', 'sw'],
+    availableModes: CATALOG_MODES,
+    paymentMethods: [],
+    mobileMoneyProviders: ['MTN MoMo', 'Airtel Money'],
+    posLicensed: false,
+  },
+  RW: {
+    countryCode: 'RW',
+    countryName: 'Rwanda',
+    currency: 'RWF',
+    currencySymbol: 'RF',
+    languages: ['en', 'fr'],
+    availableModes: CATALOG_MODES,
+    paymentMethods: [],
+    mobileMoneyProviders: ['MTN MoMo', 'Airtel Money'],
+    posLicensed: false,
+  },
+  ZA: {
+    countryCode: 'ZA',
+    countryName: 'South Africa',
+    currency: 'ZAR',
+    currencySymbol: 'R',
+    languages: ['en'],
+    availableModes: CATALOG_MODES,
+    paymentMethods: [],
+    mobileMoneyProviders: [],
+    posLicensed: false,
   },
 };
 

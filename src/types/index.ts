@@ -42,9 +42,16 @@ export interface MarketConfig {
   currency: string;
   currencySymbol: string;
   languages: string[];
+  /** Search tabs. Inventory and OD still decide what a journey can actually sell. */
   availableModes: BookingMode[];
+  /**
+   * Collection methods this point of sale may offer. Empty until a merchant row is
+   * licensed — the adapters already exist; licensing is activation, not a rebuild.
+   */
   paymentMethods: PaymentMethod[];
   mobileMoneyProviders: string[];
+  /** True when this POS may collect. Search does not require it. */
+  posLicensed: boolean;
 }
 
 export interface PassengerInfo {

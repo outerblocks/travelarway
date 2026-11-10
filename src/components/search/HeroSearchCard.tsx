@@ -56,7 +56,7 @@ export function HeroSearchCard() {
       </div>
 
       <div className="min-h-[12rem] overflow-visible px-4 pb-5 pt-5 sm:min-h-[10.5rem] sm:px-6 sm:pb-6 sm:pt-5">
-        <SearchForm mode={activeMode} key={activeMode} />
+        <SearchForm mode={activeMode} />
       </div>
     </div>
   );

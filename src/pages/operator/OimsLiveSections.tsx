@@ -1,4 +1,17 @@
 import { useState } from 'react';
+import { AMENITY_KEYS, AMENITY_LABELS, type AmenityKey } from '@/domain/amenities';
+import { AmenityIcon } from '@/components/shared/AmenityIcon';
+import { OimsSeatMapDesigner } from '@/pages/operator/OimsSeatMapDesigner';
+
+type FleetVehicle = {
+  id: string;
+  registration: string;
+  model?: string | null;
+  classLabel?: string | null;
+  serviceClass: string | null;
+  amenities?: string[];
+  seatLayoutId?: string | null;
+};
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -22,6 +35,82 @@ async function postJson(url: string, body: unknown) {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error((payload as { error?: string }).error ?? 'request_failed');
   return payload;
+}
+
+function VehicleEditor({
+  vehicle,
+  onChanged,
+  onError,
+}: {
+  vehicle: FleetVehicle;
+  onChanged: () => void;
+  onError: (message: string) => void;
+}) {
+  const [model, setModel] = useState(vehicle.model ?? '');
+  const [classLabel, setClassLabel] = useState(vehicle.classLabel ?? '');
+  const [serviceClass, setServiceClass] = useState(vehicle.serviceClass ?? '');
+  const [amenities, setAmenities] = useState<AmenityKey[]>(
+    (vehicle.amenities ?? []).filter((item): item is AmenityKey => AMENITY_KEYS.includes(item as AmenityKey)),
+  );
+
+  const toggle = (key: AmenityKey) => {
+    setAmenities((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]));
+  };
+
+  return (
+    <li className="py-3">
+      <p className="text-sm font-semibold text-neutral-900">
+        {vehicle.registration}
+        {vehicle.seatLayoutId ? ' · map assigned' : ' · no map'}
+      </p>
+      <div className="mt-2 grid gap-2 sm:grid-cols-3">
+        <input className={inputClass} value={model} onChange={(event) => setModel(event.target.value)} placeholder="Coach model" />
+        <input className={inputClass} value={classLabel} onChange={(event) => setClassLabel(event.target.value)} placeholder="Service label" />
+        <select className={inputClass} value={serviceClass} onChange={(event) => setServiceClass(event.target.value)}>
+          <option value="">LATRA class not stated</option>
+          <option value="ordinary">Ordinary</option>
+          <option value="semi_luxury">Semi-luxury</option>
+          <option value="luxury">Luxury</option>
+        </select>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {AMENITY_KEYS.map((key) => {
+          const on = amenities.includes(key);
+          return (
+            <button
+              key={key}
+              type="button"
+              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${
+                on ? 'bg-ink text-white' : 'bg-neutral-100 text-neutral-700'
+              }`}
+              onClick={() => toggle(key)}
+            >
+              <AmenityIcon amenity={key} />
+              {AMENITY_LABELS[key].en}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        className="btn-secondary mt-2 text-xs"
+        onClick={() => {
+          onError('');
+          void postJson('/api/oims/fleet', {
+            mode: 'bus',
+            action: 'update',
+            vehicleId: vehicle.id,
+            model,
+            classLabel,
+            serviceClass: serviceClass || null,
+            amenities,
+          }).then(onChanged).catch((caught: Error) => onError(caught.message));
+        }}
+      >
+        Save fleet facts
+      </button>
+    </li>
+  );
 }
 
 export function CompliancePanel({
@@ -382,11 +471,13 @@ export function LiveFleetSection({
   onChanged,
 }: {
   mode: 'bus' | 'ferry';
-  vehicles: { id: string; registration: string; serviceClass: string | null }[];
+  vehicles: FleetVehicle[];
   vessels: { id: string; name: string; passengerCertificateMax: number; classes?: { id: string; name: string; capacity: number }[] }[];
   onChanged: () => void;
 }) {
   const [registration, setRegistration] = useState('');
+  const [model, setModel] = useState('');
+  const [classLabel, setClassLabel] = useState('');
   const [name, setName] = useState('');
   const [cap, setCap] = useState('80');
   const [className, setClassName] = useState('Economy');
@@ -397,22 +488,26 @@ export function LiveFleetSection({
     <section className="rounded-lg border border-neutral-200 bg-white p-5">
       <h2 className="text-sm font-bold text-neutral-900">{mode === 'bus' ? 'Fleet' : 'Vessels'}</h2>
       {mode === 'bus' ? (
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
           <input className={inputClass} placeholder="T 123 ABC" value={registration} onChange={(event) => setRegistration(event.target.value)} />
-          <button
-            type="button"
-            className="btn-primary px-3 py-2 text-xs"
-            onClick={() => {
-              setError('');
-              void postJson('/api/oims/fleet', { mode, registration }).then(() => {
-                setRegistration('');
-                onChanged();
-              }).catch((caught: Error) => setError(caught.message));
-            }}
-          >
-            Add vehicle
-          </button>
+          <input className={inputClass} placeholder="Yutong F12" value={model} onChange={(event) => setModel(event.target.value)} />
+          <input className={inputClass} placeholder="AC Luxury VIP" value={classLabel} onChange={(event) => setClassLabel(event.target.value)} />
         </div>
+        <button
+          type="button"
+          className="btn-primary mt-2 px-3 py-2 text-xs"
+          onClick={() => {
+            setError('');
+            void postJson('/api/oims/fleet', { mode, registration, model, classLabel }).then(() => {
+              setRegistration('');
+              setModel('');
+              setClassLabel('');
+              onChanged();
+            }).catch((caught: Error) => setError(caught.message));
+          }}
+        >
+          Add vehicle
+        </button>
       ) : (
         <div className="mt-4 flex gap-2">
           <input className={inputClass} placeholder="Vessel name" value={name} onChange={(event) => setName(event.target.value)} />
@@ -460,7 +555,7 @@ export function LiveFleetSection({
       <ul className="mt-4 divide-y divide-neutral-100">
         {mode === 'bus'
           ? vehicles.map((vehicle) => (
-            <li key={vehicle.id} className="py-2 text-sm">{vehicle.registration} · {vehicle.serviceClass ?? 'class not stated'}</li>
+            <VehicleEditor key={vehicle.id} vehicle={vehicle} onChanged={onChanged} onError={setError} />
           ))
           : vessels.map((vessel) => (
             <li key={vessel.id} className="py-2 text-sm">
@@ -469,6 +564,7 @@ export function LiveFleetSection({
             </li>
           ))}
       </ul>
+      {mode === 'bus' ? <OimsSeatMapDesigner vehicles={vehicles} onChanged={onChanged} /> : null}
     </section>
   );
 }

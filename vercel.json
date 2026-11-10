@@ -35,7 +35,7 @@
       ]
     },
     {
-      "source": "/api/(.*)",
+      "source": "/api/(holds|bookings|payments|oims|hims|auth|internal)(.*)",
       "headers": [
         {
           "key": "Cache-Control",

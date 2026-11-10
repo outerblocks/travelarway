@@ -1,127 +1,133 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { stubAuthPolicy } from '@/auth/stubAuth';
 
 interface AuthUser {
   email: string;
   name: string;
-  provider: 'email' | 'google' | 'apple';
+  provider: 'keycloak';
+  id?: string;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<{ error: string | null }>;
   signInWithProvider: (provider: 'google' | 'apple') => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  beginLogin: (
+    intent?: 'passenger' | 'oims' | 'hims',
+    returnTo?: string,
+    options?: { loginHint?: string; register?: boolean },
+  ) => void;
+  refreshSession: () => Promise<void>;
 }
-
-const STORAGE_KEY = 'travelar_auth_user';
-const PROVIDERS: ReadonlyArray<AuthUser['provider']> = ['email', 'google', 'apple'];
-const STUB_UNAVAILABLE =
-  'Sign-in is not available until the identity provider is configured.';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-/**
- * The signed-in user is cached in localStorage purely as a UI convenience. It is
- * readable and writable by any script on the origin, so it is never an
- * authorisation boundary — every protected action must be re-checked by the API.
- * Anything that does not match the expected shape is discarded rather than trusted.
- */
-function normalizeUser(value: unknown): AuthUser | null {
-  if (!value || typeof value !== 'object') return null;
+function loginPath(
+  intent: 'passenger' | 'oims' | 'hims',
+  returnTo: string,
+  options?: { loginHint?: string; register?: boolean },
+): string {
+  const params = new URLSearchParams({ intent, returnTo });
+  if (options?.loginHint) params.set('loginHint', options.loginHint);
+  if (options?.register) params.set('action', 'register');
+  return `/api/auth/login?${params.toString()}`;
+}
 
-  const candidate = value as Record<string, unknown>;
-  const email = typeof candidate.email === 'string' ? candidate.email.trim() : '';
-  const provider = candidate.provider;
-  const isKnownProvider = typeof provider === 'string' && PROVIDERS.includes(provider as AuthUser['provider']);
-
-  if (!email || email.length > 254 || !email.includes('@') || !isKnownProvider) return null;
-
-  const rawName = typeof candidate.name === 'string' ? candidate.name.trim() : '';
-  return {
-    email,
-    name: (rawName || email.split('@')[0]).slice(0, 80),
-    provider: provider as AuthUser['provider'],
+async function readSession(): Promise<AuthUser | null> {
+  const response = await fetch('/api/auth/session', { credentials: 'same-origin' });
+  const body = await response.json() as {
+    authenticated?: boolean;
+    user?: { email?: string | null; name?: string; id?: string };
   };
-}
-
-function loadUser(): AuthUser | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-
-    const user = normalizeUser(JSON.parse(raw));
-    if (!user) localStorage.removeItem(STORAGE_KEY);
-    return user;
-  } catch {
-    return null;
+  if (body.authenticated && body.user?.email) {
+    return {
+      email: body.user.email,
+      name: body.user.name || body.user.email.split('@')[0],
+      provider: 'keycloak',
+      id: body.user.id,
+    };
   }
-}
-
-function saveUser(user: AuthUser | null) {
-  if (user) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
-  }
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // localStorage is browser-only, so the server render and the hydration render
-    // are both the signed-out shape. In Vite dev the stored stub is adopted after
-    // mount. Production builds discard it — it is not a session.
-    if (!stubAuthPolicy.isAllowed()) {
-      localStorage.removeItem(STORAGE_KEY);
+  const refreshSession = useCallback(async () => {
+    try {
+      setUser(await readSession());
+    } catch {
       setUser(null);
-      setLoading(false);
-      return;
     }
-    setUser(loadUser());
-    setLoading(false);
   }, []);
 
-  const persistUser = useCallback((newUser: AuthUser | null) => {
-    saveUser(newUser);
-    setUser(newUser);
+  useEffect(() => {
+    let cancelled = false;
+    readSession()
+      .then((next) => {
+        if (!cancelled) setUser(next);
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const signInWithEmail = useCallback(async (email: string, _password: string) => {
-    if (!stubAuthPolicy.isAllowed()) return { error: STUB_UNAVAILABLE };
-    persistUser({ email, name: email.split('@')[0], provider: 'email' });
-    return { error: null };
-  }, [persistUser]);
+  const beginLogin = useCallback((
+    intent: 'passenger' | 'oims' | 'hims' = 'passenger',
+    returnTo = '/',
+    options?: { loginHint?: string; register?: boolean },
+  ) => {
+    window.location.assign(loginPath(intent, returnTo, options));
+  }, []);
 
-  const signUpWithEmail = useCallback(async (email: string, _password: string) => {
-    if (!stubAuthPolicy.isAllowed()) return { error: STUB_UNAVAILABLE };
-    persistUser({ email, name: email.split('@')[0], provider: 'email' });
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    const response = await fetch('/api/auth/password', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email, password }),
+    });
+    const body = await response.json().catch(() => ({})) as { error?: string };
+    if (!response.ok) return { error: body.error === 'invite_not_accepted' ? 'Open the invitation link from HIMS to set your password.' : 'Email or password is incorrect.' };
+    await refreshSession();
     return { error: null };
-  }, [persistUser]);
+  }, [refreshSession]);
 
-  const signInWithProvider = useCallback(async (provider: 'google' | 'apple') => {
-    if (!stubAuthPolicy.isAllowed()) return { error: STUB_UNAVAILABLE };
-    await delay(1000);
-    const fakeEmail = provider === 'google' ? 'user@gmail.com' : 'user@icloud.com';
-    persistUser({ email: fakeEmail, name: 'Travelar User', provider });
+  const signUpWithEmail = useCallback(async (email: string, password: string, displayName?: string) => {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email, password, displayName: displayName ?? email.split('@')[0] }),
+    });
+    const body = await response.json().catch(() => ({})) as { error?: string };
+    if (!response.ok) return { error: body.error ?? 'Could not create the account.' };
+    await refreshSession();
     return { error: null };
-  }, [persistUser]);
+  }, [refreshSession]);
+
+  const signInWithProvider = useCallback(async () => {
+    return { error: 'Google and Apple sign-in are not enabled yet.' };
+  }, []);
 
   const signOut = useCallback(async () => {
-    persistUser(null);
-  }, [persistUser]);
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    setUser(null);
+    window.location.assign('/');
+  }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, signInWithEmail, signUpWithEmail, signInWithProvider, signOut }}
+      value={{ user, loading, signInWithEmail, signUpWithEmail, signInWithProvider, signOut, beginLogin, refreshSession }}
     >
       {children}
     </AuthContext.Provider>

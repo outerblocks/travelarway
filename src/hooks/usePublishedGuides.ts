@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Language } from '@/context/I18nContext';
 import type { PublicGuide, PublicGuideSummary } from '@/server/guides';
-import { isAbortError, queryFailureStatus, type QueryStatus } from '@/hooks/query-status';
+import { isAbortError, queryFailureStatus, stayReadyDuringRefetch, type QueryStatus } from '@/hooks/query-status';
 import { useOnlineRetry } from '@/hooks/useOnlineRetry';
 
 export function usePublishedGuides(locale: Language) {
@@ -13,7 +13,7 @@ export function usePublishedGuides(locale: Language) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setStatus('loading');
+    setStatus((current) => stayReadyDuringRefetch(current, 'loading', 'ready', guides.length > 0));
     fetch(`/api/guides?locale=${locale}`, { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error(String(response.status));
@@ -42,7 +42,7 @@ export function usePublishedGuide(slug: string, locale: Language) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setStatus('loading');
+    setStatus((current) => stayReadyDuringRefetch(current, 'loading', 'ready', guide !== null));
     fetch(`/api/guides/${encodeURIComponent(slug)}?locale=${locale}`, { signal: controller.signal })
       .then((response) => {
         if (response.status === 404) {

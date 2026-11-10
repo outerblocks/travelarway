@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import {
@@ -19,6 +19,7 @@ const TRIP = {
   operatorInitials: 'KE',
   operatorSource: 'fixture',
   seatLayoutName: 'Coach 2+2',
+  classLabel: 'AC Luxury VVIP',
   vehicleModel: 'Yutong F12',
   registrationNumber: 'T 123 ABC',
   departureTime: '06:00',
@@ -37,12 +38,12 @@ const TRIP = {
   // The regulated LATRA category, distinct from the operator's own marketing label.
   serviceClass: 'semi_luxury',
   supportPhone: '+255 748 000 111',
-  amenities: [],
+  amenities: ['wifi', 'aircon'],
 };
 
 function Seed() {
   const { setSearchParams } = useApp();
-  useEffect(() => {
+  useLayoutEffect(() => {
     setSearchParams({
       mode: 'bus',
       origin: 'Dar es Salaam',
@@ -87,15 +88,30 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('BusResultsPage', () => {
   it('shows a loading state before the search resolves, then renders real results', async () => {
-    vi.stubGlobal('fetch', respondWith({ data: [TRIP] }));
+    let settle: (value: { ok: true; json: () => Promise<unknown> }) => void = () => {};
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise((resolve) => {
+            settle = resolve;
+          }),
+      ),
+    );
     await renderResults();
 
-    // Loading is a skeleton region, never an empty list that looks like "no trips".
+    // Loading is a status region, never an empty list that looks like "no trips".
     expect(document.querySelector('[role="status"]')).not.toBeNull();
 
+    settle({ ok: true, json: async () => ({ data: [TRIP] }) });
     await waitFor(() => expect(screen.getByText('Kilimanjaro Express')).toBeInTheDocument());
     expect(screen.getByText(/44 \/ 49/)).toBeInTheDocument();
     expect(screen.getByText(/Sample inventory/)).toBeInTheDocument();
+    expect(screen.getByText('AC Luxury VVIP')).toBeInTheDocument();
+    expect(screen.getByText(/Yutong F12/)).toBeInTheDocument();
+    expect(screen.getByText(/T 123 ABC/)).toBeInTheDocument();
+    expect(screen.getByText('Wi-Fi')).toBeInTheDocument();
+    expect(screen.getByText('Air conditioning')).toBeInTheDocument();
   });
 
   it('shows an empty state — not a fabricated trip — when the API returns nothing', async () => {

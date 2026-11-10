@@ -1,4 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { HqDashboardPage } from '@/pages/hq/HqDashboardPage';
+import { routeSeo } from '@/domain/seo';
+import { HqShell } from '@/pages/hq/HqShell';
 
-export const Route = createFileRoute('/hq')({ component: HqDashboardPage });
+export const Route = createFileRoute('/hq')({
+  ...routeSeo('/hq'),
+  component: HqShell,
+});

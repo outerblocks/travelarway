@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, Link } from '@/router';
+import { useNavigate } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState } from '@/components/shared/States';
+import { stayReadyDuringRefetch } from '@/hooks/query-status';
 import { formatDate } from '@/utils/format';
 import { formatMoney } from '@/domain/money';
 
@@ -75,7 +76,7 @@ export function BusReviewPage() {
     }
 
     const controller = new AbortController();
-    setState('loading');
+    setState((current) => stayReadyDuringRefetch(current, 'loading', 'ready', detail !== null));
 
     // Price the segment the passenger is actually travelling: the boarding and drop-off
     // stops chosen on the seat page. The searched origin is only a fallback — using it
@@ -136,15 +137,8 @@ export function BusReviewPage() {
     };
   }, [detail, bookingState.boardingPointId, bookingState.dropOffPointId]);
 
-  if (state === 'loading') {
-    return (
-      <>
-        <SearchSummaryBar>
-          <Link to="/bus/booking" className="btn-ghost text-label">← {tp('checkoutBack')}</Link>
-        </SearchSummaryBar>
-        <LoadingState message={tp('preparingBookingReview')} />
-      </>
-    );
+  if (state === 'loading' && !view) {
+    return <LoadingState message={tp('preparingBookingReview')} />;
   }
 
   if (state === 'error') {
@@ -190,11 +184,6 @@ export function BusReviewPage() {
 
   return (
     <>
-      <SearchSummaryBar>
-        <Link to="/bus/booking" className="btn-ghost text-label">← {tp('checkoutBack')}</Link>
-        <span className="text-body font-medium text-neutral-900">{tp('bookingReview')}</span>
-      </SearchSummaryBar>
-
       <div className="section-container py-6">
         <h1 className="text-page mb-6 font-bold text-neutral-900">{tp('reviewYourBooking')}</h1>
 
@@ -207,11 +196,15 @@ export function BusReviewPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-body font-bold text-neutral-900">{detail.operatorName}</p>
-                  <p className="truncate text-meta text-neutral-500">
-                    {[detail.classLabel, detail.vehicleModel, detail.vehicleRegistration]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </p>
+                  {detail.classLabel ? (
+                    <p className="text-meta text-neutral-600">{detail.classLabel}</p>
+                  ) : null}
+                  {detail.vehicleModel ? (
+                    <p className="text-meta text-neutral-600">{tp('busModel')} {detail.vehicleModel}</p>
+                  ) : null}
+                  {detail.vehicleRegistration ? (
+                    <p className="text-meta tabular-nums text-neutral-600">{tp('registrationNo')} {detail.vehicleRegistration}</p>
+                  ) : null}
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
@@ -291,7 +284,7 @@ export function BusReviewPage() {
               <div className="border-t border-neutral-200 pt-4">
                 <div className="flex justify-between">
                   <span className="text-listing font-bold text-neutral-900">{tp('checkoutTotal')}</span>
-                  <span className="text-listing font-bold text-brand-600">
+                  <span className="text-listing font-bold text-neutral-900">
                     {formatMoney(view.grossMinor, view.currency)}
                   </span>
                 </div>

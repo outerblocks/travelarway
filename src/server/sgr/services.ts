@@ -1,5 +1,5 @@
 import { query } from '@/server/db';
-import { getClassAvailability } from '@/server/sgr/read-models';
+import { loadSearchClassCards } from '@/server/sgr/read-models';
 
 /**
  * SGR services for a searched corridor and date.
@@ -188,36 +188,18 @@ export async function findSgrServices(input: {
     [origin.id, destination.id, dayStart, dayEnd],
   );
 
-  const services = await Promise.all(
-    trips.rows.map(async (trip) => {
-      const availability = await getClassAvailability({
-        tripId: trip.trip_id,
-        fromSeq: trip.from_seq,
-        toSeq: trip.to_seq,
-      });
+  const classCards = await loadSearchClassCards(
+    trips.rows.map((trip) => ({
+      tripId: trip.trip_id,
+      fromSeq: trip.from_seq,
+      toSeq: trip.to_seq,
+      fromStation: trip.from_station,
+      toStation: trip.to_station,
+      servicePattern: trip.service_pattern,
+    })),
+  );
 
-      const fares = await query<{
-        seat_class_code: string;
-        amount: string;
-        currency: string;
-        fare_source: string;
-      }>(
-        // Keyed on the pair the passenger is actually travelling. Pricing Morogoro → Dodoma
-        // from the Dar es Salaam → Dodoma row would charge a short journey the price of the
-        // longest one on the line, and the traveller would over-pay without anything looking wrong.
-        `select sc.code as seat_class_code, f.amount::text, f.currency, f.fare_source
-           from app.sgr_fares f
-           join app.sgr_seat_classes sc on sc.id = f.seat_class_id
-          where f.origin_station_id = (select id from app.location where name = $1)
-            and f.destination_station_id = (select id from app.location where name = $2)
-            and f.passenger_type = 'adult'
-            and (f.service_pattern = $3 or f.service_pattern is null)
-            and f.valid_to is null
-          order by f.service_pattern nulls last`,
-        [trip.from_station, trip.to_station, trip.service_pattern],
-      );
-
-      const fareByClass = new Map(fares.rows.map((row) => [row.seat_class_code, row]));
+  const services = trips.rows.map((trip) => {
       const departure = localParts(trip.departs_at);
 
       /**
@@ -250,21 +232,9 @@ export async function findSgrServices(input: {
         /** The train's own endpoints, so the card can say where the service actually runs. */
         serviceOrigin: trip.origin,
         serviceDestination: trip.destination,
-        classes: availability
-          .filter((entry) => entry.totalSellable > 0)
-          .map((entry) => ({
-            seatClassCode: entry.seatClassCode,
-            name: entry.name,
-            fare: fareByClass.get(entry.seatClassCode) ? Number(fareByClass.get(entry.seatClassCode)?.amount) : null,
-            currency: fareByClass.get(entry.seatClassCode)?.currency ?? null,
-            fareSource: fareByClass.get(entry.seatClassCode)?.fare_source ?? null,
-            available: entry.available,
-            totalSellable: entry.totalSellable,
-            soldOut: entry.soldOut,
-          })),
+        classes: classCards.get(trip.trip_id) ?? [],
       };
-    }),
-  );
+    });
 
   return { services, unresolved: [] };
 }

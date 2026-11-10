@@ -4,6 +4,8 @@
  * Server only. Every statement is parameterised; nothing is interpolated from the URL.
  */
 import { query } from '@/server/db';
+import { cachedRead } from '@/server/read-cache';
+import { OPERATOR_LOCATION_COUNTRIES, type LocationCatalog } from '@/server/location-catalog';
 import { foldSearchText, matchingCountryCodes } from '@/server/location-search';
 import { quoteBusSegment, type SegmentQuote } from '@/server/quote';
 
@@ -35,8 +37,12 @@ export const MODE_LOCATION_KINDS: Record<string, string[]> = {
   experiences: ['city', 'town'],
 };
 
-/** Operator-direct markets kept on Tanzania geography. GDS modes are worldwide. */
-export const LOCAL_COUNTRY_MODES = ['bus', 'ferry', 'experiences'] as const;
+/**
+ * Modes whose From/To list stays Tanzania-only until that market is activated.
+ * Bus is omitted: East African cities are searchable; sellable trips still need
+ * per-country licences and operator inventory.
+ */
+export const LOCAL_COUNTRY_MODES = ['ferry', 'experiences'] as const;
 
 export function isGdsLocationMode(mode: string): boolean {
   return mode === 'flights' || mode === 'stays';
@@ -44,9 +50,30 @@ export function isGdsLocationMode(mode: string): boolean {
 
 export async function listLocations(
   term?: string,
-  options: { kinds?: string[]; country?: string; limit?: number } = {},
+  options: {
+    kinds?: string[];
+    country?: string;
+    limit?: number;
+    catalog?: LocationCatalog;
+    excludeCodes?: string[];
+  } = {},
 ): Promise<LocationDto[]> {
   const limit = Math.min(Math.max(options.limit ?? 100, 1), 500);
+  const cacheKey = `loc:${term ?? ''}:${(options.kinds ?? []).join(',')}:${options.country ?? ''}:${options.catalog ?? ''}:${(options.excludeCodes ?? []).join(',')}:${limit}`;
+  return cachedRead(cacheKey, 60_000, () => loadLocations(term, options, limit));
+}
+
+async function loadLocations(
+  term: string | undefined,
+  options: {
+    kinds?: string[];
+    country?: string;
+    limit?: number;
+    catalog?: LocationCatalog;
+    excludeCodes?: string[];
+  },
+  limit: number,
+): Promise<LocationDto[]> {
   const needle = foldSearchText(term?.trim() ?? '');
   const likeAnywhere = needle ? `%${needle}%` : null;
   const likePrefix = needle ? `${needle}%` : null;
@@ -78,6 +105,13 @@ export async function listLocations(
         )
         and ($2::text[] is null or l.kind = any($2))
         and ($3::char(2) is null or l.country_code = $3)
+        and (
+          $8::text is distinct from 'operator'
+          or (
+            l.country_code = any($9::char(2)[])
+            and ($10::text[] is null or l.code <> all($10))
+          )
+        )
       order by
         (lower(l.code) = lower($5)) desc,
         (
@@ -99,6 +133,9 @@ export async function listLocations(
       needle || null,
       likePrefix,
       countryHits.length ? countryHits : null,
+      options.catalog ?? null,
+      options.catalog === 'operator' ? [...OPERATOR_LOCATION_COUNTRIES] : null,
+      options.excludeCodes?.length ? options.excludeCodes : null,
     ],
   );
 
@@ -120,6 +157,8 @@ export interface TripStopDto {
   sequence: number;
   offsetMinutes: number;
   terminalName: string | null;
+  pickupAllowed: boolean;
+  dropoffAllowed: boolean;
 }
 
 export interface SegmentFareDto {
@@ -218,8 +257,11 @@ export async function findTripDetail(
       sequence: number;
       offset_minutes: number;
       terminal_name: string | null;
+      pickup_allowed: boolean;
+      dropoff_allowed: boolean;
     }>(
-      `select rs.id, l.name, l.code, rs.sequence, rs.offset_minutes, rs.terminal_name
+      `select rs.id, l.name, l.code, rs.sequence, rs.offset_minutes, rs.terminal_name,
+              rs.pickup_allowed, rs.dropoff_allowed
          from app.route_stop rs
          join app.location l on l.id = rs.location_id
          join app.trip t on t.route_id = rs.route_id
@@ -234,14 +276,14 @@ export async function findTripDetail(
         where t.id = $1`,
       [tripId],
     ),
-    query<{ seat_no: string; reason: string }>(
-      `select seat_no, 'hold' as reason
+    query<{ seat_no: string; reason: string; from_seq: number; to_seq: number }>(
+      `select seat_no, 'hold' as reason, from_seq, to_seq
          from app.seat_hold
         where trip_id = $1 and status = 'active' and expires_at > now()
         union
-       select seat_no, 'sold' as reason
+       select seat_no, 'sold' as reason, from_seq, to_seq
          from app.booking_passenger
-        where trip_id = $1 and status = 'active' and seat_no is not null`,
+        where trip_id = $1 and status in ('pending', 'active') and seat_no is not null`,
       [tripId],
     ),
   ]);
@@ -267,6 +309,8 @@ export async function findTripDetail(
       sequence: stop.sequence,
       offsetMinutes: stop.offset_minutes,
       terminalName: stop.terminal_name,
+      pickupAllowed: stop.pickup_allowed,
+      dropoffAllowed: stop.dropoff_allowed,
     })),
     fares: fares.rows.map((fare) => ({
       fromStopId: fare.from_stop_id,
@@ -300,15 +344,32 @@ export async function findTripDetail(
     return { ...base, quote: null, segment: null };
   }
 
-  const quote = await quoteBusSegment({
-    tripId,
-    fromStopId: fromStop.id,
-    toStopId: toStop.id,
-    adults: party.adults,
-    children: party.children,
-  });
+  let quote: SegmentQuote;
+  try {
+    quote = await quoteBusSegment({
+      tripId,
+      fromStopId: fromStop.id,
+      toStopId: toStop.id,
+      adults: party.adults,
+      children: party.children,
+    });
+  } catch {
+    return { ...base, quote: null, segment: null };
+  }
 
-  return { ...base, quote, segment: { fromStopId: fromStop.id, toStopId: toStop.id } };
+  const overlapping = taken.rows
+    .filter((seat) => seat.from_seq < toStop.sequence && seat.to_seq > fromStop.sequence)
+    .map((seat) => ({
+      seatNo: seat.seat_no,
+      reason: (seat.reason === 'sold' ? 'sold' : 'hold') as 'sold' | 'hold',
+    }));
+
+  return {
+    ...base,
+    takenSeats: overlapping,
+    quote,
+    segment: { fromStopId: fromStop.id, toStopId: toStop.id },
+  };
 }
 
 export interface TripDto {
@@ -377,8 +438,10 @@ export async function findTrips(params: {
        join app.location  tl  on tl.id = ts.location_id
        join app.segment_fare sf
          on sf.route_id = r.id and sf.from_stop_id = fs.id and sf.to_stop_id = ts.id
-      where t.service_date = $3::date
-        and t.status = 'scheduled'
+      where t.status = 'scheduled'
+        and fs.pickup_allowed
+        and ts.dropoff_allowed
+        and (t.service_date::timestamp + sch.departure_time + make_interval(mins => fs.offset_minutes))::date = $3::date
         and upper(fl.code) = upper($1)
         and upper(tl.code) = upper($2)
       order by departs_at`,

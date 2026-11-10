@@ -1,13 +1,14 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from '@/router';
 import {
   LayoutDashboard, CalendarDays, Users, BarChart3, Bus, Ship, Settings,
-  ArrowLeft, LogOut, Route, ClipboardList, type LucideIcon,
+  ArrowLeft, LogOut, Route, ClipboardList, Ticket, type LucideIcon,
 } from 'lucide-react';
+import { filterOimsNav } from '@/domain/oims-nav';
 import { useAuth } from '@/context/AuthContext';
 import { useI18n, type TranslationKey } from '@/context/I18nContext';
 
-export type MgmtSection = 'overview' | 'routes' | 'schedules' | 'fleet' | 'manifest' | 'bookings' | 'analytics';
+export type MgmtSection = 'overview' | 'routes' | 'schedules' | 'fleet' | 'manifest' | 'otc' | 'bookings' | 'finance' | 'staff' | 'analytics';
 
 interface MgmtSidebarItem {
   id: MgmtSection;
@@ -22,9 +23,11 @@ const SIDEBAR_ITEMS: MgmtSidebarItem[] = [
   { id: 'routes', label: 'Routes & fares', icon: Route },
   { id: 'schedules', labelKey: 'scheduleManagement', icon: CalendarDays },
   { id: 'fleet', labelKey: 'fleetManagement', icon: Bus },
-  { id: 'manifest', label: 'Manifest & OTC', icon: ClipboardList },
+  { id: 'manifest', label: 'Manifest', icon: ClipboardList },
+  { id: 'otc', label: 'Walk-in sales', icon: Ticket },
   { id: 'bookings', labelKey: 'bookingManagement', icon: Users },
-  { id: 'analytics', labelKey: 'analytics', icon: BarChart3 },
+  { id: 'finance', label: 'Finance', icon: BarChart3 },
+  { id: 'staff', label: 'Staff', icon: Users },
 ];
 
 const SIDEBAR_ITEMS_FERRY: MgmtSidebarItem[] = [
@@ -32,9 +35,11 @@ const SIDEBAR_ITEMS_FERRY: MgmtSidebarItem[] = [
   { id: 'routes', label: 'Routes & fares', icon: Route },
   { id: 'schedules', labelKey: 'scheduleManagement', icon: CalendarDays },
   { id: 'fleet', labelKey: 'vesselManagement', icon: Ship },
-  { id: 'manifest', label: 'Manifest & OTC', icon: ClipboardList },
+  { id: 'manifest', label: 'Manifest', icon: ClipboardList },
+  { id: 'otc', label: 'Walk-in sales', icon: Ticket },
   { id: 'bookings', labelKey: 'bookingManagement', icon: Users },
-  { id: 'analytics', labelKey: 'analytics', icon: BarChart3 },
+  { id: 'finance', label: 'Finance', icon: BarChart3 },
+  { id: 'staff', label: 'Staff', icon: Users },
 ];
 
 export interface OperatorInfo {
@@ -51,6 +56,7 @@ export function OperatorManagementLayout({
   onSelectOperator,
   activeSection,
   onSectionChange,
+  permissions,
   children,
 }: {
   operator: OperatorInfo;
@@ -60,6 +66,7 @@ export function OperatorManagementLayout({
   onSelectOperator: (id: string) => void;
   activeSection: MgmtSection;
   onSectionChange: (s: MgmtSection) => void;
+  permissions?: string[];
   children: ReactNode;
 }) {
   const { signOut } = useAuth();
@@ -68,7 +75,13 @@ export function OperatorManagementLayout({
 
   const ModeIcon = mode === 'bus' ? Bus : Ship;
   const consoleTitle = mode === 'bus' ? t('busOperators') : t('ferryOperators');
-  const items = mode === 'bus' ? SIDEBAR_ITEMS : SIDEBAR_ITEMS_FERRY;
+  const allowedIds = filterOimsNav(permissions ?? []).map((item) => item.id);
+  const allowed = new Set(allowedIds);
+  const items = (mode === 'bus' ? SIDEBAR_ITEMS : SIDEBAR_ITEMS_FERRY).filter((item) => allowed.has(item.id));
+
+  useEffect(() => {
+    if (allowedIds.length && !allowedIds.includes(activeSection)) onSectionChange(allowedIds[0]!);
+  }, [activeSection, allowedIds.join(','), onSectionChange]);
 
   const handleNav = (s: MgmtSection) => {
     onSectionChange(s);
@@ -126,6 +139,10 @@ export function OperatorManagementLayout({
         </nav>
 
         <div className="space-y-1 border-t border-white/10 px-3 py-4">
+          <Link to="/operator/settings" className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:text-white">
+            <Settings size={16} />
+            <span>Account settings</span>
+          </Link>
           <Link to="/" className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:text-white">
             <ArrowLeft size={16} />
             <span>{t('backToSite')}</span>
@@ -180,6 +197,9 @@ export function OperatorManagementLayout({
               })}
             </nav>
             <div className="px-3 py-4 border-t border-neutral-800 space-y-1">
+              <Link to="/operator/settings" className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-neutral-400 rounded-md">
+                <Settings size={16} /> Account settings
+              </Link>
               <Link to="/" className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-neutral-400 rounded-md">
                 <ArrowLeft size={16} /> {t('backToSite')}
               </Link>

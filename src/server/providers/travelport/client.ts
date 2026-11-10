@@ -1,6 +1,10 @@
+import { circuitFor } from '@/server/circuit-breaker';
 import { assertRequestReady, readTravelportConfig, type TravelportConfig } from '@/server/travelport/config';
 import { getTravelportToken } from '@/server/providers/travelport/auth';
 import { errorsFromBody, type TravelportError } from '@/server/providers/travelport/errors';
+
+const TRAVELPORT_TIMEOUT_MS = 12_000;
+const TRAVELPORT_CIRCUIT = 'travelport';
 
 export type TravelportProduct = 'air' | 'hotel';
 
@@ -40,26 +44,49 @@ async function travelportRequest(
   if (!config) throw new Error('travelport_disabled');
   assertRequestReady(config);
 
-  const token = await getTravelportToken(config, fetchImpl);
+  const circuit = circuitFor(TRAVELPORT_CIRCUIT);
+  if (!circuit.allow()) {
+    return {
+      httpStatus: 503,
+      body: null,
+      errors: [{ message: 'circuit_open', sourceCode: 'circuit_open', category: 'TERMINAL' }],
+    };
+  }
+
   const base = product === 'air' ? config.flightsBaseUrl : config.staysV11BaseUrl;
   const url = `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
   const accessGroup = config.accessGroup || config.pcc || '';
 
-  const response = await fetchImpl(url, {
-    method: init.method,
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      'cache-control': 'no-cache',
-      authorization: `Bearer ${token}`,
-      'Accept-Version': '11',
-      'Content-Version': '11',
-      Accept: 'application/json',
-      XAUTH_TRAVELPORT_ACCESSGROUP: accessGroup,
-    },
-    body: init.body,
-    cache: 'no-store',
-  });
+  let response: Response;
+  try {
+    const token = await getTravelportToken(config, fetchImpl);
+    response = await fetchImpl(url, {
+      method: init.method,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'cache-control': 'no-cache',
+        authorization: `Bearer ${token}`,
+        'Accept-Version': '11',
+        'Content-Version': '11',
+        Accept: 'application/json',
+        XAUTH_TRAVELPORT_ACCESSGROUP: accessGroup,
+      },
+      body: init.body,
+      cache: 'no-store',
+      signal: AbortSignal.timeout(TRAVELPORT_TIMEOUT_MS),
+    });
+  } catch {
+    circuit.failure();
+    return {
+      httpStatus: 504,
+      body: null,
+      errors: [{ message: 'timeout', sourceCode: 'timeout', category: 'TERMINAL' }],
+    };
+  }
+
+  if (response.status >= 500) circuit.failure();
+  else circuit.success();
 
   const text = await response.text();
   let parsed: unknown = null;

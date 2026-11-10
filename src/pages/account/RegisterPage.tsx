@@ -6,8 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useI18n } from '@/context/I18nContext';
 
 export function RegisterPage() {
-  const navigate = useNavigate();
   const { signUpWithEmail } = useAuth();
+  const navigate = useNavigate();
   const { tp } = useI18n();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -28,25 +28,22 @@ export function RegisterPage() {
       setError(tp('passwordsDoNotMatch'));
       return;
     }
-    if (password.length < 6) {
+    if (password.length < 8) {
       setError(tp('passwordMinLength'));
       return;
     }
     setLoading(true);
-    const { error: authError } = await signUpWithEmail(email, password);
+    const { error: authError } = await signUpWithEmail(email, password, fullName);
     if (authError) {
       setLoading(false);
       setError(authError);
       return;
     }
-    // Stay in the loading state until this page unmounts so the label never flips
-    // back for a frame in the middle of navigation.
     navigate('/');
   };
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Left branding panel — equal 50% width, hidden on mobile */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-ink p-12">
         <div className="relative z-10">
           <Link to="/" className="inline-flex">
@@ -75,10 +72,8 @@ export function RegisterPage() {
         </div>
       </div>
 
-      {/* Right auth panel — equal 50% */}
       <div className="flex w-full flex-col items-center justify-center px-5 py-8 sm:px-6 sm:py-12 lg:w-1/2">
         <div className="w-full max-w-[400px]">
-          {/* Mobile logo */}
           <div className="mb-8 text-center lg:hidden">
             <Link to="/" className="inline-flex justify-center"><Logo size="lg" /></Link>
           </div>

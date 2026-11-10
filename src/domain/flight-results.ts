@@ -1,4 +1,5 @@
-import type { PublicAirOffer } from '@/domain/air-offer';
+import type { PublicAirLeg, PublicAirOffer } from '@/domain/air-offer';
+import { TICKETING_CARRIERS } from '@/domain/air-ticketing';
 import {
   calendarDayOf,
   formatClock,
@@ -7,12 +8,50 @@ import {
   minutesBetweenLocal,
 } from '@/utils/format';
 
+/**
+ * The airline the traveller will fly. Hahn Air (`H1`) and similar ticketed
+ * carriers stay on the flight number; the card brands the operating airline.
+ */
+export function displayAirline(leg: PublicAirLeg): { code: string; name: string } {
+  const marketing = (leg.carrier || '').trim();
+  const operating = (leg.operatingCarrier || '').trim();
+  const marketingName = (leg.carrierName || '').trim();
+  const operatingName = (leg.operatingCarrierName || '').trim();
+  if (operating && operating.toUpperCase() !== marketing.toUpperCase()) {
+    return { code: operating, name: operatingName || marketingName };
+  }
+  return { code: marketing, name: marketingName || operatingName };
+}
+
 export function marketingLabel(offer: PublicAirOffer): string {
   const names = [...new Set(
-    offer.itinerary.map((leg) => (leg.carrierName || '').trim()).filter(Boolean),
+    offer.itinerary.map((leg) => displayAirline(leg).name).filter(Boolean),
   )];
+  const brand = (offer.fareBrand || '').trim();
+  const ticketed = offer.itinerary.length > 0
+    && offer.itinerary.every((leg) => TICKETING_CARRIERS.has(leg.carrier.trim().toUpperCase()));
+  if (ticketed && brand && !names.some((name) => name.toLowerCase() === brand.toLowerCase())) {
+    return brand;
+  }
   if (names.length) return names.join(' · ');
   return flightNumbers(offer);
+}
+
+export function cabinLine(offer: PublicAirOffer): string {
+  const cabin = (offer.cabinClass || '').trim();
+  const brand = (offer.fareBrand || '').trim();
+  if (!brand) return cabin;
+  const airlineNames = new Set(
+    offer.itinerary.flatMap((leg) => [
+      displayAirline(leg).name.toLowerCase(),
+      (leg.carrierName || '').trim().toLowerCase(),
+      (leg.operatingCarrierName || '').trim().toLowerCase(),
+    ]).filter(Boolean),
+  );
+  if (airlineNames.has(brand.toLowerCase())) return cabin;
+  if (/^[A-Z0-9]{2}$/i.test(brand) && airlineNames.size > 0) return cabin;
+  if (cabin && brand.toLowerCase() === cabin.toLowerCase()) return cabin;
+  return [cabin, brand].filter(Boolean).join(', ');
 }
 
 export function flightNumbers(offer: PublicAirOffer): string {

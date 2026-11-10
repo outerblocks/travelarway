@@ -1,13 +1,13 @@
 import { useLocation } from '@tanstack/react-router';
-import { Link, useNavigate } from '@/router';
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { useNavigate } from '@/router';
+import { Pencil } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { FlightCheckoutSteps } from '@/components/flights/FlightCheckoutSteps';
 import { FlightFareFacts } from '@/components/flights/FlightFareFacts';
 import { FlightItineraryList } from '@/components/flights/FlightItineraryList';
-import { ErrorState, LoadingState, QueryFeedback, SearchSummaryBar } from '@/components/shared/States';
-import { flightNumbers, iataFromPlace, marketingLabel, splitRoundTrip } from '@/domain/flight-results';
+import { ErrorState, LoadingState, QueryFeedback } from '@/components/shared/States';
+import { cabinLine, flightNumbers, iataFromPlace, marketingLabel, splitRoundTrip } from '@/domain/flight-results';
 import { offerIdFromSearch } from '@/pages/stays/stay-offer-id';
 import { useFlightOffer } from '@/pages/flights/useFlightOffer';
 
@@ -25,14 +25,7 @@ export function FlightReviewPage() {
     <QueryFeedback
       status={status}
       errorMessage={tp('unableLoadBookingReview')}
-      loading={(
-        <>
-          <SearchSummaryBar>
-            <Link to="/flights/booking" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
-          </SearchSummaryBar>
-          <LoadingState count={2} message={tp('preparingBookingReview')} />
-        </>
-      )}
+      loading={<LoadingState count={2} message={tp('preparingBookingReview')} />}
     >
       {!offer ? (
         <ErrorState message={tp('flightNotFound')} onRetry={() => navigate('/flights/results')} />
@@ -40,12 +33,6 @@ export function FlightReviewPage() {
         <ErrorState message={tp('unableLoadBookingReview')} onRetry={() => navigate(`/flights/booking?offer=${encodeURIComponent(offerId)}`)} />
       ) : (
         <>
-          <SearchSummaryBar>
-            <Link to={`/flights/booking?offer=${encodeURIComponent(offer.id)}`} className="btn-ghost text-label">
-              <ArrowLeft size={16} /> {tp('checkoutBack')}
-            </Link>
-            <span className="text-body font-medium text-neutral-900">{tp('flightBookingReview')}</span>
-          </SearchSummaryBar>
           <div className="section-container py-6">
             <h1 className="text-page font-bold text-neutral-900 mb-6">{tp('reviewYourBooking')}</h1>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -59,8 +46,8 @@ export function FlightReviewPage() {
                   </div>
                   <p className="text-body font-medium text-neutral-900">{marketingLabel(offer)}</p>
                   <p className="mt-1 text-meta text-neutral-600">{flightNumbers(offer)}</p>
-                  {offer.cabinClass || offer.fareBrand ? (
-                    <p className="mt-2 text-meta text-neutral-600">{[offer.cabinClass, offer.fareBrand].filter(Boolean).join(' · ')}</p>
+                  {cabinLine(offer) ? (
+                    <p className="mt-2 text-meta text-neutral-600">{cabinLine(offer)}</p>
                   ) : null}
                   {(() => {
                     const { outbound, inbound } = splitRoundTrip(offer.itinerary, iataFromPlace(params.destination));

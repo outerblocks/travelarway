@@ -12,5 +12,7 @@ describe('queryFailureStatus', () => {
 
   it('recognises abort', () => {
     expect(isAbortError(new DOMException('Aborted', 'AbortError'))).toBe(true);
+    expect(isAbortError(Object.assign(new Error('Aborted'), { name: 'AbortError' }))).toBe(true);
+    expect(isAbortError(new Error('search failed: 500'))).toBe(false);
   });
 });

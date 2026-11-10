@@ -17,10 +17,10 @@
  */
 import type pg from 'pg';
 import { query, withTransaction } from '@/server/db';
-import { isUniqueViolation } from '@/server/errors';
+import { isInventoryConflict, isUniqueViolation } from '@/server/errors';
+import { releaseFerryCapacity } from '@/server/sailing-inventory';
 import { recordSale, recordUnallocatedCollection, reverseSaleJournal } from '@/server/ledger';
 import {
-  getPaymentProvider,
   PaymentConfigurationError,
   PaymentNotEnabledError,
   PaymentRateLimitedError,
@@ -28,6 +28,8 @@ import {
   UnsupportedCurrencyError,
   type CollectionStatus,
 } from '@/server/payments/clickpesa';
+import { getCollectionAdapter } from '@/server/payments/registry';
+import { resolvePaymentMerchant } from '@/server/markets';
 import { orderReferenceFor } from '@/server/payments/order-reference';
 import { normaliseMsisdn } from '@/server/payments/phone';
 import { attemptStatusFor } from '@/server/payments/attempt-status';
@@ -122,6 +124,7 @@ export async function startPayment(input: {
   phoneNumber?: string;
 }): Promise<StartPaymentResult> {
   const intent = await openIntent(input);
+  const adapter = getCollectionAdapter(intent.provider);
 
   // An intent that already reached the provider is not sent twice.
   if (intent.providerReference || intent.status !== 'initiated') {
@@ -157,7 +160,7 @@ export async function startPayment(input: {
   }
 
   try {
-    const collection = await getPaymentProvider().initiateCollection({
+    const collection = await adapter.initiateCollection({
       orderReference: intent.orderReference,
       amountMinor: intent.amountMinor,
       currency: intent.currency,
@@ -200,7 +203,7 @@ async function startCardPayment(intent: IntentWithPnr): Promise<StartPaymentResu
   }
 
   try {
-    const card = await getPaymentProvider().initiateCardPayment({
+    const card = await getCollectionAdapter(intent.provider).initiateCardPayment({
       orderReference: intent.orderReference,
       amountMinor: intent.amountMinor,
       currency: intent.currency,
@@ -299,10 +302,11 @@ async function openIntent(input: { bookingId: string; method: string }): Promise
       amount_minor: string;
       currency: string;
       method: string | null;
+      provider: string;
       provider_reference: string | null;
       order_reference: string | null;
     }>(
-      `select id, status::text, amount_minor::text, currency::text, method,
+      `select id, status::text, amount_minor::text, currency::text, method, provider,
               provider_reference, order_reference
          from app.payment
         where booking_id = $1 and status in ('initiated', 'pending')
@@ -315,7 +319,7 @@ async function openIntent(input: { bookingId: string; method: string }): Promise
       return {
         paymentId: existing.id,
         bookingId: input.bookingId,
-        provider: PAYMENT_PROVIDER,
+        provider: existing.provider || PAYMENT_PROVIDER,
         method: existing.method,
         amountMinor: Number(existing.amount_minor),
         currency: existing.currency,
@@ -339,24 +343,38 @@ async function openIntent(input: { bookingId: string; method: string }): Promise
     );
     const orderReference = orderReferenceFor(bookingRow.pnr, attempts.rows[0].attempts + 1);
 
+    const merchant = await resolvePaymentMerchant(client, {
+      countryCode: bookingRow.country_code,
+      currency: bookingRow.currency,
+      method: input.method,
+    });
+    if (!merchant) throw new PaymentNotEnabledError('no_merchant');
+    if (merchant.status !== 'licensed') throw new PaymentNotEnabledError('merchant_not_licensed');
+
     const created = await client.query<{ id: string; status: string }>(
-      `insert into app.payment (booking_id, provider, method, amount_minor, currency, order_reference)
-       values ($1, $2, $3, $4::bigint, $5, $6)
+      `insert into app.payment (booking_id, provider, method, amount_minor, currency, order_reference, payment_merchant_id)
+       values ($1, $2, $3, $4::bigint, $5, $6, $7)
        returning id, status::text`,
       [
         input.bookingId,
-        PAYMENT_PROVIDER,
+        merchant.providerCode,
         input.method,
         bookingRow.total_minor,
         bookingRow.currency,
         orderReference,
+        merchant.id,
       ],
+    );
+
+    await client.query(
+      `update app.booking set payment_merchant_id = $2 where id = $1 and payment_merchant_id is null`,
+      [input.bookingId, merchant.id],
     );
 
     return {
       paymentId: created.rows[0].id,
       bookingId: input.bookingId,
-      provider: PAYMENT_PROVIDER,
+      provider: merchant.providerCode,
       method: input.method,
       amountMinor: Number(bookingRow.total_minor),
       currency: bookingRow.currency,
@@ -392,10 +410,14 @@ export async function previewPayment(input: {
     currency: string;
     payment_due_at: Date | null;
     attempts: number;
+    country_code: string;
   }>(
-    `select status::text, pnr, total_minor::text, currency::text, payment_due_at,
-            (select count(*)::int from app.payment where booking_id = b.id) as attempts
-       from app.booking b where id = $1`,
+    `select b.status::text, b.pnr, b.total_minor::text, b.currency::text, b.payment_due_at,
+            (select count(*)::int from app.payment where booking_id = b.id) as attempts,
+            o.country_code
+       from app.booking b
+       join app.operator o on o.id = b.operator_id
+      where b.id = $1`,
     [input.bookingId],
   );
 
@@ -406,8 +428,17 @@ export async function previewPayment(input: {
     throw new BookingNotPayableError('window_closed');
   }
 
+  const merchant = await resolvePaymentMerchant({ query }, {
+      countryCode: row.country_code,
+      currency: row.currency,
+      method: 'mobile_money',
+    });
+  if (!merchant || merchant.status !== 'licensed') {
+    throw new PaymentNotEnabledError('merchant_not_licensed');
+  }
+
   const orderReference = orderReferenceFor(row.pnr, row.attempts + 1);
-  const preview = await getPaymentProvider().previewCollection({
+  const preview = await getCollectionAdapter(merchant.providerCode).previewCollection({
     orderReference,
     amountMinor: Number(row.total_minor),
     currency: row.currency,
@@ -551,7 +582,7 @@ export async function reconcileOpenPayments(limit = 25): Promise<ReconciliationS
   for (const row of rows) {
     let result;
     try {
-      result = await getPaymentProvider().getCollectionStatus(row.order_reference);
+      result = await getCollectionAdapter(row.provider).getCollectionStatus(row.order_reference);
     } catch (error) {
       // A failed status query leaves the attempt exactly as it was. Guessing either way
       // would issue a ticket without evidence, or fail a payment that may have succeeded.
@@ -721,8 +752,8 @@ export async function reversePayment(input: {
       record.booking_id,
     ]);
 
-    // The seat is no longer sold. ux_seat_sold_once only counts active passengers, so this
-    // is what actually puts the seat back on the map.
+    await releaseFerryCapacity(client, [record.booking_id]);
+
     await client.query(
       `update app.booking_passenger set status = 'cancelled'
         where booking_id = $1 and status = 'active'`,
@@ -909,8 +940,8 @@ async function applyPayment(client: pg.PoolClient, input: ConfirmPaymentInput): 
   const paidAt = input.paidAt ?? null;
 
   try {
-    // Activating the passengers is where the double-sell guarantee finally fires:
-    // ux_seat_sold_once rejects a second active passenger on the same seat. If it does,
+    // Activating the passengers is where interval exclusion finally fires for pending
+    // rows that overlapped a sale completed while this customer paid. If it does,
     // the seat was sold in the gap and this money cannot become a ticket.
     await client.query(
       `update app.booking_passenger set status = 'active'
@@ -918,7 +949,7 @@ async function applyPayment(client: pg.PoolClient, input: ConfirmPaymentInput): 
       [record.booking_id],
     );
   } catch (error) {
-    if (isUniqueViolation(error)) throw new InventoryLostError(record.booking_id, sale.pnr);
+    if (isInventoryConflict(error)) throw new InventoryLostError(record.booking_id, sale.pnr);
     throw error;
   }
 
@@ -1008,6 +1039,7 @@ async function markUnallocated(input: ConfirmPaymentInput, lost: InventoryLostEr
         where id = $1 and status = 'pending_payment'`,
       [lost.bookingId],
     );
+    await releaseFerryCapacity(client, [lost.bookingId]);
     await client.query(
       `update app.booking_passenger set status = 'cancelled'
         where booking_id = $1 and status = 'pending'`,

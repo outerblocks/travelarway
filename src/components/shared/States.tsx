@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react';
 import { useI18n } from '@/context/I18nContext';
 import type { QueryStatus } from '@/hooks/query-status';
+import { TravelarLoader, useRouteWaitHold } from '@/components/shared/TravelarLoader';
 
 /**
- * Page-level loading uses skeleton blocks. Spinners stay inside buttons that are
- * already in flight, so a screen never shows two loading idioms at once.
+ * Page-level waits reuse the Travelar journey scene. Spinners stay inside
+ * buttons that are already in flight.
  */
 export function LoadingState({
   message,
-  count = 3,
   inset = false,
 }: {
   message?: string;
@@ -16,24 +16,17 @@ export function LoadingState({
   inset?: boolean;
 }) {
   const { tp } = useI18n();
-  return (
-    <div className={inset ? 'py-6' : 'section-container py-10'} role="status" aria-live="polite">
-      <div className="mx-auto max-w-3xl space-y-4">
-        <div className="skeleton h-8 w-56" />
-        {Array.from({ length: count }, (_, row) => (
-          <div key={row} className="card flex items-center gap-4 p-5">
-            <div className="skeleton h-12 w-12 rounded-lg" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="skeleton h-3.5 w-2/5" />
-              <div className="skeleton h-3 w-1/4" />
-            </div>
-            <div className="skeleton h-9 w-24 rounded-lg" />
-          </div>
-        ))}
-        <p className="pt-1 text-center text-meta text-neutral-500">{message ?? tp('searchingOptions')}</p>
-      </div>
-    </div>
-  );
+  const hosted = useRouteWaitHold();
+  void inset;
+  const copy = message ?? tp('searchingOptions');
+  if (hosted) {
+    return (
+      <span className="sr-only" role="status" aria-live="polite">
+        {copy}
+      </span>
+    );
+  }
+  return <TravelarLoader message={copy} />;
 }
 
 export function EmptyResults({ message, subMessage }: { message: string; subMessage?: string }) {
@@ -116,18 +109,6 @@ export function QueryFeedback({
     return <ErrorState message={errorMessage} subMessage={errorSubMessage} onRetry={onRetry} />;
   }
   return <>{children}</>;
-}
-
-export function SearchSummaryBar({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="search-summary-bar border-b border-white/10 bg-ink text-white [&_.btn-ghost]:text-white [&_.btn-ghost:hover]:bg-white/10 [&_.text-neutral-500]:text-white/65 [&_.text-neutral-900]:text-white">
-      <div className="section-container py-3.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export function ConnectionNotice() {

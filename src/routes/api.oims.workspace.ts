@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { jsonError, requireOperator } from '@/server/oims/http';
+import { requireOimsPermission } from '@/server/identity/staff-gate';
+import { jsonError } from '@/server/oims/http';
 import { loadWorkspace } from '@/server/oims/repository';
 
 export const Route = createFileRoute('/api/oims/workspace')({
@@ -11,7 +12,7 @@ export const Route = createFileRoute('/api/oims/workspace')({
           if (mode !== 'bus' && mode !== 'ferry') {
             return Response.json({ error: 'invalid_mode' }, { status: 400 });
           }
-          const operatorId = requireOperator(request);
+          const { operatorId } = await requireOimsPermission(request, 'oims.bookings.view');
           const workspace = await loadWorkspace(operatorId, mode);
           return Response.json(workspace, { headers: { 'cache-control': 'no-store' } });
         } catch (error) {

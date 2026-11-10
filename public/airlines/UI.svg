@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Auric Air">
+  <rect width="64" height="64" rx="12" fill="#ffffff"/>
+  <path fill="#2B7DE9" d="M6 36c14-22 26-12 38-24 7-7 14-9 20-6-10 6-14 16-26 24C26 38 14 38 6 36z"/>
+  <path fill="#F5C518" d="M6 46c14-20 26-10 38-22 7-6 14-8 20-5-10 6-14 16-26 24C26 51 14 50 6 46z"/>
+</svg>

@@ -12,7 +12,8 @@ import { todayISO } from '@/utils/format';
 /**
  * GET /api/offers?mode=flights|stays|ferry|experiences&from=&to=&date=
  *
- * Bus stays Tanzania-local. Train search for TRC SGR uses /api/sgr/services; Madaraka
+ * Bus uses /api/bus/results (East African geography, licensed inventory only).
+ * Train search for TRC SGR uses /api/sgr/services; Madaraka
  * Express is operator-direct once inventory exists; international rail is GDS-blocked.
  * Flights and stays resolve worldwide IATA geography through GDS adapters.
  */
@@ -20,7 +21,7 @@ export const Route = createFileRoute('/api/offers')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const params = new URL(request.url).searchParams;

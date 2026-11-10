@@ -1,9 +1,9 @@
 import { useLocation } from '@tanstack/react-router';
-import { Link, useNavigate } from '@/router';
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { useNavigate } from '@/router';
+import { Pencil } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { ErrorState, LoadingState, QueryFeedback, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState, QueryFeedback } from '@/components/shared/States';
 import { roomFromOffer } from '@/domain/stay-offer';
 import { formatMoney } from '@/domain/money';
 import { formatDate, nightsBetween } from '@/utils/format';
@@ -26,14 +26,7 @@ export function StaysReviewPage() {
     <QueryFeedback
       status={status}
       errorMessage={tp('unableLoadBookingReview')}
-      loading={(
-        <>
-          <SearchSummaryBar>
-            <Link to="/stays/booking" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('checkoutBack')}</Link>
-          </SearchSummaryBar>
-          <LoadingState count={2} message={tp('preparingBookingReview')} />
-        </>
-      )}
+      loading={<LoadingState count={2} message={tp('preparingBookingReview')} />}
     >
       {!offer ? (
         <ErrorState message={tp('propertyNotFound')} onRetry={() => navigate('/stays/results')} />
@@ -43,12 +36,6 @@ export function StaysReviewPage() {
         <ErrorState message={tp('unableLoadBookingReview')} onRetry={() => navigate(`/stays/booking?offer=${encodeURIComponent(offerId)}`)} />
       ) : (
         <>
-          <SearchSummaryBar>
-            <Link to={`/stays/booking?offer=${encodeURIComponent(offer.id)}`} className="btn-ghost text-label">
-              <ArrowLeft size={16} /> {tp('checkoutBack')}
-            </Link>
-            <span className="text-body font-medium text-neutral-900">{tp('reviewStay')}</span>
-          </SearchSummaryBar>
           <div className="section-container py-6">
             <h1 className="text-page font-bold text-neutral-900 mb-6">{tp('reviewYourBooking')}</h1>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -109,7 +96,7 @@ export function StaysReviewPage() {
                 {room.totalPrice != null && room.currency ? (
                   <div className="flex justify-between border-t border-neutral-200 pt-4">
                     <span className="text-listing font-bold text-neutral-900">{tp('checkoutTotal')}</span>
-                    <span className="text-listing font-bold tabular-nums text-brand-600">
+                    <span className="text-listing font-bold tabular-nums text-neutral-900">
                       {formatMoney(room.totalPrice, room.currency)}
                     </span>
                   </div>

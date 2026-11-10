@@ -14,17 +14,26 @@ const AIRLINES: Record<string, string> = {
   AY: 'Finnair',
   AZ: 'ITA Airways',
   BA: 'British Airways',
+  B5: 'Flightlink',
   B6: 'JetBlue',
+  CQ: 'Coastal Aviation',
   CX: 'Cathay Pacific',
   DL: 'Delta Air Lines',
   EK: 'Emirates',
   ET: 'Ethiopian Airlines',
   EY: 'Etihad Airways',
+  F2: 'Safarilink',
+  FA: 'FlySafair',
+  FN: 'Fastjet',
   FZ: 'flydubai',
   G9: 'Air Arabia',
+  '5H': 'Fly540',
   GF: 'Gulf Air',
+  H1: 'Hahn Air',
+  HR: 'Hahn Air',
   IB: 'Iberia',
   JL: 'Japan Airlines',
+  JM: 'Jambojet',
   KE: 'Korean Air',
   KL: 'KLM',
   KQ: 'Kenya Airways',
@@ -34,11 +43,16 @@ const AIRLINES: Record<string, string> = {
   LY: 'El Al',
   ME: 'Middle East Airlines',
   MK: 'Air Mauritius',
+  MN: 'Kulula',
   MS: 'Egyptair',
   NH: 'All Nippon Airways',
   OS: 'Austrian Airlines',
+  OW: 'Skyward Express',
+  P0: 'Proflight Zambia',
+  P2: 'AirKenya',
   PC: 'Pegasus Airlines',
   PW: 'Precision Air',
+  Q4: 'Euroairlines',
   QF: 'Qantas',
   QR: 'Qatar Airways',
   RJ: 'Royal Jordanian',
@@ -47,10 +61,14 @@ const AIRLINES: Record<string, string> = {
   SN: 'Brussels Airlines',
   SQ: 'Singapore Airlines',
   SV: 'Saudia',
+  TC: 'Air Tanzania',
   TK: 'Turkish Airlines',
+  TM: 'LAM Mozambique',
   TP: 'TAP Air Portugal',
   UA: 'United Airlines',
+  UI: 'Auric Air',
   UL: 'SriLankan Airlines',
+  UM: 'Air Zimbabwe',
   UR: 'Uganda Airlines',
   VN: 'Vietnam Airlines',
   VS: 'Virgin Atlantic',
@@ -59,7 +77,10 @@ const AIRLINES: Record<string, string> = {
   WS: 'WestJet',
   WY: 'Oman Air',
   W2: 'FlexFlight',
+  '8N': 'Regional Air',
 };
+
+const AIRLINE_NAMES = new Set(Object.values(AIRLINES).map((name) => name.toLowerCase()));
 
 const AIRCRAFT: Record<string, string> = {
   '319': 'Airbus A319',
@@ -95,9 +116,17 @@ const AIRCRAFT: Record<string, string> = {
   '789': 'Boeing 787-9',
   '7M8': 'Boeing 737 MAX 8',
   '7M9': 'Boeing 737 MAX 9',
+  AT5: 'ATR 72',
   AT7: 'ATR 72',
   AT4: 'ATR 42',
+  ATR: 'ATR',
   DH4: 'Dash 8-400',
+  DH8: 'Dash 8',
+  CR7: 'CRJ-700',
+  CR9: 'CRJ-900',
+  E70: 'Embraer 170',
+  '73W': 'Boeing 737-700',
+  '32S': 'Airbus A321',
   E90: 'Embraer 190',
   E95: 'Embraer 195',
 };
@@ -105,6 +134,33 @@ const AIRCRAFT: Record<string, string> = {
 export function airlineName(code: string | undefined): string | undefined {
   if (!code) return undefined;
   return AIRLINES[code.toUpperCase()];
+}
+
+export function isKnownAirlineName(value: string | undefined): boolean {
+  const name = (value ?? '').trim().toLowerCase();
+  return Boolean(name) && AIRLINE_NAMES.has(name);
+}
+
+const CABIN_LABEL: Record<string, string> = {
+  Y: 'Economy',
+  ECONOMY: 'Economy',
+  ECO: 'Economy',
+  COACH: 'Economy',
+  W: 'Premium Economy',
+  S: 'Premium Economy',
+  PREMIUMECONOMY: 'Premium Economy',
+  PREMIUM_ECONOMY: 'Premium Economy',
+  C: 'Business',
+  J: 'Business',
+  BUSINESS: 'Business',
+  F: 'First',
+  FIRST: 'First',
+};
+
+export function cabinLabel(code: string | undefined): string | undefined {
+  const raw = (code ?? '').trim();
+  if (!raw) return undefined;
+  return CABIN_LABEL[raw.toUpperCase().replace(/\s+/g, '')] ?? raw;
 }
 
 export function aircraftName(code: string | undefined): string | undefined {

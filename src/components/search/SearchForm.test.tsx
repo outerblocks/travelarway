@@ -10,7 +10,7 @@ import {
 } from '@tanstack/react-router';
 import { AppProvider } from '@/context/AppContext';
 import { I18nProvider } from '@/context/I18nContext';
-import { SearchForm } from '@/components/search/SearchForm';
+import { resetSearchPlacesCache, SearchForm } from '@/components/search/SearchForm';
 import type { BookingMode } from '@/types';
 
 // Multi-city is the only part of the search form that grows: each leg adds three
@@ -105,6 +105,7 @@ const legFieldCount = (container: HTMLElement) =>
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  resetSearchPlacesCache();
 });
 
 async function chooseMultiCity() {
@@ -201,7 +202,7 @@ describe('SearchForm flight trip types', () => {
     const bottom = container.querySelector('.search-form-bottom');
 
     expect(alert).toHaveTextContent('Places could not be loaded');
-    expect(container.querySelector('.search-form-status')).toContainElement(alert);
+    expect(alert).toHaveClass('search-form-status');
     expect(bottom?.contains(submit)).toBe(true);
     expect(bottom?.contains(alert)).toBe(false);
     expect(submit).toBeDisabled();

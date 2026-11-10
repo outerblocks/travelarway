@@ -59,7 +59,7 @@ export function Header() {
               value={lang}
               onChange={(event) => setLang(event.target.value as typeof lang)}
               aria-label={tp('languageLabel')}
-              className="h-8 cursor-pointer appearance-none rounded border border-neutral-200 bg-neutral-50 px-2.5 pr-6 text-meta font-semibold text-neutral-700 outline-none transition-colors hover:border-neutral-300 hover:bg-neutral-100"
+              className="h-8 cursor-pointer appearance-none rounded border border-neutral-200 bg-white px-2.5 pr-6 text-meta font-semibold text-neutral-700 outline-none transition-colors hover:border-neutral-300"
             >
               {LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -112,7 +112,7 @@ export function Header() {
                 value={lang}
                 onChange={(event) => setLang(event.target.value as typeof lang)}
                 aria-label={tp('languageLabel')}
-                className="mb-2 h-11 w-full cursor-pointer appearance-none rounded-lg border border-neutral-200 bg-neutral-50 px-4 text-body font-medium text-neutral-700 outline-none"
+                className="mb-2 h-11 w-full cursor-pointer appearance-none rounded-lg border border-neutral-200 bg-white px-4 text-body font-medium text-neutral-700 outline-none"
               >
                 {LANGUAGE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.fullLabel}</option>

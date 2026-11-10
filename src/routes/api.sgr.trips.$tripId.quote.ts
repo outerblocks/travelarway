@@ -22,7 +22,7 @@ export const Route = createFileRoute('/api/sgr/trips/$tripId/quote')({
        * charged the adult price. Over-charging to complete a booking is not a trade we make.
        */
       GET: async ({ params, request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const url = new URL(request.url);

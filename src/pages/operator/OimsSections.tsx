@@ -239,7 +239,7 @@ export function RoutesSection({ operatorId, mode }: { operatorId: string; mode: 
                   return (
                     <div key={`${fare.fromStopId}-${fare.toStopId}`} className="flex items-center gap-3 px-3 py-2">
                       <span className="flex-1 text-sm text-neutral-900">{from} → {to}</span>
-                      <span className="text-sm font-semibold text-brand-600">{nf(fare.fare, 'TZS')}</span>
+                      <span className="text-sm font-semibold text-neutral-900">{nf(fare.fare, 'TZS')}</span>
                       <button
                         type="button"
                         onClick={() => removeSegmentFare(route.id, fare.fromStopId, fare.toStopId)}

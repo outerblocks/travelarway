@@ -30,7 +30,7 @@ export const Route = createFileRoute('/api/payments/preview')({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
-        const limited = guardMutation(request, 'payments');
+        const limited = await guardMutation(request, 'payments');
         if (limited) return limited;
 
         let body: unknown;

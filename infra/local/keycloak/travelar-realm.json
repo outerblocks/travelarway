@@ -1,0 +1,86 @@
+{
+  "realm": "travelar",
+  "enabled": true,
+  "displayName": "Travelar",
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+  "otpPolicyCodeReusable": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      { "name": "passenger", "description": "Hint only. Travelar authorizes from staff_assignment." },
+      { "name": "oims_operator" },
+      { "name": "hims_finance" },
+      { "name": "hims_admin" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "travelar-bff",
+      "name": "Travelar BFF",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "secret": "travelar-dev-oidc-secret-change-me",
+      "redirectUris": [
+        "http://localhost:3000/api/auth/callback",
+        "http://127.0.0.1:3000/api/auth/callback",
+        "http://localhost:5173/api/auth/callback",
+        "http://127.0.0.1:5173/api/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*##http://127.0.0.1:3000/*##http://localhost:5173/*##http://127.0.0.1:5173/*"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access"]
+    },
+    {
+      "clientId": "travelar-admin",
+      "name": "Travelar Admin API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "secret": "travelar-dev-admin-secret-change-me",
+      "defaultClientScopes": ["web-origins", "roles"]
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-travelar-admin",
+      "enabled": true,
+      "serviceAccountClientId": "travelar-admin",
+      "clientRoles": {
+        "realm-management": ["manage-users", "view-users", "query-users", "view-clients"]
+      }
+    }
+  ]
+}

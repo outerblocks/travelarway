@@ -1,16 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Navigate } from '@/router';
 import {
-  BarChart3, CalendarDays, CheckCircle2, Clock, DollarSign, LayoutDashboard,
-  MapPin, Ticket, Users,
+  BarChart3, CalendarDays, CheckCircle2, Clock, DollarSign, Ticket, Users,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import type { TranslationKey } from '@/context/I18nContext';
 import { RoutePending } from '@/components/shared/RouteStates';
+import { useRouteWaitHold } from '@/components/shared/TravelarLoader';
 import { OperatorManagementLayout, type MgmtSection, type OperatorInfo } from '@/components/layout/OperatorManagementLayout';
 import {
   CompliancePanel, LiveFleetSection, LiveManifestSection, LiveRoutesSection, LiveSchedulesSection,
 } from '@/pages/operator/OimsLiveSections';
+import { OimsFinanceSection, OimsOtcSection, OimsStaffSection } from '@/pages/operator/OimsOtcFinanceStaff';
 import { useOimsConsole } from '@/hooks/useOimsConsole';
 import type { OpsMode } from '@/data/operations';
 
@@ -52,9 +53,9 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
       passengerCertificateMax: number | null;
     };
     routes?: { id: string; name: string; stops: { id: string; locationName: string; sequence: number }[]; fares?: { fromStopId: string; toStopId: string; fareMinor: number; currency: string }[] }[];
-    vehicles?: { id: string; registration: string; serviceClass: string | null }[];
+    vehicles?: { id: string; registration: string; model?: string | null; classLabel?: string | null; serviceClass: string | null; amenities?: string[]; seatLayoutId?: string | null }[];
     vessels?: { id: string; name: string; passengerCertificateMax: number; classes?: { id: string; name: string; capacity: number }[] }[];
-    trips?: { id: string; serviceDate: string; status: string; scheduleId: string }[];
+    trips?: { id: string; serviceDate: string; status: string; scheduleId: string; routeId?: string; routeName?: string; vesselId?: string | null }[];
     bookings?: OimsBookingRow[];
     staffInvites?: { status: string; reason: string };
   } | null;
@@ -89,8 +90,11 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
     .filter((booking) => booking.currency === currency)
     .reduce((sum, booking) => sum + booking.amount, 0);
 
+  const waiting = loading || consoleState.status === 'loading';
+  useRouteWaitHold(waiting);
+
   // One frame while the browser session is adopted, then the console or sign-in.
-  if (loading || consoleState.status === 'loading') return <RoutePending />;
+  if (waiting && !operator) return <RoutePending />;
   if (!user) return <Navigate to="/operator/oims-signin" replace />;
   if (consoleState.status === 'error') {
     return <div className="p-12 text-center text-sm text-error-600">{consoleState.error || 'OIMS workspace unavailable.'}</div>;
@@ -103,15 +107,6 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
     .sort((a, b) => new Date(b.bookedAt).getTime() - new Date(a.bookedAt).getTime())
     .slice(0, 6);
 
-  const revenueByDay = Object.entries(
-    confirmed.reduce<Record<string, number>>((acc, booking) => {
-      const day = booking.bookedAt.slice(0, 10);
-      acc[day] = (acc[day] ?? 0) + (booking.currency === currency ? booking.amount : 0);
-      return acc;
-    }, {}),
-  ).sort(([a], [b]) => a.localeCompare(b)).slice(-7);
-  const peak = Math.max(1, ...revenueByDay.map(([, amount]) => amount));
-
   return (
     <OperatorManagementLayout
       operator={operatorInfo}
@@ -121,6 +116,7 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
       onSelectOperator={consoleState.setOperatorId}
       activeSection={activeSection}
       onSectionChange={setActiveSection}
+      permissions={consoleState.permissions}
     >
       {activeSection === 'overview' && (
         <div className="space-y-6">
@@ -172,12 +168,11 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
             </Panel>
           </div>
 
-          {workspace?.operator ? (
+          {workspace?.operator && consoleState.permissions.includes('oims.routes.manage') ? (
             <CompliancePanel mode={mode} operator={workspace.operator} onSaved={consoleState.reload} />
           ) : null}
           <p className="text-xs text-neutral-500">
-            Staff invitations stay blocked until the identity provider is live
-            ({workspace?.staffInvites?.reason ?? 'identity_provider_required'}).
+            {workspace?.staffInvites?.reason ?? 'Operator Admin invites this tenant’s staff from the Staff section.'}
             Manifest issue stores LATRA/TASAC copies here; it does not file with police or Maritime Single Window.
           </p>
         </div>
@@ -198,51 +193,33 @@ export function OimsDashboardPage({ mode }: { mode: OpsMode }) {
         <LiveFleetSection mode={mode} vehicles={vehicles} vessels={vessels} onChanged={consoleState.reload} />
       )}
       {activeSection === 'manifest' && <LiveManifestSection mode={mode} trips={trips} />}
+      {activeSection === 'otc' && (
+        <OimsOtcSection mode={mode} trips={trips} routes={routes} vessels={vessels} onSold={consoleState.reload} />
+      )}
+      {activeSection === 'staff' && <OimsStaffSection />}
+      {activeSection === 'finance' && <OimsFinanceSection mode={mode} />}
 
       {activeSection === 'bookings' && (
         <BookingList
           bookings={bookings}
           currency={currency}
           scheduleIds={scheduleIds}
+          canSell={consoleState.permissions.includes('oims.otc.sell')}
         />
-      )}
-
-      {activeSection === 'analytics' && (
-        <div className="space-y-6">
-          <Panel title="Revenue, last 7 selling days" subtitle={nf(revenue, currency)}>
-            <div className="flex items-end gap-3 px-4 pb-4">
-              {revenueByDay.map(([day, amount]) => (
-                <div key={day} className="flex-1 text-center">
-                  <div
-                    className="mx-auto w-full rounded-t bg-brand-600"
-                    style={{ height: `${Math.max(6, (amount / peak) * 120)}px` }}
-                    title={`${day}: ${nf(amount, currency)}`}
-                  />
-                  <p className="mt-1 text-[10px] text-neutral-500">{day.slice(5)}</p>
-                </div>
-              ))}
-              {revenueByDay.length === 0 && <Empty>No sales recorded yet.</Empty>}
-            </div>
-          </Panel>
-          <Panel title="Channel mix" subtitle={`${bookings.length} bookings`}>
-            <div className="grid grid-cols-2 gap-4 p-4">
-              <ChannelStat label="Online" value={bookings.length - otcSales.length} total={bookings.length} icon={MapPin} />
-              <ChannelStat label="Counter (OTC)" value={otcSales.length} total={bookings.length} icon={Ticket} />
-            </div>
-          </Panel>
-        </div>
       )}
     </OperatorManagementLayout>
   );
 }
 
-function BookingList({ bookings, currency, scheduleIds }: {
+function BookingList({ bookings, currency, scheduleIds, canSell }: {
   bookings: OimsBookingRow[];
   currency: string;
   scheduleIds: Set<string>;
+  canSell: boolean;
 }) {
   const [status, setStatus] = useState<'all' | 'issued' | 'held' | 'cancelled' | 'refunded'>('all');
   const [channel, setChannel] = useState<'all' | 'online' | 'otc'>('all');
+  const [message, setMessage] = useState('');
 
   const rows = bookings
     .filter((booking) => scheduleIds.has(booking.scheduleId))
@@ -259,6 +236,7 @@ function BookingList({ bookings, currency, scheduleIds }: {
       </div>
 
       <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+        {message ? <p className="px-4 pt-3 text-xs text-neutral-600">{message}</p> : null}
         <div className="flex flex-wrap items-center gap-2 border-b border-neutral-100 px-4 py-3">
           <h2 className="text-sm font-bold text-neutral-900">Bookings</h2>
           <select
@@ -291,6 +269,7 @@ function BookingList({ bookings, currency, scheduleIds }: {
                 <th className="px-4 py-2">Channel</th>
                 <th className="px-4 py-2">Amount</th>
                 <th className="px-4 py-2">Status</th>
+                <th className="px-4 py-2" />
               </tr>
             </thead>
             <tbody>
@@ -307,10 +286,30 @@ function BookingList({ bookings, currency, scheduleIds }: {
                       {booking.status}
                     </span>
                   </td>
+                  <td className="px-4 py-2">
+                    {canSell && booking.channel === 'otc' && booking.status === 'issued' ? (
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-brand-700"
+                        onClick={() => {
+                          const reprint = window.prompt('Reprint reason') ?? '';
+                          if (!reprint.trim()) return;
+                          void fetch('/api/oims/otc', {
+                            method: 'POST',
+                            headers: { 'content-type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ action: 'reprint', bookingId: booking.id, reason: reprint }),
+                          }).then(() => setMessage(`Reprinted ${booking.reference}`));
+                        }}
+                      >
+                        Reprint
+                      </button>
+                    ) : null}
+                  </td>
                 </tr>
               ))}
               {rows.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-6 text-center text-sm text-neutral-500">No bookings match this filter.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-6 text-center text-sm text-neutral-500">No bookings match this filter.</td></tr>
               )}
             </tbody>
           </table>
@@ -346,24 +345,6 @@ function Panel({ title, subtitle, children }: { title: string; subtitle?: string
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <p className="px-4 py-6 text-center text-sm text-neutral-500">{children}</p>;
-}
-
-function ChannelStat({ label, value, total, icon: Icon }: {
-  label: string;
-  value: number;
-  total: number;
-  icon: typeof LayoutDashboard;
-}) {
-  const share = total > 0 ? Math.round((value / total) * 100) : 0;
-  return (
-    <div className="rounded-lg border border-neutral-200 p-3">
-      <div className="flex items-center gap-2 text-neutral-500">
-        <Icon size={14} />
-        <span className="text-[11px] font-semibold uppercase tracking-wide">{label}</span>
-      </div>
-      <p className="mt-1 text-xl font-bold text-neutral-900">{value} <span className="text-xs font-medium text-neutral-500">({share}%)</span></p>
-    </div>
-  );
 }
 
 export type { TranslationKey };

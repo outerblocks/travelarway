@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { rateLimit } from '@/server/rate-limit';
 import { findSgrServices } from '@/server/sgr/services';
+import { createSearchIntent } from '@/server/search-intent';
 
 export const Route = createFileRoute('/api/sgr/services')({
   server: {
@@ -14,7 +15,7 @@ export const Route = createFileRoute('/api/sgr/services')({
        * apart from "we could not look".
        */
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const url = new URL(request.url);
@@ -31,9 +32,16 @@ export const Route = createFileRoute('/api/sgr/services')({
 
         try {
           const { services, unresolved } = await findSgrServices({ from, to, date });
+          let searchIntent: string | undefined;
+          try {
+            searchIntent = createSearchIntent(services.map((row) => row.tripId));
+          } catch {
+            searchIntent = undefined;
+          }
           return Response.json(
             {
               data: services,
+              searchIntent,
               // Names the platform has no place row for. Reported rather than answered with an
               // empty list, so a typo or an unseeded station is not mistaken for "no trains".
               unresolved_places: unresolved,

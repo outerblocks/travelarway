@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { rateLimit } from '@/server/rate-limit';
+import { BUS_FERRY_ONLY_CITY_CODES, locationCatalogForMode } from '@/server/location-catalog';
 import { isGdsLocationMode, listLocations, LOCAL_COUNTRY_MODES, MODE_LOCATION_KINDS } from '@/server/search';
 
 /** GET /api/locations?q=dar&mode=train — the places a given mode can be searched between. */
@@ -7,7 +8,7 @@ export const Route = createFileRoute('/api/locations')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const url = new URL(request.url);
@@ -34,10 +35,14 @@ export const Route = createFileRoute('/api/locations')({
           const localCountry = mode && (LOCAL_COUNTRY_MODES as readonly string[]).includes(mode)
             ? 'TZ'
             : undefined;
+          // Bus is not in LOCAL_COUNTRY_MODES: Nairobi/Kampala/etc. are searchable
+          // cities. That is vocabulary, not inventory.
           const locations = await listLocations(term, {
             kinds: mode ? MODE_LOCATION_KINDS[mode] : undefined,
             country: requestedCountry || localCountry,
-            limit: isGdsLocationMode(mode ?? '') ? 40 : 200,
+            catalog: mode ? locationCatalogForMode(mode) : undefined,
+            excludeCodes: mode === 'bus' ? [...BUS_FERRY_ONLY_CITY_CODES] : undefined,
+            limit: isGdsLocationMode(mode ?? '') ? 40 : 500,
           });
           return Response.json(
             { data: locations, count: locations.length },

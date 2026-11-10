@@ -1,101 +1,77 @@
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { stubAuthPolicy } from '@/auth/stubAuth';
 
-const KEY = 'travelar_auth_user';
 const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
 
-beforeEach(() => vi.useFakeTimers());
-afterEach(() => vi.useRealTimers());
-
-// These pin the CURRENT (simulated) behaviour: any credentials succeed.
-describe('AuthContext (current simulated behaviour)', () => {
-  it('starts signed out', () => {
-    const { result } = renderHook(() => useAuth(), { wrapper });
-    expect(result.current.user).toBeNull();
-    expect(result.current.loading).toBe(false);
+describe('AuthContext (Keycloak BFF session)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({ authenticated: false, provider: 'none' }), {
+        headers: { 'content-type': 'application/json' },
+      }),
+    ));
   });
 
-  it('restores a user from localStorage', () => {
-    localStorage.setItem(KEY, JSON.stringify({ email: 'x@y.z', name: 'x', provider: 'email' }));
-    const { result } = renderHook(() => useAuth(), { wrapper });
-    expect(result.current.user?.email).toBe('x@y.z');
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
-  it('ignores corrupt localStorage data', () => {
-    localStorage.setItem(KEY, '{not json');
+  it('starts from the server session, not localStorage', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.user).toBeNull();
   });
 
-  it('signInWithEmail accepts any password and persists the user without simulated latency', async () => {
+  it('adopts an authenticated Keycloak session', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(JSON.stringify({
+        authenticated: true,
+        provider: 'keycloak',
+        user: { id: 'u1', email: 'ada@example.com', name: 'ada' },
+      }), { headers: { 'content-type': 'application/json' } }),
+    ));
     const { result } = renderHook(() => useAuth(), { wrapper });
-    let res: { error: string | null } | undefined;
-    await act(async () => {
-      res = await result.current.signInWithEmail('jane@example.com', 'wrong');
-    });
-    expect(res).toEqual({ error: null });
-    expect(result.current.user).toEqual({ email: 'jane@example.com', name: 'jane', provider: 'email' });
-    expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual(result.current.user);
+    await waitFor(() => expect(result.current.user?.email).toBe('ada@example.com'));
+    expect(result.current.user?.provider).toBe('keycloak');
   });
 
-  it('signUpWithEmail signs the user in immediately', async () => {
+  it('beginLogin sends the browser to the BFF', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { assign, href: 'http://localhost/' });
     const { result } = renderHook(() => useAuth(), { wrapper });
-    await act(async () => {
-      await result.current.signUpWithEmail('new@example.com', 'pw');
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => {
+      result.current.beginLogin('oims', '/operator/bus');
     });
-    expect(result.current.user?.name).toBe('new');
+    expect(assign).toHaveBeenCalledWith('/api/auth/login?intent=oims&returnTo=%2Foperator%2Fbus');
   });
 
-  it('signInWithProvider returns a fixed fake identity', async () => {
+  it('signInWithEmail posts credentials to the BFF', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo) => {
+      const url = String(input);
+      if (url.includes('/api/auth/password')) {
+        return new Response(JSON.stringify({ ok: true, user: { email: 'ada@example.com' } }), {
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({
+        authenticated: true,
+        provider: 'keycloak',
+        user: { email: 'ada@example.com', name: 'ada' },
+      }), { headers: { 'content-type': 'application/json' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
     const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.loading).toBe(false));
     await act(async () => {
-      const p = result.current.signInWithProvider('google');
-      await vi.advanceTimersByTimeAsync(1000);
-      await p;
+      await result.current.signInWithEmail('ada@example.com', 'Operator12');
     });
-    expect(result.current.user).toEqual({ email: 'user@gmail.com', name: 'Travelar User', provider: 'google' });
-
-    await act(async () => {
-      const p = result.current.signInWithProvider('apple');
-      await vi.advanceTimersByTimeAsync(1000);
-      await p;
-    });
-    expect(result.current.user?.email).toBe('user@icloud.com');
-  });
-
-  it('signOut clears the user and storage', async () => {
-    localStorage.setItem(KEY, JSON.stringify({ email: 'x@y.z', name: 'x', provider: 'email' }));
-    const { result } = renderHook(() => useAuth(), { wrapper });
-    await act(async () => {
-      await result.current.signOut();
-    });
-    expect(result.current.user).toBeNull();
-    expect(localStorage.getItem(KEY)).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/password', expect.objectContaining({ method: 'POST' }));
   });
 
   it('useAuth throws outside AuthProvider', () => {
     expect(() => renderHook(() => useAuth())).toThrow('useAuth must be used within AuthProvider');
-  });
-});
-
-describe('AuthContext (production fail-closed)', () => {
-  it('refuses stub sign-in and clears a forged localStorage user', async () => {
-    const allowed = vi.spyOn(stubAuthPolicy, 'isAllowed').mockReturnValue(false);
-    localStorage.setItem(KEY, JSON.stringify({ email: 'x@y.z', name: 'x', provider: 'email' }));
-
-    const { result } = renderHook(() => useAuth(), { wrapper });
-    expect(result.current.user).toBeNull();
-    expect(localStorage.getItem(KEY)).toBeNull();
-
-    let res: { error: string | null } | undefined;
-    await act(async () => {
-      res = await result.current.signInWithEmail('jane@example.com', 'any');
-    });
-    expect(res?.error).toMatch(/identity provider/i);
-    expect(result.current.user).toBeNull();
-    allowed.mockRestore();
   });
 });

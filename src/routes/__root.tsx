@@ -12,7 +12,10 @@ import { I18nProvider } from '@/context/I18nContext';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { OfflineBanner, ScrollToTop } from '@/components/layout/ScrollToTop';
-import { RouteError, RoutePending } from '@/components/shared/RouteStates';
+import { RouteError } from '@/components/shared/RouteStates';
+import { SeoJsonLd } from '@/components/shared/SeoJsonLd';
+import { RouteWaitProvider } from '@/components/shared/TravelarLoader';
+import { isNoindexPath, langFromSearch } from '@/domain/seo';
 import appCss from '../index.css?url';
 
 /** Routes that render inside their own full-screen shell (no public header/footer). */
@@ -54,33 +57,26 @@ const DOCUMENT_SECURITY_HEADERS = {
 };
 
 export const Route = createRootRoute({
-  headers: () => DOCUMENT_SECURITY_HEADERS,
+  headers: ({ matches }) => {
+    const pathname = matches?.at(-1)?.pathname ?? '/';
+    const extra = isNoindexPath(pathname) ? { 'X-Robots-Tag': 'noindex, nofollow' } : {};
+    return { ...DOCUMENT_SECURITY_HEADERS, ...extra };
+  },
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
-      { title: 'Travelar - Multimodal Travel Booking' },
-      {
-        name: 'description',
-        content: 'Book bus, ferry, flights, train, stays, and experiences across Tanzania and beyond with Travelar.',
-      },
-      { property: 'og:title', content: 'Travelar - Multimodal Travel Booking' },
-      {
-        property: 'og:description',
-        content: 'Book bus, ferry, flights, train, stays, and experiences across Tanzania and beyond.',
-      },
-      { property: 'og:image', content: '/travelar-logo.png' },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:image', content: '/travelar-logo.png' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1.0, viewport-fit=cover' },
+      { name: 'theme-color', content: '#0055dd' },
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
       { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      { rel: 'manifest', href: '/manifest.webmanifest' },
     ],
   }),
   component: AppLayout,
   shellComponent: RootDocument,
-  pendingComponent: RoutePending,
   notFoundComponent: () => <h1 className="p-8 text-center text-2xl font-bold">Page not found</h1>,
   errorComponent: ({ reset }) => <RouteError reset={reset} />,
 });
@@ -89,30 +85,34 @@ function AppLayout() {
   const location = useLocation();
   const shell = isShellRoute(location.pathname);
   const fullPage = isFullPageRoute(location.pathname);
+  const urlLang = langFromSearch(location.search);
 
   return (
     <AppProvider>
       <AuthProvider>
-        <I18nProvider>
-          <ScrollToTop />
-          <OfflineBanner />
-          {shell ? (
-            <div className="min-h-screen bg-background">
-              <Outlet />
-            </div>
-          ) : fullPage ? (
-            <div className="min-h-screen bg-background">
-              <Outlet />
-            </div>
-          ) : (
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">
+        <I18nProvider urlLang={urlLang}>
+          <RouteWaitProvider>
+            <ScrollToTop />
+            <OfflineBanner />
+            <SeoJsonLd />
+            {shell ? (
+              <div className="min-h-screen bg-background">
                 <Outlet />
-              </main>
-              <Footer />
-            </div>
-          )}
+              </div>
+            ) : fullPage ? (
+              <div className="min-h-screen bg-background">
+                <Outlet />
+              </div>
+            ) : (
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">
+                  <Outlet />
+                </main>
+                <Footer />
+              </div>
+            )}
+          </RouteWaitProvider>
         </I18nProvider>
       </AuthProvider>
     </AppProvider>
@@ -125,7 +125,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>

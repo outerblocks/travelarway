@@ -1,0 +1,105 @@
+# Local PII plane + Keycloak. Development only.
+# Passenger SoR and the IdP database stay off Cloudflare Workers and off AWS
+# Ireland until a recorded transfer instrument names that destination.
+#
+#   docker compose up -d
+#   node scripts/migrate.mjs
+#
+# Keycloak has its own PostgreSQL instance. Do not point KEYCLOAK at travelar_dev.
+
+services:
+  pii-db:
+    image: postgres:18-alpine
+    container_name: travelar-pii-db
+    environment:
+      POSTGRES_USER: travelar_migrator
+      POSTGRES_PASSWORD: ${PII_POSTGRES_PASSWORD:-travelar_dev_only}
+      POSTGRES_DB: travelar_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - travelar_pii_pg:/var/lib/postgresql/data
+      - ./infra/local/init-pii.sql:/docker-entrypoint-initdb.d/01-roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U travelar_migrator -d travelar_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  keycloak-db:
+    image: postgres:18-alpine
+    container_name: travelar-keycloak-db
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-travelar_kc_dev_only}
+      POSTGRES_DB: keycloak
+    ports:
+      - "5433:5432"
+    volumes:
+      - travelar_keycloak_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    container_name: travelar-redis
+    command: redis-server --save "" --appendonly no --maxmemory 64mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 8
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: travelar-pgbouncer
+    environment:
+      DB_HOST: pii-db
+      DB_USER: travelar_app
+      DB_PASSWORD: ${PII_POSTGRES_PASSWORD:-travelar_dev_only}
+      DB_NAME: travelar_dev
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: session
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 20
+      LISTEN_PORT: 6432
+    ports:
+      - "6432:6432"
+    depends_on:
+      pii-db:
+        condition: service_healthy
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    container_name: travelar-keycloak
+    command:
+      - start-dev
+      - --import-realm
+      - --http-port=8080
+      - --hostname=localhost
+      - --hostname-strict=false
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-travelar_kc_dev_only}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-travelar_kc_admin_dev_only}
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./infra/local/keycloak/travelar-realm.json:/opt/keycloak/data/import/travelar-realm.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
+volumes:
+  travelar_pii_pg:
+  travelar_keycloak_pg:

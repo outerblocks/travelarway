@@ -39,7 +39,8 @@ describe('buildStaySearchRequest', () => {
     expect(query['@type']).toBe('PropertiesQuerySearch');
     expect(query.RequestedCurrency).toBe('GBP');
     expect(query.returnOnlyAvailablePropertiesInd).toBe(true);
-    expect(query.ImageSize).toBe('Medium');
+    expect(query.ImageSize).toBe('Large');
+    expect(query.returnAllImagesInd).toBe(true);
     expect(query.recommendedPropertyAmenitiesInd).toBe(true);
     expect(query.RoomStayCandidate).toHaveLength(2);
     expect(query.SearchBy).toMatchObject({ '@type': 'SearchByCity', SearchCity: 'DAR' });
@@ -93,7 +94,9 @@ describe('normalizeStaySearch', () => {
               Image: [
                 { value: 'https://images.example.com/lobby.jpg', pictureOf: 'Lobby' },
                 { value: 'https://images.example.com/front.jpg', pictureOf: 'Exterior' },
+                { value: 'https://i.travelapi.com/lodging/1/room_b.jpg', pictureOf: 'GuestRoom', imageSize: 'Medium', width: 350 },
                 { value: 'http://insecure.example.com/skip.jpg', pictureOf: 'Exterior' },
+                { value: 'https://images.example.com/logo.png', pictureOf: 'Logo' },
               ],
               Description: ['Harbour-facing rooms in the city centre.'],
               PropertyAmenity: [{ description: 'WiFi' }, { Name: 'Pool' }],
@@ -115,7 +118,11 @@ describe('normalizeStaySearch', () => {
       distanceLabel: '4 mi',
       description: 'Harbour-facing rooms in the city centre.',
       amenities: ['WiFi', 'Pool'],
-      photoUrls: ['https://images.example.com/front.jpg', 'https://images.example.com/lobby.jpg'],
+      photoUrls: [
+        'https://i.travelapi.com/lodging/1/room_z.jpg',
+        'https://images.example.com/front.jpg',
+        'https://images.example.com/lobby.jpg',
+      ],
       reviews: undefined,
     });
   });
@@ -167,6 +174,27 @@ describe('normalizeStaySearch', () => {
     });
     expect(offers[0]?.totalAmount).toBeUndefined();
   });
+
+  it('title-cases shouting property names and prefers room photos over logos', () => {
+    const offers = normalizeStaySearch({
+      PropertiesSearchResponse: {
+        PropertyInfo: [{
+          Property: {
+            name: 'SEA CLIFF HOTEL',
+            PropertyKey: { chainCode: 'HH', propertyCode: '95075' },
+            Address: { City: 'DAR ES SALAAM' },
+            Image: [
+              { value: 'https://images.example.com/logo.png', pictureOf: 'Logo' },
+              { value: 'http://i.travelapi.com/lodging/1/room_b.jpg', pictureOf: 'GuestRoom' },
+            ],
+          },
+        }],
+      },
+    }, meta);
+    expect(offers[0]?.propertyName).toBe('Sea Cliff Hotel');
+    expect(offers[0]?.locationLabel).toBe('Dar Es Salaam');
+    expect(offers[0]?.photoUrls).toEqual(['https://i.travelapi.com/lodging/1/room_z.jpg']);
+  });
 });
 
 describe('normalizeStayAvailability', () => {
@@ -206,6 +234,30 @@ describe('normalizeStayAvailability', () => {
       refundable: false,
       totalAmount: 317.65,
       currency: 'USD',
+    });
+  });
+
+  it('does not present a GDS booking code as the room name and keeps room photos', () => {
+    const rooms = normalizeStayAvailability({
+      CatalogOfferingsHospitalityResponse: {
+        CatalogOfferings: {
+          CatalogOffering: [{
+            id: 'offering-2',
+            Price: { TotalPrice: 120, CurrencyCode: { value: 'USD' } },
+            ProductOptions: [{
+              Product: [{
+                bookingCode: 'E00SM3E',
+                Image: [{ value: 'https://i.travelapi.com/lodging/1/twin_t.jpg', pictureOf: 'GuestRoom' }],
+                RoomType: { Description: { value: '' } },
+              }],
+            }],
+          }],
+        },
+      },
+    });
+    expect(rooms[0]).toMatchObject({
+      name: 'Guest room',
+      photoUrls: ['https://i.travelapi.com/lodging/1/twin_z.jpg'],
     });
   });
 });

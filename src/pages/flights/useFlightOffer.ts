@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PublicAirOffer } from '@/domain/air-offer';
-import { isAbortError, queryFailureStatus, type QueryStatus } from '@/hooks/query-status';
+import { isAbortError, queryFailureStatus, stayReadyDuringRefetch, type QueryStatus } from '@/hooks/query-status';
 
 export function useFlightOffer(offerId: string) {
   const [status, setStatus] = useState<QueryStatus>(offerId ? 'loading' : 'ready');
@@ -13,7 +13,7 @@ export function useFlightOffer(offerId: string) {
       return;
     }
     const controller = new AbortController();
-    setStatus('loading');
+    setStatus((current) => stayReadyDuringRefetch(current, 'loading', 'ready', offer !== null));
     fetch(`/api/flights/offers/${encodeURIComponent(offerId)}`, { signal: controller.signal })
       .then((response) => {
         if (response.status === 404) {

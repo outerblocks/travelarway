@@ -134,6 +134,131 @@ export async function getClassAvailability(input: {
   });
 }
 
+export interface SearchTripRange {
+  tripId: string;
+  fromSeq: number;
+  toSeq: number;
+  fromStation: string;
+  toStation: string;
+  servicePattern: string | null;
+}
+
+export interface SearchClassCard {
+  seatClassCode: string;
+  name: string;
+  available: number;
+  totalSellable: number;
+  soldOut: boolean;
+  fare: number | null;
+  currency: string | null;
+  fareSource: string | null;
+}
+
+/**
+ * Availability and corridor fares for many trips in two queries instead of 2N.
+ */
+export async function loadSearchClassCards(trips: SearchTripRange[]): Promise<Map<string, SearchClassCard[]>> {
+  const result = new Map<string, SearchClassCard[]>();
+  if (trips.length === 0) return result;
+
+  const tripIds = trips.map((trip) => trip.tripId);
+  const fromSeqs = trips.map((trip) => trip.fromSeq);
+  const toSeqs = trips.map((trip) => trip.toSeq);
+  const origins = trips.map((trip) => trip.fromStation);
+  const destinations = trips.map((trip) => trip.toStation);
+
+  const [availability, fares] = await Promise.all([
+    query<AvailabilityRow & { trip_id: string }>(
+      `with ranges as (
+         select unnest($1::uuid[]) as trip_id,
+                unnest($2::int[]) as from_seq,
+                unnest($3::int[]) as to_seq
+       )
+       select r.trip_id, sc.code as seat_class_code, sc.name,
+              count(s.id) filter (where s.sellable)::int as total_sellable,
+              count(s.id) filter (
+                where s.sellable
+                  and not exists (
+                    select 1 from app.sgr_seat_segments g
+                     where g.trip_seat_id = s.id
+                       and g.state in ('HELD', 'SOLD', 'BLOCKED')
+                       and g.from_seq < r.to_seq and g.to_seq > r.from_seq
+                  )
+              )::int as available
+         from ranges r
+         cross join app.sgr_seat_classes sc
+         left join app.sgr_trip_seats s on s.seat_class_id = sc.id and s.trip_id = r.trip_id
+        where sc.is_active
+        group by r.trip_id, sc.code, sc.name, sc.rank
+        order by sc.rank desc`,
+      [tripIds, fromSeqs, toSeqs],
+    ),
+    query<{
+      origin_name: string;
+      dest_name: string;
+      service_pattern: string | null;
+      seat_class_code: string;
+      amount: string;
+      currency: string;
+      fare_source: string;
+    }>(
+      `select o.name as origin_name, d.name as dest_name, f.service_pattern,
+              sc.code as seat_class_code, f.amount::text, f.currency, f.fare_source
+         from app.sgr_fares f
+         join app.sgr_seat_classes sc on sc.id = f.seat_class_id
+         join app.location o on o.id = f.origin_station_id
+         join app.location d on d.id = f.destination_station_id
+        where f.passenger_type = 'adult'
+          and f.valid_to is null
+          and (o.name, d.name) in (
+            select unnest($1::text[]), unnest($2::text[])
+          )`,
+      [origins, destinations],
+    ),
+  ]);
+
+  const fareKey = (origin: string, dest: string, pattern: string | null, cls: string) =>
+    `${origin}|${dest}|${pattern ?? ''}|${cls}`;
+  const fareExact = new Map<string, (typeof fares.rows)[number]>();
+  const fareAny = new Map<string, (typeof fares.rows)[number]>();
+  for (const row of fares.rows) {
+    if (row.service_pattern) {
+      fareExact.set(fareKey(row.origin_name, row.dest_name, row.service_pattern, row.seat_class_code), row);
+    } else if (!fareAny.has(fareKey(row.origin_name, row.dest_name, null, row.seat_class_code))) {
+      fareAny.set(fareKey(row.origin_name, row.dest_name, null, row.seat_class_code), row);
+    }
+  }
+
+  const byTrip = new Map<string, Array<AvailabilityRow & { trip_id: string }>>();
+  for (const row of availability.rows) {
+    const list = byTrip.get(row.trip_id) ?? [];
+    list.push(row);
+    byTrip.set(row.trip_id, list);
+  }
+
+  for (const trip of trips) {
+    const classes = (byTrip.get(trip.tripId) ?? [])
+      .filter((entry) => entry.total_sellable > 0)
+      .map((entry) => {
+        const fare =
+          fareExact.get(fareKey(trip.fromStation, trip.toStation, trip.servicePattern, entry.seat_class_code)) ??
+          fareAny.get(fareKey(trip.fromStation, trip.toStation, null, entry.seat_class_code));
+        return {
+          seatClassCode: entry.seat_class_code,
+          name: entry.name,
+          available: entry.available,
+          totalSellable: entry.total_sellable,
+          soldOut: entry.available === 0,
+          fare: fare ? Number(fare.amount) : null,
+          currency: fare?.currency ?? null,
+          fareSource: fare?.fare_source ?? null,
+        };
+      });
+    result.set(trip.tripId, classes);
+  }
+  return result;
+}
+
 interface SnapshotCoach {
   coachNo: number;
   classCode: string;

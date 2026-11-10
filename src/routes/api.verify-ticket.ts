@@ -17,7 +17,7 @@ export const Route = createFileRoute('/api/verify-ticket')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'tickets');
+        const limited = await rateLimit(request, 'tickets');
         if (limited) return limited;
 
         const token = new URL(request.url).searchParams.get('token')?.trim() ?? '';

@@ -1,14 +1,16 @@
 import { useCallback, useMemo, useState, useEffect } from 'react';
-import { useNavigate, Link } from '@/router';
+import { useNavigate } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
 import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
 import { partyMismatched } from '@/domain/passengers';
-import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState } from '@/components/shared/States';
 import { Select } from '@/components/ui/Select';
 import { SeatMapGrid, type SeatMapSeatView, type SeatMapCellView } from '@/components/bus/SeatMapGrid';
+import { stayReadyDuringRefetch } from '@/hooks/query-status';
 import { formatCurrency } from '@/utils/format';
+import { readStoredSearchIntent, rememberSearchIntent } from '@/utils/search-intent';
 import type { PassengerInfo } from '@/types';
 
 /** Seat as this page renders it; no dependency on the retired mock trip model. */
@@ -20,7 +22,7 @@ interface SeatView {
 }
 
 interface SeatMapResponse {
-  layout: { name: string; rows: number; cols: number };
+  layout: { name: string; rows: number; cols: number; decks?: number };
   cells: SeatMapCellView[];
   seats: SeatMapSeatView[];
 }
@@ -54,7 +56,16 @@ interface TripDetailResponse {
   vehicleModel: string | null;
   vehicleRegistration: string | null;
   seatLayout: { name: string; rowCount: number; lanes: string[] } | null;
-  stops: { id: string; locationName: string; code: string; sequence: number; offsetMinutes: number; terminalName: string | null }[];
+  stops: {
+    id: string;
+    locationName: string;
+    code: string;
+    sequence: number;
+    offsetMinutes: number;
+    terminalName: string | null;
+    pickupAllowed?: boolean;
+    dropoffAllowed?: boolean;
+  }[];
   fares: { fromStopId: string; toStopId: string; fareMinor: number; currency: string }[];
   takenSeats: { seatNo: string; reason: 'hold' | 'sold' }[];
 }
@@ -101,7 +112,7 @@ export function BusBookingPage() {
     }
 
     const controller = new AbortController();
-    setLoadState('loading');
+    setLoadState((current) => stayReadyDuringRefetch(current, 'loading', 'ready', detail !== null));
 
     fetch(`/api/trip-detail?id=${encodeURIComponent(tripId)}`, { signal: controller.signal })
       .then(async (response) => {
@@ -133,18 +144,27 @@ export function BusBookingPage() {
 
   useEffect(() => {
     if (!tripId) return;
+    const fromStopId = boardingPoint || '';
+    const toStopId = dropOffPoint || '';
+    const segment =
+      fromStopId && toStopId
+        ? `&fromStopId=${encodeURIComponent(fromStopId)}&toStopId=${encodeURIComponent(toStopId)}`
+        : '';
 
     const controller = new AbortController();
-    fetch(`/api/seat-map?tripId=${encodeURIComponent(tripId)}`, { signal: controller.signal, cache: 'no-store' })
+    fetch(`/api/seat-map?tripId=${encodeURIComponent(tripId)}${segment}`, { signal: controller.signal, cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
-      .then((body: { data?: SeatMapResponse } | null) => setSeatMap(body?.data ?? null))
+      .then((body: { data?: SeatMapResponse; searchIntent?: string } | null) => {
+        rememberSearchIntent(body?.searchIntent);
+        setSeatMap(body?.data ?? null);
+      })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setSeatMap(null);
       });
 
     return () => controller.abort();
-  }, [tripId]);
+  }, [tripId, boardingPoint, dropOffPoint]);
 
   const trip = useMemo<TripView | null>(() => {
     if (!detail) return null;
@@ -208,22 +228,19 @@ export function BusBookingPage() {
       originStopId: originStop.id,
       destinationStopId: destinationStop.id,
       boardingPoints: detail.stops
-        .filter((stop) => stop.sequence <= destinationStop.sequence)
+        .filter((stop) => stop.sequence <= destinationStop.sequence && stop.pickupAllowed !== false)
         .map(toPoint),
       dropOffPoints: detail.stops
-        .filter((stop) => stop.sequence >= originStop.sequence)
+        .filter((stop) => stop.sequence >= originStop.sequence && stop.dropoffAllowed !== false)
         .map(toPoint),
       seatMap: { layout },
     };
   }, [detail, bookingState.searchParams.origin, bookingState.searchParams.destination]);
 
-  // Boarding and drop-off deliberately start empty. Between them they set the price, so
-  // pre-filling them from the search had the customer confirm a pair of stops they never
-  // chose. The fare line reads '—' until both are stated.
+  // Boarding and drop-off start empty so the traveller names the pair. Until then the
+  // fare is the searched origin–destination amount already shown on results. Once both
+  // stops are chosen, the fare table for that pair replaces it.
 
-  // Price the pair that is actually selected, from the fare table the API already returned.
-  // Changing the drop-off to the terminus must change the price on screen immediately,
-  // not at the review step.
   const selectedFare = useMemo(() => {
     if (!detail) return null;
     const match = detail.fares.find(
@@ -317,8 +334,16 @@ export function BusBookingPage() {
     try {
       const response = await fetch('/api/holds', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ tripId, seats: selectedSeats }),
+        headers: {
+          'content-type': 'application/json',
+          'x-search-intent': readStoredSearchIntent(),
+        },
+        body: JSON.stringify({
+          tripId,
+          fromStopId: boardingPoint,
+          toStopId: dropOffPoint,
+          seats: selectedSeats,
+        }),
       });
 
       if (response.status === 409) {
@@ -364,15 +389,8 @@ export function BusBookingPage() {
     }
   };
 
-  if (loadState === 'loading') {
-    return (
-      <>
-        <SearchSummaryBar>
-          <Link to="/bus/results" className="btn-ghost text-label">← {tp('backToResults')}</Link>
-        </SearchSummaryBar>
-        <LoadingState />
-      </>
-    );
+  if (loadState === 'loading' && !detail) {
+    return <LoadingState />;
   }
 
   if (loadState === 'missing' || !trip) return (
@@ -391,17 +409,18 @@ export function BusBookingPage() {
     />
   );
 
+  const fareMinor = selectedFare ?? (trip.segmentFare > 0 ? trip.segmentFare : null);
+
   return (
     <>
-      <SearchSummaryBar>
-        <Link to="/bus/results" className="btn-ghost text-label">← {tp('backToResults')}</Link>
-        <span className="text-body font-medium text-neutral-900">
-          {trip.operatorName} · {trip.passengerOrigin} → {trip.passengerDestination}
-        </span>
-        <span className="text-body text-neutral-500">{trip.departureTime} · {trip.busClass}</span>
-      </SearchSummaryBar>
-
       <div className="section-container py-6">
+        <h1 className="mb-1 text-page font-bold text-neutral-900">{trip.operatorName}</h1>
+        <p className="mb-6 text-body text-neutral-500">
+          {trip.passengerOrigin} → {trip.passengerDestination} · {trip.departureTime}
+          {trip.busClass ? ` · ${trip.busClass}` : ''}
+          {trip.busModel ? ` · ${trip.busModel}` : ''}
+          {trip.registrationNumber ? ` · ${trip.registrationNumber}` : ''}
+        </p>
         <div className="grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-12 lg:gap-y-8 items-start">
           {/* Seat Selection - Left */}
           <div className="lg:col-span-4">
@@ -442,13 +461,13 @@ export function BusBookingPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-neutral-500">{tp('farePerPerson')}</span>
                   <span className="font-medium text-neutral-900">
-                    {selectedFare === null ? '—' : formatCurrency(selectedFare, trip.currency, 'TSh')}
+                    {fareMinor === null ? '—' : formatCurrency(fareMinor, trip.currency, 'TSh')}
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-neutral-500">{tp('checkoutTotal')}</span>
-                  <span className="font-bold text-brand-600">
-                    {selectedFare === null ? '—' : formatCurrency(selectedFare * totalPassengers, trip.currency, 'TSh')}
+                  <span className="font-bold text-neutral-900">
+                    {fareMinor === null ? '—' : formatCurrency(fareMinor * totalPassengers, trip.currency, 'TSh')}
                   </span>
                 </div>
               </div>
@@ -555,8 +574,8 @@ export function BusBookingPage() {
                 <div className="flex w-full items-center justify-between gap-5 sm:w-auto sm:justify-end">
                   <div className="text-left sm:text-right">
                     <p className="text-meta text-neutral-500">{tp('checkoutTotal')}</p>
-                    <p className="text-listing font-bold text-brand-600">
-                      {selectedFare === null ? '—' : formatCurrency(selectedFare * totalPassengers, trip.currency, 'TSh')}
+                    <p className="text-listing font-bold text-neutral-900">
+                      {fareMinor === null ? '—' : formatCurrency(fareMinor * totalPassengers, trip.currency, 'TSh')}
                     </p>
                   </div>
                   <button

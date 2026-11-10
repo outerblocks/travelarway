@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useI18n } from '@/context/I18nContext';
+import { lodgingPhotoUrls } from '@/domain/lodging-images';
 
 export function StayPhoto({
   urls,
@@ -12,7 +13,7 @@ export function StayPhoto({
 }) {
   const { tp } = useI18n();
   const [index, setIndex] = useState(0);
-  const https = urls.filter((url) => url.startsWith('https://'));
+  const https = lodgingPhotoUrls(urls);
   const src = https[index] ?? null;
   const initial = (name.trim()[0] || 'T').toUpperCase();
 
@@ -28,7 +29,7 @@ export function StayPhoto({
     <img
       src={src}
       alt={`${name} ${tp('propertyPhoto')}`}
-      className={`object-cover ${className}`}
+      className={`block h-full w-full object-cover object-center ${className}`}
       onError={() => setIndex((current) => current + 1)}
     />
   );

@@ -12,12 +12,15 @@
  */
 import { query, withTransaction } from '@/server/db';
 import { isUniqueViolation, TripNotFoundError } from '@/server/errors';
+import { resolveBusSegment } from '@/server/bus-segment';
 
 // Re-exported so existing route imports keep working; the class itself is shared.
 export { TripNotFoundError };
-import { quoteBusSegment } from '@/server/quote';
+import { quoteBusSegment, QuoteUnavailableError } from '@/server/quote';
+import { resolveSeatsForTrip } from '@/server/seat-map';
 import { expireIfDue } from '@/server/expiry';
 import { createBookingAccessToken, assertBookingAccessConfigured } from '@/server/booking-access';
+import { stampBookingPos } from '@/server/markets';
 
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -85,9 +88,9 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     throw new BookingNotConfiguredError('BOOKING_ACCESS_SECRET');
   }
 
-  const seats = [...new Set(input.seats.map((seat) => seat.trim().toUpperCase()).filter(Boolean))];
+    const seats = [...new Set(input.seats.map((seat) => seat.trim().toUpperCase()).filter(Boolean))];
 
-  return withTransaction(async (client) => {
+    return withTransaction(async (client) => {
     const trip = await client.query<{ operator_id: string; status: string; mode: string; country_code: string }>(
       `select t.operator_id, t.status, o.mode, o.country_code
          from app.trip t join app.operator o on o.id = t.operator_id
@@ -95,17 +98,24 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
       [input.tripId],
     );
     if (trip.rowCount === 0) throw new TripNotFoundError();
+    const resolved = await resolveSeatsForTrip(client, input.tripId, seats);
+    const canonical = resolved.map((seat) => seat.label);
+    const seatIdByLabel = new Map(resolved.map((seat) => [seat.label.toUpperCase(), seat.id]));
 
     // Every seat must still be held by an unexpired hold. This is the check that stops a
     // client from booking seats it never reserved.
+    const segment = await resolveBusSegment(client, input.tripId, input.fromStopId, input.toStopId);
+    if (!segment) throw new QuoteUnavailableError('no_such_segment');
+
     const held = await client.query<{ seat_no: string }>(
       `select seat_no from app.seat_hold
         where trip_id = $1 and status = 'active' and expires_at > now()
-          and seat_no = any($2::text[])`,
-      [input.tripId, seats],
+          and seat_no = any($2::text[])
+          and from_seq = $3 and to_seq = $4`,
+      [input.tripId, canonical, segment.fromSeq, segment.toSeq],
     );
-    const heldSeats = new Set(held.rows.map((row) => row.seat_no));
-    const missing = seats.filter((seat) => !heldSeats.has(seat));
+    const heldSeats = new Set(held.rows.map((row) => row.seat_no.toUpperCase()));
+    const missing = canonical.filter((seat) => !heldSeats.has(seat.toUpperCase()));
     if (missing.length > 0) throw new SeatsNotHeldError(missing);
 
     // The amount owed is computed from segment_fare inside this transaction. Nothing in the
@@ -154,12 +164,27 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
       }
     }
     if (!bookingId || !paymentDueAt) throw new Error('pnr_generation_failed');
+    await stampBookingPos(client, bookingId, trip.rows[0].operator_id);
 
     for (const passenger of input.passengers) {
       await client.query(
-        `insert into app.booking_passenger (booking_id, trip_id, full_name, category, seat_no, fare_minor, status)
-         values ($1, $2, $3, $4, $5, $6, 'pending')`,
-        [bookingId, input.tripId, passenger.fullName, passenger.category, passenger.seatNo, fareFor(passenger.category)],
+        `insert into app.booking_passenger
+           (booking_id, trip_id, full_name, category, seat_no, seat_id, fare_minor, status,
+            from_stop_id, to_stop_id, from_seq, to_seq)
+         values ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11)`,
+        [
+          bookingId,
+          input.tripId,
+          passenger.fullName,
+          passenger.category,
+          passenger.seatNo.trim().toUpperCase(),
+          seatIdByLabel.get(passenger.seatNo.trim().toUpperCase()) ?? null,
+          fareFor(passenger.category),
+          segment.fromStopId,
+          segment.toStopId,
+          segment.fromSeq,
+          segment.toSeq,
+        ],
       );
     }
 
@@ -168,8 +193,9 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     // booking is what lets a confirmed payment find and consume them.
     await client.query(
       `update app.seat_hold set booking_id = $1
-        where trip_id = $2 and status = 'active' and seat_no = any($3::text[])`,
-      [bookingId, input.tripId, seats],
+        where trip_id = $2 and status = 'active' and seat_no = any($3::text[])
+          and from_seq = $4 and to_seq = $5`,
+      [bookingId, input.tripId, canonical, segment.fromSeq, segment.toSeq],
     );
 
     await client.query(
@@ -179,7 +205,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
         bookingId,
         JSON.stringify({
           pnr,
-          seats,
+          seats: canonical,
           totalMinor: quote.grossMinor,
           currency: quote.currency,
           paymentDueAt: paymentDueAt.toISOString(),
@@ -190,7 +216,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     return {
       bookingId,
       pnr,
-      seats,
+      seats: canonical,
       totalMinor: quote.grossMinor,
       currency: quote.currency,
       status: 'pending_payment',

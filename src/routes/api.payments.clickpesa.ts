@@ -2,13 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { getServerConfig } from '@/server/config';
 import { verifyChecksum } from '@/server/payments/checksum';
 import { CONFIRMING_COLLECTION_STATUSES } from '@/server/payments/clickpesa';
-import {
-  confirmPayment,
-  failPaymentByOrderReference,
-  PAYMENT_PROVIDER,
-  reversePayment,
-  UnknownPaymentError,
-} from '@/server/payments';
+import { enqueueOutboxStandalone, processOutboxBatch } from '@/server/outbox';
+import { log } from '@/server/log';
 
 /**
  * POST /api/payments/clickpesa
@@ -73,75 +68,32 @@ export const Route = createFileRoute('/api/payments/clickpesa')({
           return Response.json({ error: 'invalid_webhook' }, { status: 400 });
         }
 
+        if (
+          body.event === 'PAYMENT RECEIVED' &&
+          typeof data.status === 'string' &&
+          CONFIRMING_COLLECTION_STATUSES.has(data.status)
+        ) {
+          const amountMinor = Number(data.collectedAmount);
+          const currency = String(data.collectedCurrency ?? '').toUpperCase();
+          if (!Number.isFinite(amountMinor) || amountMinor < 0 || !/^[A-Z]{3}$/.test(currency)) {
+            return Response.json({ error: 'invalid_amount' }, { status: 400 });
+          }
+        }
+
+        const idempotencyKey = `clickpesa:${orderReference}:${body.event ?? ''}:${data.status ?? ''}`;
         try {
-          // A reversal is decided by status, not by the event name: money can go back to the
-          // customer after we have issued, and a void ticket in a conductor's hands is worse
-          // than a refunded booking.
-          const reversal =
-            data.status === 'REVERSED' ? 'reversed' : data.status === 'REFUNDED' ? 'refunded' : null;
-          if (reversal) {
-            const result = await reversePayment({
-              provider: PAYMENT_PROVIDER,
-              orderReference,
-              kind: reversal,
-              reason: typeof data.message === 'string' ? data.message : undefined,
-            });
-            if (!result) {
-              console.error('[api/payments/clickpesa] reversal for unknown reference', orderReference);
-              return Response.json({ error: 'unknown_order_reference' }, { status: 404 });
-            }
-            return Response.json({ ...result, acknowledged: true });
-          }
-
-          if (body.event === 'PAYMENT RECEIVED') {
-            // One gate, shared with the reconciliation poll: PENDING, PROCESSING and
-            // ON-HOLD never issue a ticket, however promising they sound.
-            if (!data.status || !CONFIRMING_COLLECTION_STATUSES.has(data.status)) {
-              return Response.json({ acknowledged: true, ignored: `status:${data.status ?? 'unknown'}` });
-            }
-
-            const amountMinor = Number(data.collectedAmount);
-            const currency = (data.collectedCurrency ?? '').toUpperCase();
-            if (!Number.isFinite(amountMinor) || amountMinor < 0 || !/^[A-Z]{3}$/.test(currency)) {
-              return Response.json({ error: 'invalid_amount' }, { status: 400 });
-            }
-
-            const result = await confirmPayment({
-              provider: PAYMENT_PROVIDER,
-              orderReference,
-              amountMinor,
-              currency,
-              paidAt: data.updatedAt,
-              raw: data,
-            });
-
-            return Response.json(result, {
-              // A mismatch is a real answer: stop retrying, reconcile by hand.
-              status: result.paymentStatus === 'failed' ? 409 : 200,
-              headers: { 'cache-control': 'no-store' },
-            });
-          }
-
-          if (body.event === 'PAYMENT FAILED') {
-            const failed = await failPaymentByOrderReference({
-              provider: PAYMENT_PROVIDER,
-              orderReference,
-              failureCode: (data.message ?? 'provider_failed').slice(0, 200),
-            });
-            return Response.json({ acknowledged: true, recorded: failed });
-          }
-
-          // Received, understood, not ours to act on yet.
-          return Response.json({ acknowledged: true, ignored: body.event ?? 'unknown' });
+          await enqueueOutboxStandalone(
+            'payment.clickpesa',
+            { event: body.event ?? '', data },
+            idempotencyKey,
+          );
+          const processed = await processOutboxBatch();
+          return Response.json(
+            { acknowledged: true, queued: true, processed },
+            { headers: { 'cache-control': 'no-store' } },
+          );
         } catch (error) {
-          if (error instanceof UnknownPaymentError) {
-            // A reference we never issued. Do not acknowledge as processed; it needs a
-            // human, because it means either a misconfiguration or someone probing.
-            console.error('[api/payments/clickpesa] unknown order reference', orderReference);
-            return Response.json({ error: 'unknown_order_reference' }, { status: 404 });
-          }
-          console.error('[api/payments/clickpesa] failed:', (error as Error).message);
-          // 5xx so ClickPesa retries: a transient database failure must not lose a sale.
+          log('error', 'clickpesa_enqueue_failed', { message: (error as Error).message });
           return Response.json({ error: 'webhook_failed' }, { status: 500 });
         }
       },

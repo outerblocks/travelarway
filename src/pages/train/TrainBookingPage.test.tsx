@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -82,7 +82,7 @@ function installFetch(options: { failHold?: boolean } = {}) {
 function SeedTrainSearch({ roundTrip = false }: { roundTrip?: boolean }) {
   const { setSearchParams } = useApp();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setSearchParams({
       mode: 'train',
       origin: 'Dar es Salaam',

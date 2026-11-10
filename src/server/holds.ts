@@ -1,16 +1,15 @@
 /**
  * Seat holds.
  *
- * A hold is temporary, not a booking: it reserves capacity for a few minutes so a
- * passenger can pay. The database, not this module, is the authority on whether a seat
- * can be taken — ux_seat_hold_active rejects a second active hold on the same seat, and
- * ux_seat_sold_once rejects a second active passenger. This code reports those failures
- * as domain errors instead of leaking driver codes to the caller.
+ * A hold is temporary, not a booking: it reserves a numbered seat across a stop interval
+ * for a few minutes so a passenger can pay. The database exclusion constraint, not this
+ * module, is the authority on whether two intervals overlap.
  */
 import { withTransaction } from '@/server/db';
-import { isUniqueViolation, TripNotFoundError } from '@/server/errors';
+import { isInventoryConflict, TripNotFoundError } from '@/server/errors';
+import { resolveBusSegment } from '@/server/bus-segment';
+import { resolveSeatsForTrip } from '@/server/seat-map';
 
-// Re-exported so existing route imports keep working; the class itself is shared.
 export { TripNotFoundError };
 
 export class TripUnavailableError extends Error {
@@ -25,14 +24,24 @@ export class SeatUnavailableError extends Error {
   }
 }
 
+export class SegmentNotPermittedError extends Error {
+  constructor() {
+    super('segment_not_permitted');
+  }
+}
+
 export interface HoldResult {
   holdIds: string[];
   seats: string[];
   expiresAt: string;
+  fromStopId: string;
+  toStopId: string;
 }
 
 export async function createHold(input: {
   tripId: string;
+  fromStopId: string;
+  toStopId: string;
   seats: string[];
   ttlSeconds?: number;
 }): Promise<HoldResult> {
@@ -49,41 +58,59 @@ export async function createHold(input: {
     if (trip.rowCount === 0) throw new TripNotFoundError();
     if (trip.rows[0].status !== 'scheduled') throw new TripUnavailableError();
 
-    // A seat already sold is not merely held — check the sold side too, so the error is
-    // accurate rather than surfacing later as a booking conflict.
+    const segment = await resolveBusSegment(client, input.tripId, input.fromStopId, input.toStopId);
+    if (!segment) throw new SegmentNotPermittedError();
+
+    const resolved = await resolveSeatsForTrip(client, input.tripId, seats);
+    const canonical = resolved.map((seat) => seat.label);
+
     const sold = await client.query<{ seat_no: string }>(
       `select seat_no from app.booking_passenger
-        where trip_id = $1 and status = 'active' and seat_no = any($2::text[])`,
-      [input.tripId, seats],
+        where trip_id = $1 and status in ('pending', 'active') and seat_no = any($2::text[])
+          and from_seq < $4 and to_seq > $3`,
+      [input.tripId, canonical, segment.fromSeq, segment.toSeq],
     );
     if ((sold.rowCount ?? 0) > 0) {
       throw new SeatUnavailableError(sold.rows.map((row) => row.seat_no));
     }
 
-    // Expired holds must not block a seat forever, even before the sweeper runs.
     await client.query(
       `update app.seat_hold
           set status = 'expired'
         where trip_id = $1 and seat_no = any($2::text[])
-          and status = 'active' and expires_at <= now()`,
-      [input.tripId, seats],
+          and status = 'active' and expires_at <= now()
+          and from_seq < $4 and to_seq > $3`,
+      [input.tripId, canonical, segment.fromSeq, segment.toSeq],
     );
 
     try {
       const inserted = await client.query<{ id: string; expires_at: Date }>(
-        `insert into app.seat_hold (trip_id, seat_no, expires_at)
-         select $1, unnest($2::text[]), now() + make_interval(secs => $3)
+        `insert into app.seat_hold
+           (trip_id, seat_no, seat_id, expires_at, from_stop_id, to_stop_id, from_seq, to_seq)
+         select $1, x.label, x.id, now() + make_interval(secs => $3), $5, $6, $7, $8
+           from unnest($2::uuid[], $4::text[]) as x(id, label)
          returning id, expires_at`,
-        [input.tripId, seats, ttl],
+        [
+          input.tripId,
+          resolved.map((seat) => seat.id),
+          ttl,
+          resolved.map((seat) => seat.label),
+          segment.fromStopId,
+          segment.toStopId,
+          segment.fromSeq,
+          segment.toSeq,
+        ],
       );
 
       return {
         holdIds: inserted.rows.map((row) => row.id),
-        seats,
+        seats: canonical,
         expiresAt: inserted.rows[0].expires_at.toISOString(),
+        fromStopId: segment.fromStopId,
+        toStopId: segment.toStopId,
       };
     } catch (error) {
-      if (isUniqueViolation(error)) throw new SeatUnavailableError(seats);
+      if (isInventoryConflict(error)) throw new SeatUnavailableError(seats);
       throw error;
     }
   });

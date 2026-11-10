@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from '@/router';
+import { useNavigate } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { LoadingState, ErrorState, SearchSummaryBar } from '@/components/shared/States';
+import { LoadingState, ErrorState } from '@/components/shared/States';
 import { formatDate } from '@/utils/format';
 import { formatMoney } from '@/domain/money';
 
@@ -72,7 +72,7 @@ export function TrainReviewPage() {
 
   const loading = !outboundQuote.quote && !outboundQuote.failed;
 
-  if (loading) return <><SearchSummaryBar><Link to="/train/booking" className="btn-ghost text-label">← {tp('checkoutBack')}</Link></SearchSummaryBar><LoadingState message={tp('preparingBookingReview')} /></>;
+  if (loading) return <LoadingState message={tp('preparingBookingReview')} />;
 
   // The selection carried no trip, or the server cannot price it. Both are shown as a failure
   // to continue rather than a review page with a zero total on it.
@@ -112,7 +112,6 @@ export function TrainReviewPage() {
 
   return (
     <>
-      <SearchSummaryBar><Link to="/train/booking" className="btn-ghost text-label">← {tp('checkoutBack')}</Link><span className="text-body font-medium text-neutral-900">{tp('trainBookingReview')}</span></SearchSummaryBar>
       <div className="section-container py-6">
         <nav aria-label={tp('trainBookingProgress')} className="mb-6">
           <ol className="flex flex-wrap items-center gap-2 text-meta sm:gap-4">
@@ -213,7 +212,7 @@ export function TrainReviewPage() {
                 )}
               </div>
               <div className="border-t border-neutral-200 pt-4">
-                <div className="flex justify-between"><span className="text-listing font-bold text-neutral-900">{tp('checkoutTotal')}</span><span className="text-listing font-bold text-brand-600">{formatMoney(combinedTotal, quote.currency)}</span></div>
+                <div className="flex justify-between"><span className="text-listing font-bold text-neutral-900">{tp('checkoutTotal')}</span><span className="text-listing font-bold text-neutral-900">{formatMoney(combinedTotal, quote.currency)}</span></div>
               </div>
               <button onClick={() => navigate('/checkout')} className="btn-primary w-full mt-6">{tp('proceedToCheckout')}</button>
             </div>

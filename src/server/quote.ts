@@ -57,6 +57,8 @@ export async function quoteBusSegment(input: {
         and sf.from_stop_id = $2
         and sf.to_stop_id = $3
         and fs.sequence < ts.sequence
+        and fs.pickup_allowed
+        and ts.dropoff_allowed
       limit 1`,
     [input.tripId, input.fromStopId, input.toStopId],
   );
@@ -81,6 +83,46 @@ export async function quoteBusSegment(input: {
     lines.push({ kind: 'child', unitMinor: childUnit, quantity: children, amountMinor: childUnit * children });
   }
 
+  return {
+    currency: rows[0].currency,
+    grossMinor: lines.reduce((sum, line) => sum + line.amountMinor, 0),
+    adultUnitMinor: adultUnit,
+    childUnitMinor: childUnit,
+    lines,
+  };
+}
+
+export async function quoteFerryClass(input: {
+  tripId: string;
+  vesselClassId: string;
+  adults: number;
+  children: number;
+}): Promise<SegmentQuote> {
+  const { rows } = await query<{
+    adult_fare_minor: string;
+    child_fare_minor: string;
+    currency: string;
+  }>(
+    `select vc.adult_fare_minor::text, vc.child_fare_minor::text, vc.currency
+       from app.sailing_inventory si
+       join app.vessel_class vc on vc.id = si.vessel_class_id
+       join app.trip t on t.id = si.trip_id
+      where t.id = $1 and si.vessel_class_id = $2
+      limit 1`,
+    [input.tripId, input.vesselClassId],
+  );
+  if (!rows[0]) throw new QuoteUnavailableError('no_such_segment');
+  const adults = Math.max(0, Math.trunc(input.adults));
+  const children = Math.max(0, Math.trunc(input.children));
+  if (adults + children === 0) throw new QuoteUnavailableError('invalid_segment');
+  const adultUnit = Number(rows[0].adult_fare_minor);
+  const childUnit = Number(rows[0].child_fare_minor);
+  const lines: QuoteLine[] = [
+    { kind: 'adult', unitMinor: adultUnit, quantity: adults, amountMinor: adultUnit * adults },
+  ];
+  if (children > 0) {
+    lines.push({ kind: 'child', unitMinor: childUnit, quantity: children, amountMinor: childUnit * children });
+  }
   return {
     currency: rows[0].currency,
     grossMinor: lines.reduce((sum, line) => sum + line.amountMinor, 0),

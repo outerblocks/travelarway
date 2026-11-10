@@ -1,0 +1,223 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Travelar AWS control plane in Europe Ireland eu-west-1. Full Aurora PostgreSQL
+  configuration in private subnets. Not Express. Not publicly accessible. Not
+  Cape Town. Do not store passenger PII here until IRELAND_PII_TRANSFER_RECORDED
+  is set and counsel names Ireland as the destination.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: preprod
+    AllowedValues: [preprod, production]
+  AppCidr:
+    Type: String
+    Default: 10.40.0.0/16
+    Description: VPC CIDR for the Ireland control plane.
+  AllowedAppCidr:
+    Type: String
+    Description: CIDR of the application tier that may open 5432. Never 0.0.0.0/0.
+    AllowedPattern: ^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(1[6-9]|2[0-9]|3[0-2])$
+  MinAcu:
+    Type: Number
+    Default: 0.5
+  MaxAcu:
+    Type: Number
+    Default: 4
+
+Conditions:
+  IsProduction: !Equals [!Ref EnvironmentName, production]
+
+Resources:
+  ControlVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref AppCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: travelar-control-eu-west-1
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ControlVpc
+      CidrBlock: 10.40.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: travelar-control-private-a
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ControlVpc
+      CidrBlock: 10.40.1.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: travelar-control-private-b
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ControlVpc
+      Tags:
+        - Key: Name
+          Value: travelar-control-private-rt
+
+  PrivateAssocA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateAssocB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref PrivateRouteTable
+
+  AuroraSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Aurora PostgreSQL from the named application CIDR only
+      VpcId: !Ref ControlVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: !Ref AllowedAppCidr
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: travelar-aurora-sg
+
+  ClusterKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Travelar Ireland Aurora storage
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: EnableRoot
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: "*"
+
+  ClusterKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/travelar-control-aurora-eu-west-1
+      TargetKeyId: !Ref ClusterKey
+
+  MasterSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub travelar/${EnvironmentName}/aurora-master
+      Description: Generated Aurora master password. Not for application runtime.
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"travelar_master"}'
+        GenerateStringKey: password
+        PasswordLength: 40
+        ExcludeCharacters: "\"@/\\"
+
+  SubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private subnets for Travelar Aurora Ireland
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+
+  ClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Description: Force TLS for Travelar Aurora
+      Family: aurora-postgresql16
+      Parameters:
+        rds.force_ssl: "1"
+
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBClusterIdentifier: !Sub travelar-control-${EnvironmentName}
+      Engine: aurora-postgresql
+      EngineVersion: "16.8"
+      DatabaseName: travelar_control
+      DBSubnetGroupName: !Ref SubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref AuroraSecurityGroup
+      DBClusterParameterGroupName: !Ref ClusterParameterGroup
+      StorageEncrypted: true
+      KmsKeyId: !Ref ClusterKey
+      MasterUsername: travelar_master
+      MasterUserPassword: !Sub "{{resolve:secretsmanager:${MasterSecret}:SecretString:password}}"
+      BackupRetentionPeriod: !If [IsProduction, 14, 7]
+      PreferredBackupWindow: "01:00-02:00"
+      PreferredMaintenanceWindow: sun:03:00-sun:04:00
+      DeletionProtection: true
+      EnableHttpEndpoint: false
+      EnableIAMDatabaseAuthentication: true
+      CopyTagsToSnapshot: true
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref MinAcu
+        MaxCapacity: !Ref MaxAcu
+      Tags:
+        - Key: travelar:plane
+          Value: aws_ireland_control
+        - Key: travelar:pii
+          Value: "false"
+
+  WriterInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub travelar-control-${EnvironmentName}-a
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsKMSKeyId: !Ref ClusterKey
+      Tags:
+        - Key: Role
+          Value: writer
+
+  ReaderInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub travelar-control-${EnvironmentName}-b
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsKMSKeyId: !Ref ClusterKey
+      Tags:
+        - Key: Role
+          Value: reader
+
+Outputs:
+  VpcId:
+    Value: !Ref ControlVpc
+  ClusterEndpoint:
+    Value: !GetAtt AuroraCluster.Endpoint.Address
+  ReaderEndpoint:
+    Value: !GetAtt AuroraCluster.ReadEndpoint.Address
+  SecretArn:
+    Value: !Ref MasterSecret
+    Description: Master secret ARN. Application roles are created after deploy; do not use the master in the app.
+  Region:
+    Value: !Ref AWS::Region

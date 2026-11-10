@@ -3,6 +3,7 @@ import { useI18n } from '@/context/I18nContext';
 import type { PublicAirLeg, PublicAirOffer } from '@/domain/air-offer';
 import {
   airportLine,
+  displayAirline,
   isNightDeparture,
   layoverMinutes,
   segmentArrivesNextDay,
@@ -40,7 +41,7 @@ export function FlightItineraryList({
           overnight ? tp('arrivesNextDayFlight') : null,
           operated,
         ].filter(Boolean);
-        const airline = leg.carrierName || leg.carrier;
+        const airline = displayAirline(leg);
 
         return (
           <li key={`${leg.carrier}-${leg.flightNumber}-${leg.departure}`} className="border-t border-neutral-100 py-3 first:border-t-0">
@@ -54,9 +55,9 @@ export function FlightItineraryList({
                   {leg.originTerminal ? ` · ${tp('terminalLabel').replace('{terminal}', leg.originTerminal)}` : ''}
                 </p>
                 <div className="mt-2 flex items-start gap-2">
-                  <AirlineLogo code={leg.carrier} name={airline} size="sm" />
+                  <AirlineLogo code={airline.code} fallbackCode={leg.carrier} name={airline.name} size="sm" />
                   <div>
-                    <p className="font-medium text-neutral-900">{airline} {leg.carrier} {leg.flightNumber}</p>
+                    <p className="font-medium text-neutral-900">{airline.name || airline.code} {leg.carrier} {leg.flightNumber}</p>
                     {notes.length > 0 && <p className="text-meta text-neutral-600">{notes.join(' · ')}</p>}
                   </div>
                 </div>

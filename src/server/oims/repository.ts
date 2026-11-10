@@ -1,4 +1,5 @@
-import { query, withTransaction } from '@/server/db';
+import { query, withOperatorTransaction } from '@/server/db';
+import { parseAmenityKeys } from '@/domain/amenities';
 import { occurrenceDates } from '@/server/oims/calendar';
 import { buildManifest, latraCopies, tasacCopies, type ManifestDocument } from '@/server/oims/manifest';
 import { publicationBlocks, type OperatorReadiness } from '@/server/oims/readiness';
@@ -8,6 +9,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export class OimsForbiddenError extends Error {
   constructor() {
     super('oims_forbidden');
+  }
+}
+
+export class OimsConflictError extends Error {
+  constructor(message: string) {
+    super(message);
   }
 }
 
@@ -61,8 +68,8 @@ export async function loadWorkspace(operatorId: string, mode: 'bus' | 'ferry') {
       [operatorId],
     ),
     query(
-      `select v.id, v.registration, v.model, v.service_class as "serviceClass", v.total_seats as "totalSeats",
-              v.seat_layout_id as "seatLayoutId"
+      `select v.id, v.registration, v.model, v.service_class as "serviceClass", v.class_label as "classLabel",
+              v.amenities, v.total_seats as "totalSeats", v.seat_layout_id as "seatLayoutId"
          from app.vehicle v
         where v.operator_id = $1
         order by v.registration`,
@@ -85,8 +92,10 @@ export async function loadWorkspace(operatorId: string, mode: 'bus' | 'ferry') {
     ),
     query(
       `select t.id, t.schedule_id as "scheduleId", t.service_date as "serviceDate", t.status,
-              t.vehicle_id as "vehicleId", t.vessel_id as "vesselId"
+              t.vehicle_id as "vehicleId", t.vessel_id as "vesselId", t.route_id as "routeId",
+              r.name as "routeName"
          from app.trip t
+         join app.route r on r.id = t.route_id
         where t.operator_id = $1
           and t.service_date >= current_date
         order by t.service_date, t.id
@@ -122,7 +131,7 @@ export async function loadWorkspace(operatorId: string, mode: 'bus' | 'ferry') {
     vessels: vessels.rows,
     trips: trips.rows,
     bookings: bookings.rows,
-    staffInvites: { status: 'blocked', reason: 'identity_provider_required' },
+    staffInvites: { status: 'oims', reason: 'Operator Admin invites this tenant’s staff. HQ still sees the invites and never stores passwords.' },
   };
 }
 
@@ -145,6 +154,17 @@ async function loadOperator(operatorId: string, mode: 'bus' | 'ferry'): Promise<
   );
   const row = rows[0];
   if (!row) throw new OimsForbiddenError();
+  const licences = await query<{
+    country_code: string;
+    regulator_code: string;
+    licence_number: string;
+    valid_to: string | null;
+  }>(
+    `select country_code, regulator_code, licence_number, valid_to::text
+       from app.operator_licence
+      where operator_id = $1`,
+    [operatorId],
+  );
   return {
     id: row.id,
     name: row.name,
@@ -154,6 +174,12 @@ async function loadOperator(operatorId: string, mode: 'bus' | 'ferry'): Promise<
     electronicTicketingRegistered: row.electronic_ticketing_registered,
     licenceValidTo: row.licence_valid_to,
     passengerCertificateMax: row.passenger_certificate_max,
+    licences: licences.rows.map((licence) => ({
+      countryCode: licence.country_code,
+      regulatorCode: licence.regulator_code,
+      licenceNumber: licence.licence_number,
+      validTo: licence.valid_to,
+    })),
   };
 }
 
@@ -228,6 +254,7 @@ export async function previewSchedule(input: {
     stopCount: stats.stopCount,
     fareCount: stats.fareCount,
     vesselClassCapacityTotal: classTotal,
+    stopCountryCodes: stats.stopCountryCodes,
   });
   const validTo = input.validTo.trim() || input.validFrom;
   const dates = occurrenceDates(input.validFrom, validTo, input.daysOfWeek, input.exceptions ?? []);
@@ -257,7 +284,7 @@ export async function commitSchedule(input: {
   const preview = await previewSchedule(input);
   if (!preview.canCommit) throw new OimsNotReadyError(preview.blocks.length ? preview.blocks : ['no_occurrences']);
 
-  return withTransaction(async (client) => {
+  return withOperatorTransaction(input.operatorId, async (client) => {
     const schedule = await client.query<{ id: string }>(
       `insert into app.schedule (
           route_id, operator_id, departure_time, days_of_week, valid_from, valid_to,
@@ -286,13 +313,23 @@ export async function commitSchedule(input: {
 
     let created = 0;
     let reused = 0;
+    let layoutId: string | null = null;
+    if (input.vehicleId) {
+      const vehicle = await client.query<{ seat_layout_id: string | null }>(
+        `select seat_layout_id from app.vehicle where id = $1 and operator_id = $2`,
+        [input.vehicleId, input.operatorId],
+      );
+      layoutId = vehicle.rows[0]?.seat_layout_id ?? null;
+    }
     for (const date of preview.dates) {
       const trip = await client.query<{ id: string }>(
-        `insert into app.trip (schedule_id, route_id, operator_id, service_date, vehicle_id, vessel_id, status, service_timezone)
-         values ($1, $2, $3, $4::date, $5, $6, 'scheduled', 'Africa/Dar_es_Salaam')
-         on conflict (schedule_id, service_date) do update set status = excluded.status
+        `insert into app.trip (schedule_id, route_id, operator_id, service_date, vehicle_id, vessel_id, status, service_timezone, seat_layout_id)
+         values ($1, $2, $3, $4::date, $5, $6, 'scheduled', 'Africa/Dar_es_Salaam', $7)
+         on conflict (schedule_id, service_date) do update
+           set status = excluded.status,
+               seat_layout_id = coalesce(app.trip.seat_layout_id, excluded.seat_layout_id)
          returning id`,
-        [scheduleId, input.routeId, input.operatorId, date, input.vehicleId ?? null, input.vesselId ?? null],
+        [scheduleId, input.routeId, input.operatorId, date, input.vehicleId ?? null, input.vesselId ?? null, layoutId],
       );
       const tripId = trip.rows[0]?.id;
       if (!tripId) continue;
@@ -413,17 +450,25 @@ export async function issueManifest(operatorId: string, mode: 'bus' | 'ferry', a
 }
 
 async function routeStats(operatorId: string, routeId: string) {
-  const { rows } = await query<{ stops: string; fares: string }>(
+  const { rows } = await query<{ stops: string; fares: string; countries: string[] | null }>(
     `select
         (select count(*)::text from app.route_stop rs where rs.route_id = r.id) as stops,
-        (select count(*)::text from app.segment_fare sf where sf.route_id = r.id) as fares
+        (select count(*)::text from app.segment_fare sf where sf.route_id = r.id) as fares,
+        (select array_agg(distinct loc.country_code)
+           from app.route_stop rs
+           join app.location loc on loc.id = rs.location_id
+          where rs.route_id = r.id) as countries
        from app.route r
       where r.id = $1 and r.operator_id = $2`,
     [routeId, operatorId],
   );
   const row = rows[0];
   if (!row) throw new Error('invalid_route');
-  return { stopCount: Number(row.stops), fareCount: Number(row.fares) };
+  return {
+    stopCount: Number(row.stops),
+    fareCount: Number(row.fares),
+    stopCountryCodes: row.countries ?? [],
+  };
 }
 
 export async function addStop(
@@ -477,18 +522,67 @@ export async function addSegmentFare(
 export async function createVehicle(
   operatorId: string,
   actor: string,
-  input: { registration: string; model?: string; serviceClass?: 'ordinary' | 'semi_luxury' | 'luxury'; totalSeats?: number },
+  input: {
+    registration: string;
+    model?: string;
+    classLabel?: string;
+    serviceClass?: 'ordinary' | 'semi_luxury' | 'luxury';
+    amenities?: unknown;
+    totalSeats?: number;
+  },
 ) {
   const registration = input.registration.trim();
   if (registration.length < 3) throw new Error('invalid_registration');
+  const model = input.model?.trim() || null;
+  const classLabel = input.classLabel?.trim() || null;
+  const amenities = parseAmenityKeys(input.amenities);
   const { rows } = await query<{ id: string }>(
-    `insert into app.vehicle (operator_id, registration, model, service_class, total_seats)
-     values ($1, $2, $3, $4, $5)
+    `insert into app.vehicle (operator_id, registration, model, class_label, service_class, amenities, total_seats)
+     values ($1, $2, $3, $4, $5, $6, $7)
      returning id`,
-    [operatorId, registration, input.model ?? null, input.serviceClass ?? null, input.totalSeats ?? null],
+    [operatorId, registration, model, classLabel, input.serviceClass ?? null, amenities, input.totalSeats ?? null],
   );
-  await audit(operatorId, actor, 'vehicle.create', 'vehicle', rows[0]?.id ?? null, { registration });
+  await audit(operatorId, actor, 'vehicle.create', 'vehicle', rows[0]?.id ?? null, { registration, model, classLabel, amenities });
   return { id: rows[0]?.id, registration };
+}
+
+export async function updateVehicle(
+  operatorId: string,
+  actor: string,
+  input: {
+    vehicleId: string;
+    model?: string;
+    classLabel?: string;
+    serviceClass?: 'ordinary' | 'semi_luxury' | 'luxury' | null;
+    amenities?: unknown;
+  },
+) {
+  if (!UUID.test(input.vehicleId)) throw new Error('invalid_id');
+  const amenities = parseAmenityKeys(input.amenities);
+  const found = await query<{ id: string }>(
+    `update app.vehicle
+        set model = nullif($3, ''),
+            class_label = nullif($4, ''),
+            service_class = $5,
+            amenities = $6
+      where id = $1 and operator_id = $2
+      returning id`,
+    [
+      input.vehicleId,
+      operatorId,
+      input.model?.trim() ?? '',
+      input.classLabel?.trim() ?? '',
+      input.serviceClass ?? null,
+      amenities,
+    ],
+  );
+  if (!found.rowCount) throw new OimsForbiddenError();
+  await audit(operatorId, actor, 'vehicle.update', 'vehicle', input.vehicleId, {
+    model: input.model ?? null,
+    classLabel: input.classLabel ?? null,
+    amenities: amenities ?? null,
+  });
+  return { id: input.vehicleId };
 }
 
 export async function createVessel(

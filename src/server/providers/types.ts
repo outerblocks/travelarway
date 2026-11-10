@@ -108,6 +108,7 @@ export interface CanonicalStayOffer {
 export interface CanonicalStayRoom {
   providerOfferingId: string;
   name: string;
+  photoUrls?: string[];
   description?: string;
   board?: string;
   cancellation?: string;

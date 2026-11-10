@@ -12,11 +12,9 @@ export function getRouter() {
   return createRouter({
     routeTree,
     scrollRestoration: true,
-    // Hold the previous screen for a beat so quick navigations never flash a
-    // loader, and show it only when a route genuinely takes time.
     defaultPendingComponent: RoutePending,
-    defaultPendingMs: 150,
-    defaultPendingMinMs: 300,
+    defaultPendingMs: 0,
+    defaultPendingMinMs: 0,
     defaultErrorComponent: RouteError,
   });
 }

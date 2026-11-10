@@ -6,7 +6,7 @@ export const Route = createFileRoute('/api/guides/$slug')({
   server: {
     handlers: {
       GET: async ({ request, params }: { request: Request; params: { slug: string } }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const localeParam = new URL(request.url).searchParams.get('locale');

@@ -19,7 +19,7 @@ export const Route = createFileRoute('/api/sgr/layouts')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const code = new URL(request.url).searchParams.get('trainset')?.trim();

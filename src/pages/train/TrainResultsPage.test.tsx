@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -66,7 +66,7 @@ const SERVICES = [
 function SeedRoundTripSearch() {
   const { setSearchParams } = useApp();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setSearchParams({
       mode: 'train',
       origin: 'Dar es Salaam',

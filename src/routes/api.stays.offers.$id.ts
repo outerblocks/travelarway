@@ -6,7 +6,7 @@ export const Route = createFileRoute('/api/stays/offers/$id')({
   server: {
     handlers: {
       GET: async ({ request, params }: { request: Request; params: { id: string } }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
         try {
           const offer = await getStayOfferDetail(params.id);

@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
-import { useNavigate, Link } from '@/router';
-import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from '@/router';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
 import { useFerrySailing } from '@/hooks/useFerrySailing';
 import { PassengerForm, createPassenger } from '@/components/shared/PassengerForm';
 import { TravelerPartyNote } from '@/components/shared/TravelerPartyNote';
 import { partyMismatched } from '@/domain/passengers';
-import { ErrorState, LoadingState, SearchSummaryBar } from '@/components/shared/States';
+import { ErrorState, LoadingState } from '@/components/shared/States';
 import { ferryFares, quoteFerrySailing } from '@/domain/pricing';
 import { formatMoney } from '@/domain/money';
 import { formatDate } from '@/utils/format';
@@ -107,7 +106,7 @@ export function FerryBookingPage() {
     navigate('/ferry/review');
   };
 
-  if (sailingStatus === 'loading') return <LoadingState />;
+  if (sailingStatus === 'loading' && !sailing) return <LoadingState />;
   if (!sailing) {
     return (
       <ErrorState
@@ -130,33 +129,15 @@ export function FerryBookingPage() {
 
   return (
     <>
-      {/* Journey, class and price belong at the top of the step, where the traveller already
-          looked at them. A price block under the form asks them to compare two places for
-          the same number. */}
-      <SearchSummaryBar>
-        <Link to="/ferry/results" className="btn-ghost text-label"><ArrowLeft size={16} /> {tp('backToResults')}</Link>
-        <div className="min-w-0">
-          <p className="truncate text-body font-medium text-white">
-            {sailing.vesselName} · {selectedClass.name}
-          </p>
-          <p className="truncate text-meta text-neutral-500">
-            {sailing.departurePort} → {sailing.arrivalPort} · {formatDate(sailing.departureDate)} ·{' '}
-            {sailing.departureTime} · {sailing.arrivalTime}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="whitespace-nowrap text-listing font-bold text-white">
-            {formatMoney(fares.adultFare, fares.currency)}
-          </p>
-          <p className="text-meta text-neutral-500">
-            {tp('perAdultResidency').replace('{residency}', tp(residency === 'resident' ? 'resident' : 'nonResident'))}
-          </p>
-        </div>
-      </SearchSummaryBar>
-
       <div className="section-container py-8">
         <div className="mx-auto max-w-5xl">
           <h1 className="text-page font-bold text-neutral-900">{tp('passengerInformation')}</h1>
+          <p className="mt-1.5 text-body text-neutral-700">
+            {sailing.vesselName} · {selectedClass.name} · {formatMoney(fares.adultFare, fares.currency)}
+          </p>
+          <p className="mt-1 text-body text-neutral-500">
+            {sailing.departurePort} → {sailing.arrivalPort} · {formatDate(sailing.departureDate)} · {sailing.departureTime} · {sailing.arrivalTime}
+          </p>
           <p className="mt-1.5 text-body text-neutral-500">{tp('ferryPassengerIdNote')}</p>
           <div className="mt-4">
             <TravelerPartyNote adults={adults} children={children} />

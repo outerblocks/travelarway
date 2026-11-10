@@ -17,7 +17,7 @@ export const Route = createFileRoute('/api/trip-detail')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const params = new URL(request.url).searchParams;

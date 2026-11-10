@@ -8,6 +8,7 @@
  * facts in front of a paying customer.
  */
 import { query } from '@/server/db';
+import { normalizeAmenityKey } from '@/domain/amenities';
 
 export interface BusResultStop {
   name: string;
@@ -127,10 +128,17 @@ export async function searchBusResults(input: {
         sf.fare_minor::int         as fare_minor,
         sf.currency::text          as currency,
         coalesce(v.total_seats, sl.row_count * cardinality(sl.lanes)) as capacity,
-        (select count(*)::int from app.seat_hold h
-          where h.trip_id = t.id and h.status = 'active' and h.expires_at > now())
-        + (select count(*)::int from app.booking_passenger bp
-            where bp.trip_id = t.id and bp.status = 'active' and bp.seat_no is not null) as taken_seats,
+        (select count(*)::int from (
+           select distinct occupied.seat_no from (
+             select h.seat_no from app.seat_hold h
+              where h.trip_id = t.id and h.status = 'active' and h.expires_at > now()
+                and h.from_seq < ts.sequence and h.to_seq > fs.sequence
+             union
+             select bp.seat_no from app.booking_passenger bp
+              where bp.trip_id = t.id and bp.status in ('pending', 'active') and bp.seat_no is not null
+                and bp.from_seq < ts.sequence and bp.to_seq > fs.sequence
+           ) occupied
+         ) taken) as taken_seats,
         ol.name                    as origin_name,
         fs.terminal_name           as origin_terminal,
         dl.name                    as destination_name,
@@ -148,8 +156,10 @@ export async function searchBusResults(input: {
        join app.location  dl  on dl.id = ts.location_id
        join app.segment_fare sf
          on sf.route_id = r.id and sf.from_stop_id = fs.id and sf.to_stop_id = ts.id
-      where t.service_date = $3::date
-        and t.status = 'scheduled'
+      where t.status = 'scheduled'
+        and fs.pickup_allowed
+        and ts.dropoff_allowed
+        and (t.service_date::timestamp + sch.departure_time + make_interval(mins => fs.offset_minutes))::date = $3::date
         and (
           ol.id::text = $1
           or upper(ol.code) = upper($1)
@@ -237,7 +247,7 @@ export async function searchBusResults(input: {
       currency: row.currency,
       capacity,
       availableSeats: Math.max(0, capacity - taken),
-      amenities: row.amenities ?? [],
+      amenities: (row.amenities ?? []).map(normalizeAmenityKey).filter(Boolean),
     };
   });
 }

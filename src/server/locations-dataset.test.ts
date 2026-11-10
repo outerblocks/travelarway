@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { isOperatorCatalogCountry, locationCatalogForMode } from '@/server/location-catalog';
 import { MODE_LOCATION_KINDS } from '@/server/search';
 
 /**
@@ -86,6 +87,13 @@ describe('mode to location-kind mapping', () => {
     // absent by construction — which is why the ferry picker can offer them and bus cannot.
     expect(MODE_LOCATION_KINDS.bus).not.toContain('port');
     expect(MODE_LOCATION_KINDS.ferry).toContain('port');
+  });
+
+  it('does not put worldwide stay cities on bus, train, ferry or experiences pickers', () => {
+    expect(locationCatalogForMode('bus')).toBe('operator');
+    expect(locationCatalogForMode('stays')).toBe('gds');
+    expect(isOperatorCatalogCountry('TZ')).toBe(true);
+    expect(isOperatorCatalogCountry('ES')).toBe(false);
   });
 
   it('gives every booking mode a kind list, so none can silently offer nothing', () => {

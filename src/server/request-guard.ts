@@ -67,7 +67,7 @@ export function isCrossOrigin(request: Request): boolean {
 /**
  * Run at the top of every browser-facing mutation handler:
  *
- *   const refused = guardMutation(request, 'holds');
+ *   const refused = await guardMutation(request, 'holds');
  *   if (refused) return refused;
  */
 function isProduction(): boolean {
@@ -79,7 +79,10 @@ function isJsonContentType(request: Request): boolean {
   return type.toLowerCase().startsWith('application/json');
 }
 
-export function guardMutation(request: Request, bucket: RateLimitBucket): Response | null {
+export async function guardMutation(
+  request: Request,
+  bucket: RateLimitBucket,
+): Promise<Response | null> {
   if (isCrossOrigin(request)) {
     return Response.json(
       { error: 'cross_origin_forbidden' },
@@ -100,6 +103,6 @@ export function guardMutation(request: Request, bucket: RateLimitBucket): Respon
       { status: 415, headers: { 'cache-control': 'no-store' } },
     );
   }
-  return rateLimit(request, bucket);
+  return await rateLimit(request, bucket);
 }
 

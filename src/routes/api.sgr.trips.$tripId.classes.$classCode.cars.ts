@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { rateLimit } from '@/server/rate-limit';
 import { resolveProvider } from '@/server/sgr/provider';
+import { createSearchIntent } from '@/server/search-intent';
 
 export const Route = createFileRoute('/api/sgr/trips/$tripId/classes/$classCode/cars')({
   server: {
@@ -18,7 +19,7 @@ export const Route = createFileRoute('/api/sgr/trips/$tripId/classes/$classCode/
        * `holdId` is optional and only marks the caller's own selections.
        */
       GET: async ({ params, request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const url = new URL(request.url);
@@ -48,7 +49,16 @@ export const Route = createFileRoute('/api/sgr/trips/$tripId/classes/$classCode/
             toSeq,
             holdId,
           });
-          return Response.json(navigation, { status: 200, headers: { 'cache-control': 'no-store' } });
+          let searchIntent: string | undefined;
+          try {
+            searchIntent = createSearchIntent([params.tripId]);
+          } catch {
+            searchIntent = undefined;
+          }
+          return Response.json(
+            { ...navigation, searchIntent },
+            { status: 200, headers: { 'cache-control': 'no-store' } },
+          );
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           if (message.startsWith('trip_not_found')) {

@@ -23,6 +23,7 @@ export interface SaleInput {
   countryCode: string;
   grossMinor: number;
   currency: string;
+  collection?: 'psp' | 'otc_cash';
 }
 
 export async function recordSale(client: pg.PoolClient, input: SaleInput): Promise<void> {
@@ -89,17 +90,24 @@ export async function recordSale(client: pg.PoolClient, input: SaleInput): Promi
     ],
   );
 
+  const otc = input.collection === 'otc_cash';
+  if (otc && revenue <= 0) return;
   await postBalancedJournal(client, {
     mode: input.mode,
     currency: input.currency,
     sourceType: 'sale',
     sourceId: input.bookingId,
-    memo: `Sale ${input.pnr}`,
-    lines: [
-      { accountCode: '1100', debitMinor: input.grossMinor },
-      { accountCode: '4100', creditMinor: revenue },
-      { accountCode: '2100', creditMinor: supplierCost, operatorId: input.operatorId },
-    ],
+    memo: otc ? `OTC cash ${input.pnr}` : `Sale ${input.pnr}`,
+    lines: otc
+      ? [
+          { accountCode: '2100', debitMinor: revenue, operatorId: input.operatorId },
+          { accountCode: '4100', creditMinor: revenue },
+        ]
+      : [
+          { accountCode: '1100', debitMinor: input.grossMinor },
+          { accountCode: '4100', creditMinor: revenue },
+          { accountCode: '2100', creditMinor: supplierCost, operatorId: input.operatorId },
+        ],
   });
 }
 

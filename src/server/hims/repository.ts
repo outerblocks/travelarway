@@ -113,13 +113,8 @@ export async function loadOverview() {
 }
 
 export async function loadOperators() {
-  const { rows } = await query(
-    `select o.id, o.name, o.mode, o.status, o.currency, o.is_hq_approved as "hqApproved",
-            o.latra_licence_number as "latraLicenceNumber"
-       from app.operator o
-      order by o.mode, o.name`,
-  );
-  return { data: rows };
+  const { loadOperatorsDetailed } = await import('@/server/hims/supply');
+  return loadOperatorsDetailed();
 }
 
 export async function proposeCommission(input: {
@@ -140,7 +135,19 @@ export async function proposeCommission(input: {
       returning id`,
     [input.operatorId, input.mode, input.rate, input.effectiveFrom, input.actor, input.reason.trim()],
   );
-  return { id: rows[0]?.id, status: 'draft' };
+  const id = rows[0]?.id;
+  if (id) {
+    const { submitApproval } = await import('@/server/hims/work');
+    await submitApproval({
+      kind: 'commission',
+      objectType: 'commission_rate',
+      objectId: id,
+      maker: input.actor,
+      reason: input.reason.trim(),
+      mode: input.mode,
+    });
+  }
+  return { id, status: 'draft' };
 }
 
 export async function approveCommission(input: { actor: string; desk: string; rateId: string }) {
@@ -156,6 +163,12 @@ export async function approveCommission(input: { actor: string; desk: string; ra
     `update app.commission_rate
         set approval_status = 'approved', approved_by = $2, approved_at = now()
       where id = $1 and approval_status = 'draft'`,
+    [input.rateId, input.actor],
+  );
+  await query(
+    `update app.approval_item
+        set status = 'approved', checker = $2, decided_at = now()
+      where kind = 'commission' and object_id = $1 and status = 'submitted'`,
     [input.rateId, input.actor],
   );
 }
@@ -219,7 +232,18 @@ export async function preparePayout(input: {
         returning id`,
       [input.mode, input.operatorId, input.currency, amount, status, key, dest?.id ?? null, hold, input.actor],
     );
-    return { id: inserted.rows[0]?.id, amountMinor: amount, status, holdReason: hold, clickpesa: 'not_dispatched' };
+    const payoutId = inserted.rows[0]?.id;
+    if (payoutId && status === 'prepared') {
+      const { submitApproval } = await import('@/server/hims/work');
+      await submitApproval({
+        kind: 'payout',
+        objectType: 'payout_batch',
+        objectId: payoutId,
+        maker: input.actor,
+        mode: input.mode,
+      });
+    }
+    return { id: payoutId, amountMinor: amount, status, holdReason: hold, clickpesa: 'not_dispatched' };
   });
 }
 
@@ -236,6 +260,12 @@ export async function approvePayout(input: { actor: string; desk: string; payout
   await query(
     `update app.payout_batch set status = 'approved', approved_by = $2, updated_at = now()
       where id = $1 and status = 'prepared'`,
+    [input.payoutId, input.actor],
+  );
+  await query(
+    `update app.approval_item
+        set status = 'approved', checker = $2, decided_at = now()
+      where kind = 'payout' and object_id = $1 and status = 'submitted'`,
     [input.payoutId, input.actor],
   );
 }

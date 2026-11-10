@@ -6,8 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useI18n } from '@/context/I18nContext';
 
 export function SignInPage() {
-  const navigate = useNavigate();
   const { signInWithEmail } = useAuth();
+  const navigate = useNavigate();
   const { tp } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,14 +29,11 @@ export function SignInPage() {
       setError(authError);
       return;
     }
-    // Stay in the loading state until this page unmounts so the label never flips
-    // back for a frame in the middle of navigation.
     navigate('/');
   };
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Left branding panel — equal 50% width, hidden on mobile */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-ink p-12">
         <div className="relative z-10">
           <Link to="/" className="inline-flex">
@@ -65,10 +62,8 @@ export function SignInPage() {
         </div>
       </div>
 
-      {/* Right auth panel — equal 50% */}
       <div className="flex w-full flex-col items-center justify-center px-5 py-8 sm:px-6 sm:py-12 lg:w-1/2">
         <div className="w-full max-w-[400px]">
-          {/* Mobile logo */}
           <div className="mb-8 text-center lg:hidden">
             <Link to="/" className="inline-flex justify-center"><Logo size="lg" /></Link>
           </div>

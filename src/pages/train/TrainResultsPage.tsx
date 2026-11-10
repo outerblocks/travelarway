@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from '@/router';
+import { useNavigate } from '@/router';
 import { ScheduleStrip } from '@/components/results/ScheduleStrip';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/context/I18nContext';
-import { LoadingState, EmptyResults, ErrorState, OfflineState, SearchSummaryBar } from '@/components/shared/States';
+import { LoadingState, EmptyResults, ErrorState, OfflineState } from '@/components/shared/States';
 import { queryFailureStatus } from '@/hooks/query-status';
 import { useOnlineRetry } from '@/hooks/useOnlineRetry';
 import { originToken, destinationToken } from '@/domain/search-tokens';
 import { useHydrateSearchFromUrl } from '@/hooks/useHydrateSearchFromUrl';
 import { formatCurrency, formatDate } from '@/utils/format';
+import { rememberSearchIntent } from '@/utils/search-intent';
 
 /**
  * SGR search results, read from the database.
@@ -82,7 +83,6 @@ export function TrainResultsPage() {
       setLoading(false);
       return;
     }
-    setLoading(true);
     setError(false);
     setOffline(false);
     try {
@@ -93,7 +93,12 @@ export function TrainResultsPage() {
         setResults([]);
         return;
       }
-      const payload = (await response.json()) as { data?: SgrService[]; unresolved_places?: string[] };
+      const payload = (await response.json()) as {
+        data?: SgrService[];
+        unresolved_places?: string[];
+        searchIntent?: string;
+      };
+      rememberSearchIntent(payload.searchIntent);
       setResults(payload.data ?? []);
       setUnresolved(payload.unresolved_places ?? []);
     } catch (caught: unknown) {
@@ -175,18 +180,8 @@ export function TrainResultsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <SearchSummaryBar>
-          <Link to="/" className="btn-ghost text-label">← {tp('modifySearch')}</Link>
-          <span className="text-body text-neutral-500">
-            {selectedDate ? formatDate(selectedDate) : ''}
-          </span>
-        </SearchSummaryBar>
-        <LoadingState count={3} />
-      </>
-    );
+  if (loading && results.length === 0) {
+    return <LoadingState count={3} />;
   }
 
   if (offline) {
@@ -209,14 +204,6 @@ export function TrainResultsPage() {
 
   return (
     <>
-      <SearchSummaryBar>
-        <Link to="/" className="btn-ghost text-label">← {tp('modifySearch')}</Link>
-        <span className="text-body font-medium text-neutral-900">
-          {returnSelection ? `${tp('return')} ${tp('trainSearch')}` : tp('trainSearch')}
-          {selectedDate ? ` · ${formatDate(selectedDate)}` : ''}
-        </span>
-      </SearchSummaryBar>
-
       <div className="section-container py-6">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -255,7 +242,7 @@ export function TrainResultsPage() {
           <div className="offer-sheet">
             {results.map((service) => (
               <article key={service.tripId} className="offer-row">
-                <div className="flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:gap-8 lg:px-5">
+                <div className="flex flex-col gap-5 px-5 py-5 lg:flex-row lg:items-center lg:gap-10">
                   <div className="flex min-w-0 items-center gap-3 lg:w-[13.5rem] lg:shrink-0">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-ink text-label font-semibold text-white">SGR</div>
                     <div className="min-w-0">
@@ -284,15 +271,15 @@ export function TrainResultsPage() {
                   <tbody>
                     {service.classes.map((entry) => (
                       <tr key={entry.seatClassCode} className="border-t border-neutral-100 first:border-t-0">
-                        <td className="px-4 py-3 text-body font-medium text-neutral-900 lg:px-5">{entry.name}</td>
+                        <td className="py-3 pl-5 pr-3 text-body font-medium text-neutral-900">{entry.name}</td>
                         <td className="px-2 py-3 text-meta text-neutral-600">
                           {entry.available} {tp('seatsAvailableShort')}
                           {entry.fare === null ? ` · ${tp('trainFarePending')}` : ''}
                         </td>
-                        <td className="px-2 py-3 text-right text-body font-semibold tabular-nums text-brand-800">
+                        <td className="px-2 py-3 text-right text-body font-semibold tabular-nums text-neutral-900">
                           {entry.fare === null ? '—' : formatCurrency(entry.fare, entry.currency ?? 'TZS', 'TSh')}
                         </td>
-                        <td className="px-4 py-3 text-right lg:px-5">
+                        <td className="py-3 pl-3 pr-5 text-right">
                           <button
                             onClick={() => handleSelect(service, entry)}
                             disabled={entry.soldOut || entry.fare === null}

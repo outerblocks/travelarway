@@ -1,4 +1,5 @@
 import { Link } from '@/router';
+import { HeroHeadline } from '@/components/search/HeroHeadline';
 import { HeroSearchCard } from '@/components/search/HeroSearchCard';
 import { useApp } from '@/context/AppContext';
 import { useI18n, type PublicTranslationKey } from '@/context/I18nContext';
@@ -12,6 +13,7 @@ import flightImage from '@/assets/section-images/flight_2.webp';
 import hotelImage from '@/assets/section-images/hotel_2.webp';
 import trainImage from '@/assets/section-images/trc.webp';
 import appImage from '@/assets/app/app.png';
+import heroImage from '@/assets/hero/hero.png';
 import egyptFlag from '@/assets/flags/Egypt.webp';
 import kenyaFlag from '@/assets/flags/Kenya.png';
 import malawiFlag from '@/assets/flags/Malawi.png';
@@ -80,11 +82,17 @@ export function LandingPage() {
     <div>
       {/* ─── Hero ──────────────────────────────────────────────────── */}
       <section id="hero-search" className="relative z-20 bg-ink">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+          <img
+            src={heroImage}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/45" />
+        </div>
         <div className="relative flex min-h-[440px] flex-col overflow-visible pb-6 sm:min-h-[420px] lg:min-h-[380px]">
           <div className="section-container pt-12 sm:pt-14 lg:pt-16">
-            <h1 className="max-w-2xl text-[2.25rem] font-semibold leading-[1.1] tracking-[-0.025em] text-white sm:text-[2.75rem] lg:text-[3.25rem]">
-              {tp('whereToNext')}
-            </h1>
+            <HeroHeadline />
           </div>
 
           <div className="mt-8 flex w-full flex-1 items-end overflow-visible">

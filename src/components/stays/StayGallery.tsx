@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useI18n } from '@/context/I18nContext';
 import { StayLightbox } from '@/components/stays/StayLightbox';
 import { StayPhoto } from '@/components/stays/StayPhoto';
+import { lodgingPhotoUrls } from '@/domain/lodging-images';
 
 const DETAIL_PREVIEW = 6;
 
@@ -15,12 +16,12 @@ export function StayGallery({
   layout?: 'detail' | 'card';
 }) {
   const { tp } = useI18n();
-  const https = urls.filter((url) => url.startsWith('https://'));
+  const https = lodgingPhotoUrls(urls);
   const [openAt, setOpenAt] = useState<number | null>(null);
   const [mode, setMode] = useState<'album' | 'zoom'>('album');
 
   if (!https.length) {
-    return <StayPhoto urls={[]} name={name} className={layout === 'card' ? 'h-52 w-full sm:h-full sm:min-h-[12.5rem]' : 'h-64 w-full sm:h-80'} />;
+    return <StayPhoto urls={[]} name={name} className={layout === 'card' ? 'h-52 w-full sm:h-full sm:min-h-[13.5rem]' : 'h-64 w-full sm:h-80'} />;
   }
 
   const preview = layout === 'card' ? https.slice(0, 1) : https.slice(0, DETAIL_PREVIEW);
@@ -36,7 +37,7 @@ export function StayGallery({
       {layout === 'card' ? (
         <button
           type="button"
-          className="relative block h-52 w-full sm:h-full sm:min-h-[12.5rem]"
+          className="relative block h-52 w-full overflow-hidden sm:h-full sm:min-h-[13.5rem]"
           onClick={() => openAlbum(0, https.length > 1 ? 'album' : 'zoom')}
           aria-label={https.length > 1 ? tp('viewAllPhotos').replace('{count}', String(https.length)) : tp('viewPhotos')}
         >

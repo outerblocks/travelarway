@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { airportLine, arrivesNextDay, iataFromPlace, isInternationalAirOffer, isNightDeparture, journeyDuration, layoverMinutes, marketingLabel, splitRoundTrip, viaAirports } from '@/domain/flight-results';
+import { airportLine, arrivesNextDay, cabinLine, displayAirline, iataFromPlace, isInternationalAirOffer, isNightDeparture, journeyDuration, layoverMinutes, marketingLabel, splitRoundTrip, viaAirports } from '@/domain/flight-results';
 import type { PublicAirOffer } from '@/domain/air-offer';
 
 function leg(partial: Pick<PublicAirOffer['itinerary'][number], 'carrier' | 'flightNumber' | 'origin' | 'destination' | 'departure' | 'arrival'> & Partial<PublicAirOffer['itinerary'][number]>): PublicAirOffer['itinerary'][number] {
@@ -65,6 +65,57 @@ describe('flight result labels', () => {
     expect(marketingLabel(offer)).toBe('QR 8 · QR 1365');
     expect(viaAirports(offer)).toEqual(['DOH']);
     expect(arrivesNextDay(offer)).toBe(true);
+  });
+
+  it('brands the operating airline when Hahn Air tickets a Precision Air flight', () => {
+    const hahn: PublicAirOffer = {
+      ...offer,
+      cabinClass: 'Economy',
+      fareBrand: 'Precision Air',
+      itinerary: [
+        leg({
+          carrier: 'H1',
+          carrierName: 'Hahn Air',
+          operatingCarrier: 'PW',
+          operatingCarrierName: 'Precision Air',
+          flightNumber: '1956',
+          origin: 'JRO',
+          destination: 'DAR',
+          departure: '2026-12-08T09:00:00',
+          arrival: '2026-12-08T10:15:00',
+        }),
+      ],
+    };
+    expect(marketingLabel(hahn)).toBe('Precision Air');
+    expect(cabinLine(hahn)).toBe('Economy');
+    expect(displayAirline(hahn.itinerary[0])).toEqual({ code: 'PW', name: 'Precision Air' });
+    const auric: PublicAirOffer = {
+      ...hahn,
+      fareBrand: 'Auric Air',
+      itinerary: [
+        leg({
+          carrier: 'Q4',
+          carrierName: 'Euroairlines',
+          operatingCarrier: 'UI',
+          operatingCarrierName: 'Auric Air',
+          flightNumber: '9700',
+          origin: 'DAR',
+          destination: 'MWZ',
+          departure: '2026-12-08T15:30:00',
+          arrival: '2026-12-08T18:35:00',
+        }),
+      ],
+    };
+    expect(marketingLabel(auric)).toBe('Auric Air');
+    expect(displayAirline(auric.itinerary[0])).toEqual({ code: 'UI', name: 'Auric Air' });
+    expect(marketingLabel({
+      ...hahn,
+      itinerary: hahn.itinerary.map((row) => ({
+        ...row,
+        operatingCarrier: null,
+        operatingCarrierName: null,
+      })),
+    })).toBe('Precision Air');
   });
 
   it('uses the airline name when the GDS or IATA map returned one', () => {

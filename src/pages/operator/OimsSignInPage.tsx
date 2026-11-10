@@ -53,8 +53,6 @@ export function OimsSignInPage() {
       setError(authError);
       return;
     }
-    // Stay in the submitting state until this page unmounts: flipping the label
-    // back for a frame before navigation is what reads as a flicker.
     leaving.current = true;
     navigate(CONSOLE_PATH, { replace: true });
   };

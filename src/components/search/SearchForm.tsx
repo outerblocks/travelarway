@@ -63,6 +63,12 @@ interface FlightLegInput {
 const MIN_FLIGHT_LEGS = 2;
 const MAX_FLIGHT_LEGS = 5;
 
+const placesByMode = new Map<string, { id: string; name: string; subText: string }[]>();
+
+export function resetSearchPlacesCache() {
+  placesByMode.clear();
+}
+
 function emptyLeg(): FlightLegInput {
   return { key: generateId(), origin: '', originName: '', destination: '', destinationName: '', date: '' };
 }
@@ -94,6 +100,22 @@ export function SearchForm({ mode }: SearchFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [travelersOpen, setTravelersOpen] = useState(false);
   const travelersRef = useRef<HTMLDivElement>(null);
+  const previousMode = useRef(mode);
+
+  useEffect(() => {
+    if (previousMode.current === mode) return;
+    previousMode.current = mode;
+    setOrigin('');
+    setOriginName('');
+    setDestination('');
+    setDestinationName('');
+    setReturnDate('');
+    setCheckOut('');
+    setTripType('oneway');
+    setLegs(createLegs(MIN_FLIGHT_LEGS));
+    setErrors({});
+    setTravelersOpen(false);
+  }, [mode]);
 
   const isMultiCity = mode === 'flights' && tripType === 'multicity';
   const desktopLayout = getDesktopSearchLayout(mode, tripType);
@@ -146,14 +168,20 @@ export function SearchForm({ mode }: SearchFormProps) {
    * new SGR station required editing that file and shipping it. Now HIMS adds the row and the
    * station appears in the card on the next load.
    */
-  const [placeOptions, setPlaceOptions] = useState<{ id: string; name: string; subText: string }[]>([]);
-  const [placesState, setPlacesState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const remotePlaces = true;
+  const prefetchPlaces = mode !== 'flights' && mode !== 'stays';
+  const cachedPlaces = prefetchPlaces ? placesByMode.get(mode) : undefined;
+  const [placeOptions, setPlaceOptions] = useState<{ id: string; name: string; subText: string }[]>(
+    () => cachedPlaces ?? [],
+  );
+  const [placesState, setPlacesState] = useState<'loading' | 'ready' | 'failed'>(
+    () => (prefetchPlaces ? (cachedPlaces ? 'ready' : 'loading') : 'ready'),
+  );
   const [placesAttempt, setPlacesAttempt] = useState(0);
-  const remotePlaces = mode === 'flights' || mode === 'stays';
-  const placesBusy = !remotePlaces && placesState === 'loading';
+  const placesBusy = prefetchPlaces && placesState === 'loading';
 
   useEffect(() => {
-    if (remotePlaces) {
+    if (!prefetchPlaces) {
       setPlaceOptions([]);
       setPlacesState('ready');
       return;
@@ -161,7 +189,13 @@ export function SearchForm({ mode }: SearchFormProps) {
     let cancelled = false;
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 8000);
-    setPlacesState('loading');
+    const remembered = placesByMode.get(mode);
+    if (remembered) {
+      setPlaceOptions(remembered);
+      setPlacesState('ready');
+    } else {
+      setPlacesState('loading');
+    }
     fetch(`/api/locations?mode=${encodeURIComponent(mode)}`, { cache: 'no-store', signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(String(response.status));
@@ -169,21 +203,27 @@ export function SearchForm({ mode }: SearchFormProps) {
       })
       .then((body) => {
         if (cancelled) return;
-        setPlaceOptions(body.data.map(optionFromLocation));
+        const options = body.data.map(optionFromLocation);
+        placesByMode.set(mode, options);
+        setPlaceOptions(options);
         setPlacesState('ready');
       })
       .catch(() => {
-        if (!cancelled) {
-          setPlaceOptions([]);
-          setPlacesState('failed');
+        if (cancelled) return;
+        if (placesByMode.has(mode)) {
+          setPlaceOptions(placesByMode.get(mode)!);
+          setPlacesState('ready');
+          return;
         }
+        setPlaceOptions([]);
+        setPlacesState('failed');
       });
     return () => {
       cancelled = true;
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [mode, remotePlaces, placesAttempt]);
+  }, [mode, prefetchPlaces, placesAttempt]);
 
   const loadRemotePlaces = useCallback(async (query: string) => {
     const search = new URLSearchParams({ mode, q: query });
@@ -342,7 +382,7 @@ export function SearchForm({ mode }: SearchFormProps) {
     >
       <div className={`search-form-fields overflow-visible ${isMultiCity ? 'flex-none' : 'min-h-0 flex-1'} pr-0.5 ${placesBusy ? 'pointer-events-none' : ''}`}>
       {supportsReturn && (
-        <div className="search-trip-type mb-4 inline-flex flex-wrap rounded-full bg-neutral-100 p-1">
+        <div className="search-trip-type mb-4 inline-flex flex-wrap rounded-full border border-neutral-200 bg-white p-1">
           {([
             { value: 'oneway', label: tp('oneWay') },
             { value: 'return', label: tp('return') },
@@ -536,7 +576,7 @@ export function SearchForm({ mode }: SearchFormProps) {
         {mode === 'ferry' && (
           <div className="col-span-2 min-w-0 lg:col-span-1">
             <label className="input-label">{tp('residency')}</label>
-            <div className="flex h-[3.25rem] items-center gap-1 rounded-xl bg-neutral-50 p-1">
+            <div className="flex h-[3.25rem] items-center gap-1 rounded-xl border border-neutral-200 bg-white p-1">
               <button
                 type="button"
                 onClick={() => setResidency('resident')}
@@ -590,7 +630,7 @@ export function SearchForm({ mode }: SearchFormProps) {
           <button
             type="button"
             onClick={() => setTravelersOpen((open) => !open)}
-            className="search-travelers-trigger flex min-h-[3.25rem] w-full min-w-0 items-center justify-between gap-3 rounded-xl bg-neutral-50 px-4 py-3 text-left transition-colors hover:bg-neutral-100"
+            className="search-travelers-trigger flex min-h-[3.25rem] w-full min-w-0 items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-left transition-colors hover:border-neutral-300"
             aria-label={`${tp('travelersLabel')}: ${travelerCount} ${travelerCountLabel}${mode === 'stays' ? `, ${rooms} ${tp(rooms === 1 ? 'roomSingular' : 'roomPlural')}` : ''}`}
             aria-haspopup="dialog"
             aria-expanded={travelersOpen}
@@ -688,15 +728,17 @@ export function SearchForm({ mode }: SearchFormProps) {
         </p>
       )}
 
-      {placesBusy && (
-        <p className="search-form-status mt-3 text-meta text-neutral-500" role="status">
-          {tp('placesLoading')}
-        </p>
-      )}
+      <p
+        className={`search-form-status mt-3 text-meta ${placesBusy ? 'text-neutral-500' : 'invisible'}`}
+        role="status"
+        aria-live="polite"
+      >
+        {tp('placesLoading')}
+      </p>
 
       {placesState === 'failed' && (
         <div
-          className="search-form-status mt-3 flex items-center gap-3 rounded-xl bg-neutral-50 px-3.5 py-2.5"
+          className="search-form-status mt-3 flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5"
           role="alert"
         >
           <span className="h-8 w-0.5 shrink-0 self-stretch rounded-full bg-accent" aria-hidden="true" />

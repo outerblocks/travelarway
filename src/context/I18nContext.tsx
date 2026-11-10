@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import type { SeoLanguage } from '@/domain/seo';
 
 export type Language = 'en' | 'sw' | 'fr';
 
@@ -170,7 +171,8 @@ const _PUBLIC_KEYS = [
   'becomeTransportOperator', 'apiEnquiries', 'legal', 'cancellationRefundPolicy',
   'termsConditions', 'privacyPolicy', 'cookiePolicy', 'operatedBy',
   'paymentMethodsAvailable',
-  'whereToNext', 'findYourWay',
+  'whereToNext', 'whereToPrefix', 'findYourWay',
+  'heroLineBus', 'heroLineFerry', 'heroLineFlight', 'heroLineTrain', 'heroLineStay', 'heroLineExperience',
   'search',
   'exploreDestinations', 'all', 'tanzania', 'theWorld',
   'bookable', 'comingSoon', 'planBetterTrip', 'planBetterTripLead',
@@ -208,7 +210,7 @@ const _PUBLIC_KEYS = [
   'mobileAppTitle', 'mobileAppLead', 'mobileAppUnavailableNote',
   'mobileAppImageAlt', 'appStoreBadgeAlt', 'googlePlayBadgeAlt',
   'checkoutBack', 'checkoutTitle', 'checkoutIntro', 'checkoutPaymentMethod',
-  'checkoutChoosePayment', 'checkoutMobileMoney', 'checkoutPayWithWallet',
+  'checkoutChoosePayment', 'checkoutPosNotLicensed', 'checkoutMobileMoney', 'checkoutPayWithWallet',
   'checkoutCardPayment', 'checkoutCardLabel', 'checkoutCreditDebit',
   'checkoutMobileMoneyProvider', 'checkoutPhoneNumber', 'checkoutNameOnCard',
   'checkoutCardholderPlaceholder', 'checkoutCardNumber', 'checkoutExpiryDate',
@@ -339,6 +341,7 @@ const _PUBLIC_KEYS = [
   'orContinueWith', 'continueWithProvider', 'connectingToProvider',
   'loadingTrainDetails',
   'bookBus',
+  'busModel', 'registrationNo', 'busClass',
   'seatSelectionError', 'selectSeatsForDetails', 'pricesIn',
   'requiredForFerry', 'perAdultResidency', 'flightBookingTitle',
   'loadingFlightDetails', 'flightNotFound',
@@ -406,6 +409,13 @@ const PUBLIC_TRANSLATIONS: PublicTranslationMap = {
   operatedBy: { en: 'Operated by OuterBlocks Limited.', sw: 'Inaendeshwa na OuterBlocks Limited.', fr: 'Exploité par OuterBlocks Limited.' },
   paymentMethodsAvailable: { en: 'Payment methods available', sw: 'Njia za malipo zinazopatikana', fr: 'Moyens de paiement disponibles' },
   whereToNext: { en: 'Where to next?', sw: 'Safari inayofuata ni wapi?', fr: 'Où partir ensuite ?' },
+  whereToPrefix: { en: 'Where to', sw: 'Safari kwenda', fr: 'Où partir' },
+  heroLineBus: { en: 'Book a bus seat', sw: 'Chagua kiti cha basi', fr: 'Réservez un siège de bus' },
+  heroLineFerry: { en: 'Cross by ferry', sw: 'Vuka kwa feri', fr: 'Traversez en ferry' },
+  heroLineFlight: { en: 'Find a flight', sw: 'Tafuta ndege', fr: 'Trouvez un vol' },
+  heroLineTrain: { en: 'Ride the train', sw: 'Panda treni', fr: 'Prenez le train' },
+  heroLineStay: { en: 'Book a stay', sw: 'Weka malazi', fr: 'Réservez un séjour' },
+  heroLineExperience: { en: 'Plan an experience', sw: 'Panga tukio', fr: 'Planifiez une expérience' },
   findYourWay: {
     en: 'Find your way by bus, ferry, flight, train, or stay.',
     sw: 'Panga safari kwa basi, feri, ndege, treni au malazi.',
@@ -581,6 +591,11 @@ const PUBLIC_TRANSLATIONS: PublicTranslationMap = {
   checkoutIntro: { en: 'Explore the payment steps in demo mode. Payments cannot be accepted here.', sw: 'Angalia hatua za malipo katika hali ya majaribio. Malipo hayawezi kupokelewa hapa.', fr: 'Découvrez les étapes de paiement en mode démo. Aucun paiement ne peut être accepté ici.' },
   checkoutPaymentMethod: { en: 'Payment method', sw: 'Njia ya malipo', fr: 'Moyen de paiement' },
   checkoutChoosePayment: { en: 'Select how you would like to pay.', sw: 'Chagua jinsi unavyotaka kulipa.', fr: 'Choisissez votre mode de paiement.' },
+  checkoutPosNotLicensed: {
+    en: 'Collection is not licensed for this point of sale yet. Search still works; payment waits on a licensed merchant.',
+    sw: 'Malipo bado hayajaruhusiwa kwa soko hili. Utafutaji unaendelea; malipo yatasubiri leseni.',
+    fr: 'La collecte n’est pas encore autorisée pour ce point de vente. La recherche reste disponible ; le paiement attend une licence.',
+  },
   checkoutMobileMoney: { en: 'Mobile Money', sw: 'Pesa kwa Simu', fr: 'Paiement mobile' },
   checkoutPayWithWallet: { en: 'Pay with your mobile wallet', sw: 'Lipa kwa pochi yako ya simu', fr: 'Payez avec votre portefeuille mobile' },
   checkoutCardPayment: { en: 'Card payment', sw: 'Malipo ya kadi', fr: 'Paiement par carte' },
@@ -628,6 +643,9 @@ const PUBLIC_TRANSLATIONS: PublicTranslationMap = {
   passengersMany: { en: 'passengers', sw: 'abiria', fr: 'voyageurs' },
   fixtureInventory: { en: 'Sample inventory', sw: 'Data ya mfano', fr: 'Données de démonstration' },
   perSeat: { en: 'per seat', sw: 'kwa kiti', fr: 'par siège' },
+  busModel: { en: 'Bus model', sw: 'Aina ya basi', fr: 'Modèle de bus' },
+  registrationNo: { en: 'Reg. number', sw: 'Namba ya usajili', fr: 'Immatriculation' },
+  busClass: { en: 'Class', sw: 'Daraja', fr: 'Classe' },
   seatsTakenError: { en: 'Those seats were just taken. Please choose again.', sw: 'Viti hivyo vimechukuliwa sasa hivi. Tafadhali chagua tena.', fr: 'Ces sièges viennent d’être pris. Veuillez en choisir d’autres.' },
   bookingCreatedNotice: { en: 'Booking created. Payment is not collected yet.', sw: 'Ubabaji umeundwa. Malipo hayajashikiliwa bado.', fr: 'Réservation créée. Le paiement n’est pas encore perçu.' },
   checkoutQuoteUnavailable: { en: 'A verified price is unavailable for this selection. Return to the results and choose an available service.', sw: 'Bei iliyothibitishwa haipatikani kwa chaguo hili. Rudi kwenye matokeo na uchague huduma inayopatikana.', fr: 'Aucun prix vérifié n’est disponible pour cette sélection. Revenez aux résultats et choisissez un service disponible.' },
@@ -1527,24 +1545,36 @@ function saveLang(lang: Language) {
   }
 }
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Language>('en');
+export function I18nProvider({ children, urlLang }: { children: ReactNode; urlLang?: SeoLanguage | null }) {
+  const [lang, setLangState] = useState<Language>(urlLang ?? 'en');
   const userSelectedLanguage = useRef(false);
 
   useEffect(() => {
-    if (!userSelectedLanguage.current) {
-      setLangState(loadLang());
+    if (userSelectedLanguage.current) return;
+    if (urlLang) {
+      setLangState(urlLang);
+      saveLang(urlLang);
+      return;
     }
-  }, []);
+    setLangState(loadLang());
+  }, [urlLang]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
+  const writeLangToUrl = (next: Language) => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('lang', next);
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+
   const setLang = useCallback((newLang: Language) => {
     userSelectedLanguage.current = true;
     saveLang(newLang);
     setLangState(newLang);
+    writeLangToUrl(newLang);
   }, []);
 
   const t = useCallback((key: TranslationKey) => {

@@ -1,29 +1,29 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { getServerConfig } from '@/server/config';
+import { identityLive } from '@/server/identity/live';
+import { sessionFromRequest } from '@/server/identity/sessions';
 
-/**
- * GET /api/auth/session
- *
- * Tells the client whether a real session exists. Until the identity provider
- * is wired, this always reports unauthenticated. localStorage must not be
- * treated as a server session.
- */
 export const Route = createFileRoute('/api/auth/session')({
   server: {
     handlers: {
-      GET: async () => {
-        let appEnv = 'unknown';
-        try {
-          appEnv = getServerConfig().appEnv;
-        } catch {
-          /* config may be absent in a UI-only preview; still unauthenticated */
+      GET: async ({ request }: { request: Request }) => {
+        if (!identityLive()) {
+          return Response.json(
+            { authenticated: false, provider: 'none' },
+            { headers: { 'cache-control': 'no-store' } },
+          );
         }
-
+        const session = await sessionFromRequest(request);
+        if (!session) {
+          return Response.json(
+            { authenticated: false, provider: 'keycloak' },
+            { headers: { 'cache-control': 'no-store' } },
+          );
+        }
         return Response.json(
           {
-            authenticated: false,
-            provider: 'none',
-            stubUi: appEnv === 'development' || appEnv === 'test',
+            authenticated: true,
+            provider: 'keycloak',
+            user: { id: session.userId, email: session.email, name: session.email?.split('@')[0] ?? 'Traveller' },
           },
           { headers: { 'cache-control': 'no-store' } },
         );

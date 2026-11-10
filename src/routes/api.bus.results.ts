@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { rateLimit } from '@/server/rate-limit';
 import { searchBusResults } from '@/server/bus-results';
+import { createSearchIntent } from '@/server/search-intent';
 import { todayISO } from '@/utils/format';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -15,7 +16,7 @@ export const Route = createFileRoute('/api/bus/results')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const params = new URL(request.url).searchParams;
@@ -38,8 +39,14 @@ export const Route = createFileRoute('/api/bus/results')({
 
         try {
           const results = await searchBusResults({ from, to, date, sort });
+          let searchIntent: string | undefined;
+          try {
+            searchIntent = createSearchIntent(results.map((row) => row.id));
+          } catch {
+            searchIntent = undefined;
+          }
           return Response.json(
-            { data: results, count: results.length, date, from, to, sort },
+            { data: results, count: results.length, date, from, to, sort, searchIntent },
             { headers: { 'cache-control': 'no-store' } },
           );
         } catch (error) {

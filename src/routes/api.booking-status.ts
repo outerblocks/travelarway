@@ -24,7 +24,7 @@ export const Route = createFileRoute('/api/booking-status')({
   server: {
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        const limited = rateLimit(request, 'search');
+        const limited = await rateLimit(request, 'search');
         if (limited) return limited;
 
         const token = new URL(request.url).searchParams.get('token')?.trim() ?? '';

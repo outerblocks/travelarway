@@ -9,7 +9,9 @@ test('landing page sections fit the viewport and render without React hydration 
   });
 
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Where to next?' })).toBeVisible();
+  await expect(page.locator('h1.hero-heading')).toHaveText(
+    /Where to next\?|Book a bus seat|Cross by ferry|Find a flight|Ride the train|Book a stay|Plan an experience/,
+  );
   await expect(page.getByRole('heading', { name: 'All your travel options in one place' })).toBeAttached();
   await expect(page.getByRole('heading', { name: 'Planning to travel?' })).toBeAttached();
   await expect(page.getByRole('heading', { name: 'Travel Guides & Tips' })).toBeAttached();
@@ -49,17 +51,24 @@ test('public language selection updates translations and persists across reloads
   const languageSelect = page.locator('header select:visible');
   await languageSelect.selectOption('sw');
   await expect.poll(() => page.locator('html').getAttribute('lang')).toBe('sw');
-  await expect(page.getByRole('heading', { name: 'Safari inayofuata ni wapi?' })).toBeVisible();
+  await expect(page.locator('h1.hero-heading')).toHaveText(
+    /Safari inayofuata ni wapi\?|Chagua kiti cha basi|Vuka kwa feri|Tafuta ndege|Panda treni|Weka malazi|Panga tukio/,
+  );
   await expect(page.getByRole('button', { name: 'Kwenda tu', exact: true })).toBeVisible();
 
   await languageSelect.selectOption('fr');
   await expect.poll(() => page.locator('html').getAttribute('lang')).toBe('fr');
-  await expect(page.getByRole('heading', { name: 'Où partir ensuite ?' })).toBeVisible();
+  await expect(page.locator('h1.hero-heading')).toHaveText(
+    /Où partir ensuite \?|Réservez un siège de bus|Traversez en ferry|Trouvez un vol|Prenez le train|Réservez un séjour|Planifiez une expérience/,
+  );
   await expect(page.getByRole('button', { name: 'Aller simple', exact: true })).toBeVisible();
 
   await page.reload();
   await page.waitForLoadState('networkidle');
-  await expect(page.getByRole('heading', { name: 'Où partir ensuite ?' })).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('h1.hero-heading')).toHaveText(
+    /Où partir ensuite \?|Réservez un siège de bus|Traversez en ferry|Trouvez un vol|Prenez le train|Réservez un séjour|Planifiez une expérience/,
+    { timeout: 15_000 },
+  );
   await expect.poll(() => page.locator('html').getAttribute('lang')).toBe('fr');
   await page.getByRole('link', { name: 'À propos de Travelar' }).click();
   await expect(page.getByRole('heading', { name: 'À propos de Travelar' })).toBeVisible({ timeout: 15_000 });
@@ -75,7 +84,9 @@ test('mobile language selection is available and changes the public page languag
   await expect(menuButton).toHaveAttribute('aria-expanded', 'true');
   await page.locator('header select:visible').selectOption('sw');
 
-  await expect(page.getByRole('heading', { name: 'Safari inayofuata ni wapi?' })).toBeVisible();
+  await expect(page.locator('h1.hero-heading')).toHaveText(
+    /Safari inayofuata ni wapi\?|Chagua kiti cha basi|Vuka kwa feri|Tafuta ndege|Panda treni|Weka malazi|Panga tukio/,
+  );
   await expect.poll(() => page.locator('html').getAttribute('lang')).toBe('sw');
 });
 

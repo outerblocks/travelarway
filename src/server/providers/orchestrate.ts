@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { amadeusFlightAdapter, amadeusStayAdapter, sabreFlightAdapter, sabreStayAdapter } from '@/server/providers/stubs';
+import { amadeusFlightAdapter, amadeusStayAdapter, sabreFlightAdapter, sabreRailAdapter, sabreStayAdapter } from '@/server/providers/stubs';
 import { travelportFlightAdapter } from '@/server/providers/travelport/flights';
 import { travelportStayAdapter } from '@/server/providers/travelport/stays';
 import type {
@@ -57,4 +57,23 @@ export async function searchStayOffers(request: StaySearchRequest): Promise<Cano
   }
 
   return collected;
+}
+
+/**
+ * International rail via Sabre Content Services Rail. TRC SGR and Madaraka
+ * Express stay on operator search (`/api/sgr/services`). This path never invents
+ * offers and refuses until the rail capability is PROVEN.
+ */
+export async function searchRailOffers(request: {
+  originCode: string;
+  destinationCode: string;
+  departureDate: string;
+}) {
+  const result = await sabreRailAdapter.search(request, {
+    providerId: sabreRailAdapter.providerId,
+    productId: sabreRailAdapter.productId,
+    correlationId: randomUUID(),
+  });
+  if (result.outcome === 'success' && result.data?.length) return result.data;
+  return [];
 }

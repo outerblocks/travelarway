@@ -3,13 +3,11 @@
  *
  * A sliding-window counter kept in process memory, keyed by client address and bucket name.
  *
- * Scope, stated plainly: on a serverless platform each instance has its own memory, so this
- * caps abuse per instance rather than globally. It still stops the cheap attacks — one client
- * holding every seat on a trip in a loop, or hammering the payment start endpoint — which is
- * what the audit (H-006) asked for first. A shared store (Vercel KV / Redis) can replace
- * `MemoryStore` later without touching any caller, and platform-level limits (Vercel WAF)
- * should sit in front of it in production.
+ * When REDIS_URL is set, counters are shared across processes. Without it, each process
+ * keeps its own window (still enough to stop a single client looping holds on one instance).
  */
+import { getRedisWindowStore } from '@/server/redis-store';
+import { log } from '@/server/log';
 
 export interface RateLimitRule {
   /** Requests permitted per window. */
@@ -40,6 +38,7 @@ export const RATE_LIMITS = {
   tickets: { limit: 30, windowMs: 60_000 },
   oims: { limit: 60, windowMs: 60_000 },
   hims: { limit: 60, windowMs: 60_000 },
+  auth: { limit: 20, windowMs: 60_000 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitBucket = keyof typeof RATE_LIMITS;
@@ -47,7 +46,11 @@ export type RateLimitBucket = keyof typeof RATE_LIMITS;
 /** Upper bound on tracked keys, so a flood of spoofed addresses cannot exhaust memory. */
 const MAX_KEYS = 10_000;
 
-export class MemoryStore {
+export interface RateLimitStore {
+  check(key: string, rule: RateLimitRule): RateLimitDecision | Promise<RateLimitDecision>;
+}
+
+export class MemoryStore implements RateLimitStore {
   private readonly hits = new Map<string, number[]>();
 
   constructor(private readonly now: () => number = Date.now) {}
@@ -99,7 +102,13 @@ export class MemoryStore {
   }
 }
 
-const store = new MemoryStore();
+const memoryStore = new MemoryStore();
+
+async function resolveStore(): Promise<RateLimitStore> {
+  const url = process.env.REDIS_URL?.trim();
+  if (!url) return memoryStore;
+  return getRedisWindowStore(url);
+}
 
 /**
  * Best-effort client address.
@@ -120,16 +129,23 @@ export function clientKey(request: Request): string {
 /**
  * Returns a 429 response when the caller is over the limit for `bucket`, otherwise null.
  *
- *   const limited = rateLimit(request, 'holds');
+ *   const limited = await rateLimit(request, 'holds');
  *   if (limited) return limited;
  */
-export function rateLimit(
+export async function rateLimit(
   request: Request,
   bucket: RateLimitBucket,
-  memory: MemoryStore = store,
-): Response | null {
+  memory: RateLimitStore = memoryStore,
+): Promise<Response | null> {
   const rule = RATE_LIMITS[bucket];
-  const decision = memory.check(`${bucket}:${clientKey(request)}`, rule);
+  const store = memory === memoryStore ? await resolveStore() : memory;
+  let decision: RateLimitDecision;
+  try {
+    decision = await store.check(`${bucket}:${clientKey(request)}`, rule);
+  } catch (error) {
+    log('warn', 'rate_limit_store_failed', { message: (error as Error).message });
+    decision = memoryStore.check(`${bucket}:${clientKey(request)}`, rule);
+  }
   if (decision.allowed) return null;
 
   return Response.json(

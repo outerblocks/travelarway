@@ -57,20 +57,20 @@ describe('rateLimit', () => {
     const req = () => request({ 'x-forwarded-for': '203.0.113.9' });
 
     for (let i = 0; i < 10; i += 1) {
-      expect(rateLimit(req(), 'payments', store)).toBeNull();
+      expect(await rateLimit(req(), 'payments', store)).toBeNull();
     }
-    const limited = rateLimit(req(), 'payments', store);
+    const limited = await rateLimit(req(), 'payments', store);
     expect(limited?.status).toBe(429);
     expect(limited?.headers.get('retry-after')).toBe('60');
     expect(await limited?.json()).toMatchObject({ error: 'rate_limited' });
   });
 
-  it('counts buckets separately for the same client', () => {
+  it('counts buckets separately for the same client', async () => {
     const store = new MemoryStore(() => 0);
     const req = () => request({ 'x-forwarded-for': '203.0.113.10' });
-    for (let i = 0; i < 10; i += 1) rateLimit(req(), 'payments', store);
-    expect(rateLimit(req(), 'payments', store)?.status).toBe(429);
-    expect(rateLimit(req(), 'holds', store)).toBeNull();
+    for (let i = 0; i < 10; i += 1) await rateLimit(req(), 'payments', store);
+    expect((await rateLimit(req(), 'payments', store))?.status).toBe(429);
+    expect(await rateLimit(req(), 'holds', store)).toBeNull();
   });
 });
 

@@ -20,3 +20,10 @@ export class TripNotFoundError extends Error {
 export const isUniqueViolation = (error: unknown): boolean =>
   typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505';
 
+/** PostgreSQL `exclusion_violation` (SQLSTATE 23P01) — overlapping range claims. */
+export const isExclusionViolation = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null && (error as { code?: string }).code === '23P01';
+
+export const isInventoryConflict = (error: unknown): boolean =>
+  isUniqueViolation(error) || isExclusionViolation(error);
+

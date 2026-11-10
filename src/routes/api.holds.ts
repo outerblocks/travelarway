@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { guardMutation } from '@/server/request-guard';
+import { refuseHoldWithoutIntent } from '@/server/search-intent';
 import {
   assertHoldAccessConfigured,
   createHoldReleaseToken,
@@ -10,14 +11,16 @@ import {
   createHold,
   releaseHold,
   SeatUnavailableError,
+  SegmentNotPermittedError,
   TripNotFoundError,
   TripUnavailableError,
 } from '@/server/holds';
+import { refuseIfPurchasesPaused } from '@/server/purchases';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * POST /api/holds   { tripId, seats: string[], ttlSeconds? }
+ * POST /api/holds   { tripId, fromStopId, toStopId, seats: string[], ttlSeconds? }
  * DELETE /api/holds?holdId=…  (requires x-hold-release token issued at create)
  *
  * 201 when every requested seat is held, 409 when any is already held or sold — with
@@ -28,8 +31,10 @@ export const Route = createFileRoute('/api/holds')({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
-        const limited = guardMutation(request, 'holds');
+        const limited = await guardMutation(request, 'holds');
         if (limited) return limited;
+        const paused = refuseIfPurchasesPaused();
+        if (paused) return paused;
 
         try {
           assertHoldAccessConfigured();
@@ -45,8 +50,16 @@ export const Route = createFileRoute('/api/holds')({
           return Response.json({ error: 'invalid_json' }, { status: 400 });
         }
 
-        const input = body as { tripId?: unknown; seats?: unknown; ttlSeconds?: unknown };
+        const input = body as {
+          tripId?: unknown;
+          fromStopId?: unknown;
+          toStopId?: unknown;
+          seats?: unknown;
+          ttlSeconds?: unknown;
+        };
         const tripId = typeof input.tripId === 'string' ? input.tripId : '';
+        const fromStopId = typeof input.fromStopId === 'string' ? input.fromStopId : '';
+        const toStopId = typeof input.toStopId === 'string' ? input.toStopId : '';
         const seats = Array.isArray(input.seats)
           ? input.seats.filter((seat): seat is string => typeof seat === 'string')
           : [];
@@ -54,6 +67,11 @@ export const Route = createFileRoute('/api/holds')({
         if (!UUID.test(tripId)) {
           return Response.json({ error: 'invalid_trip' }, { status: 400 });
         }
+        if (!UUID.test(fromStopId) || !UUID.test(toStopId)) {
+          return Response.json({ error: 'invalid_segment' }, { status: 400 });
+        }
+        const intentRefused = refuseHoldWithoutIntent(request, tripId);
+        if (intentRefused) return intentRefused;
         if (seats.length === 0 || seats.length > 8) {
           return Response.json({ error: 'invalid_seats', detail: '1–8 seats per hold' }, { status: 400 });
         }
@@ -64,7 +82,7 @@ export const Route = createFileRoute('/api/holds')({
             : undefined;
 
         try {
-          const hold = await createHold({ tripId, seats, ttlSeconds });
+          const hold = await createHold({ tripId, fromStopId, toStopId, seats, ttlSeconds });
           const releaseTokens = Object.fromEntries(
             hold.holdIds.map((id) => [id, createHoldReleaseToken(id)]),
           );
@@ -85,12 +103,19 @@ export const Route = createFileRoute('/api/holds')({
           if (error instanceof TripUnavailableError) {
             return Response.json({ error: 'trip_unavailable' }, { status: 409 });
           }
+          if (error instanceof SegmentNotPermittedError) {
+            return Response.json({ error: 'segment_not_permitted' }, { status: 409 });
+          }
+          const message = error instanceof Error ? error.message : '';
+          if (message === 'invalid_seats' || message === 'invalid_layout') {
+            return Response.json({ error: message }, { status: 400 });
+          }
           return Response.json({ error: 'hold_failed' }, { status: 503 });
         }
       },
 
       DELETE: async ({ request }: { request: Request }) => {
-        const limited = guardMutation(request, 'holds');
+        const limited = await guardMutation(request, 'holds');
         if (limited) return limited;
 
         const holdId = new URL(request.url).searchParams.get('holdId') ?? '';

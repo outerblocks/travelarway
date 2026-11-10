@@ -8,6 +8,7 @@ import {
 } from '@/server/bookings';
 import { QuoteUnavailableError } from '@/server/quote';
 import { isUuid, parseEmail, parsePersonName, parseSeatCode } from '@/domain/input-validation';
+import { refuseIfPurchasesPaused } from '@/server/purchases';
 
 const CATEGORIES = new Set(['adult', 'child', 'infant']);
 
@@ -22,8 +23,10 @@ export const Route = createFileRoute('/api/bookings')({
   server: {
     handlers: {
       POST: async ({ request }: { request: Request }) => {
-        const limited = guardMutation(request, 'bookings');
+        const limited = await guardMutation(request, 'bookings');
         if (limited) return limited;
+        const paused = refuseIfPurchasesPaused();
+        if (paused) return paused;
 
         let body: unknown;
         try {

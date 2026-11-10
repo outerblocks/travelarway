@@ -9,6 +9,8 @@ import {
 } from '@/server/hold-access';
 import { releaseHold, SeatUnavailableError } from '@/server/sgr/inventory';
 import { resolveProvider } from '@/server/sgr/provider';
+import { refuseHoldWithoutIntent } from '@/server/search-intent';
+import { refuseIfPurchasesPaused } from '@/server/purchases';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -39,8 +41,10 @@ export const Route = createFileRoute('/api/sgr/holds')({
        * hold rather than taking a second one.
        */
       POST: async ({ request }: { request: Request }) => {
-        const limited = guardMutation(request, 'holds');
+        const limited = await guardMutation(request, 'holds');
         if (limited) return limited;
+        const paused = refuseIfPurchasesPaused();
+        if (paused) return paused;
 
         try {
           assertHoldAccessConfigured();
@@ -70,6 +74,8 @@ export const Route = createFileRoute('/api/sgr/holds')({
         if (!UUID.test(tripId)) {
           return Response.json({ error: 'invalid_trip' }, { status: 400 });
         }
+        const intentRefused = refuseHoldWithoutIntent(request, tripId);
+        if (intentRefused) return intentRefused;
         if (seats.length === 0 || seats.length > MAX_SEATS_PER_HOLD) {
           return Response.json({ error: 'invalid_seats', max: MAX_SEATS_PER_HOLD }, { status: 400 });
         }
@@ -132,7 +138,7 @@ export const Route = createFileRoute('/api/sgr/holds')({
        * away cannot act on a failure, and the expiry sweeper will free the seat regardless.
        */
       DELETE: async ({ request }: { request: Request }) => {
-        const limited = guardMutation(request, 'holds');
+        const limited = await guardMutation(request, 'holds');
         if (limited) return limited;
 
         const holdId = new URL(request.url).searchParams.get('holdId') ?? '';

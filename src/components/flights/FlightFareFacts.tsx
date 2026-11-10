@@ -1,11 +1,15 @@
 import { useI18n } from '@/context/I18nContext';
 import type { PublicAirOffer } from '@/domain/air-offer';
+import { cabinLine } from '@/domain/flight-results';
 import { formatMoney } from '@/domain/money';
 
 export function FlightFareFacts({ offer, compact = false }: { offer: PublicAirOffer; compact?: boolean }) {
   const { tp } = useI18n();
+  const cabin = cabinLine(offer);
+  const fareBrand = (offer.fareBrand || '').trim();
+  const cabinOnly = (offer.cabinClass || '').trim();
   const rows = [
-    offer.fareBrand ? [tp('fareBrandLabel'), offer.fareBrand] : null,
+    fareBrand && cabin !== cabinOnly ? [tp('fareBrandLabel'), fareBrand] : null,
     offer.cabinClass ? [tp('cabinLabel'), offer.cabinClass] : null,
     [tp('includedBaggage'), offer.baggageInfo?.trim() || tp('baggageNotOnOffer')],
     offer.refundInfo ? [tp('refundLabel'), offer.refundInfo] : null,

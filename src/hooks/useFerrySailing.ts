@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { asPublicFerrySailing } from '@/domain/ferry-offer';
+import { stayReadyDuringRefetch } from '@/hooks/query-status';
 import type { FerrySailing } from '@/types';
 
 export function useFerrySailing(sailingId: string | undefined) {
@@ -13,7 +14,7 @@ export function useFerrySailing(sailingId: string | undefined) {
       return;
     }
     let cancelled = false;
-    setStatus('loading');
+    setStatus((current) => stayReadyDuringRefetch(current, 'loading', 'ready', sailing !== null));
     void fetch(`/api/ferry/sailings/${sailingId}`, { credentials: 'same-origin' })
       .then(async (response) => {
         if (response.status === 404) {

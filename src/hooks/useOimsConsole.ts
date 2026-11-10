@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { stayReadyDuringRefetch } from '@/hooks/query-status';
 
 export interface OimsOperatorRow {
   id: string;
@@ -12,10 +13,11 @@ export function useOimsConsole(mode: 'bus' | 'ferry') {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState('');
   const [tick, setTick] = useState(0);
+  const [permissions, setPermissions] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    setStatus('loading');
+    setStatus((current) => stayReadyDuringRefetch(current, 'loading', 'ready', operators.length > 0));
     fetch(`/api/oims/operators?mode=${mode}`, { credentials: 'same-origin' })
       .then(async (response) => {
         const body = await response.json() as { data?: OimsOperatorRow[] };
@@ -40,7 +42,7 @@ export function useOimsConsole(mode: 'bus' | 'ferry') {
   useEffect(() => {
     if (!operatorId) return;
     let cancelled = false;
-    setStatus('loading');
+    setStatus((current) => stayReadyDuringRefetch(current, 'loading', 'ready', workspace !== null));
     void fetch('/api/oims/session', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -48,6 +50,8 @@ export function useOimsConsole(mode: 'bus' | 'ferry') {
       body: JSON.stringify({ operatorId, mode }),
     }).then(async (response) => {
       if (!response.ok) throw new Error('session_unavailable');
+      const sessionBody = await response.json() as { permissions?: string[] };
+      if (!cancelled) setPermissions(sessionBody.permissions ?? []);
       const body = await fetch(`/api/oims/workspace?mode=${mode}`, { credentials: 'same-origin' });
       const workspaceBody = await body.json();
       if (!body.ok) throw new Error(workspaceBody.error ?? 'workspace_unavailable');
@@ -69,5 +73,5 @@ export function useOimsConsole(mode: 'bus' | 'ferry') {
 
   const reload = useCallback(() => setTick((value) => value + 1), []);
 
-  return { operators, operatorId, setOperatorId, workspace, status, error, reload };
+  return { operators, operatorId, setOperatorId, workspace, status, error, reload, permissions };
 }

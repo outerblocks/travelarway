@@ -3,6 +3,7 @@ import {
   amadeusFlightAdapter,
   amadeusStayAdapter,
   sabreFlightAdapter,
+  sabreRailAdapter,
   sabreStayAdapter,
 } from '@/server/providers/stubs';
 
@@ -38,7 +39,13 @@ describe('sibling GDS adapters', () => {
       amadeusStayAdapter.search(stayRequest, { ...meta, providerId: 'amadeus' }),
     ]);
 
+    const rail = await sabreRailAdapter.search(
+      { originCode: 'QQU', destinationCode: 'QQM', departureDate: '2026-12-08' },
+      { ...meta, providerId: 'sabre', productId: 'rail' },
+    );
     expect(air.every((result) => result.outcome === 'unsupported' && !result.data)).toBe(true);
     expect(stays.every((result) => result.outcome === 'unsupported' && !result.data)).toBe(true);
+    expect(rail.outcome).toBe('unsupported');
+    expect(rail.data).toBeUndefined();
   });
 });

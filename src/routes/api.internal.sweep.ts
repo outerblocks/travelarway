@@ -2,7 +2,10 @@ import { timingSafeEqual } from 'node:crypto';
 import { createFileRoute } from '@tanstack/react-router';
 import { getServerConfig } from '@/server/config';
 import { countExpiredPending, sweepExpiredReservations } from '@/server/expiry';
+import { processOutboxBatch } from '@/server/outbox';
 import { reconcileOpenPayments } from '@/server/payments';
+import { releaseExpiredHolds } from '@/server/sgr/inventory';
+import { log } from '@/server/log';
 
 /**
  * POST /api/internal/sweep
@@ -38,9 +41,11 @@ export const Route = createFileRoute('/api/internal/sweep')({
         try {
           // Reconcile before expiring: a booking that was paid must be issued, not swept
           // away because its webhook went missing.
+          const outbox = await processOutboxBatch();
           const reconciled = await reconcileOpenPayments();
 
           const summary = await sweepExpiredReservations();
+          const sgrHolds = await releaseExpiredHolds();
           // Whatever is left was locked by a payment arriving at the same moment, or is
           // beyond this batch. Reporting it makes a stuck backlog visible instead of
           // silently reporting success every minute.
@@ -51,11 +56,11 @@ export const Route = createFileRoute('/api/internal/sweep')({
           }
 
           return Response.json(
-            { expired: summary.expired, remaining, reconciled },
+            { expired: summary.expired, remaining, reconciled, outbox, sgrHolds: sgrHolds.expired },
             { headers: { 'cache-control': 'no-store' } },
           );
         } catch (error) {
-          console.error('[api/internal/sweep] failed:', (error as Error).message);
+          log('error', 'sweep_failed', { message: (error as Error).message });
           return Response.json({ error: 'sweep_failed' }, { status: 503 });
         }
       },
