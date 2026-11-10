@@ -488,6 +488,7 @@ export function LiveFleetSection({
     <section className="rounded-lg border border-neutral-200 bg-white p-5">
       <h2 className="text-sm font-bold text-neutral-900">{mode === 'bus' ? 'Fleet' : 'Vessels'}</h2>
       {mode === 'bus' ? (
+        <>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           <input className={inputClass} placeholder="T 123 ABC" value={registration} onChange={(event) => setRegistration(event.target.value)} />
           <input className={inputClass} placeholder="Yutong F12" value={model} onChange={(event) => setModel(event.target.value)} />
@@ -508,6 +509,7 @@ export function LiveFleetSection({
         >
           Add vehicle
         </button>
+        </>
       ) : (
         <div className="mt-4 flex gap-2">
           <input className={inputClass} placeholder="Vessel name" value={name} onChange={(event) => setName(event.target.value)} />
